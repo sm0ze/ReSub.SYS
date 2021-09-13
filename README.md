@@ -1,4 +1,4 @@
-# reSubSystem
+# ReSub.SYS
 
 Attempt to create a discord bot that changes a users roles based on the power enhancments they want, limited by their MEE6 Level.
 
