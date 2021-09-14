@@ -1,57 +1,85 @@
 # enhancments.py
 
 DEBUG = 0
-TEST = 1
+TEST = 0
 
 import functools
 from power import power
 
-def eleCountUniStr(list, uniList = []):
-    count = 0
+def eleCountUniStr(list):
+#count number of unique strings in nested list
+    #count = 0
+    uniList = []
 
     for ele in list:
-        if DEBUG: print('element is:' + str(ele))
+
+        if DEBUG: print('FuncEleCountUniStr - ' + 'element is: ' + str(ele))
+
         if type(ele) == type([]):
-            if DEBUG: print("RECURSE HERE")
-            rec = eleCountUniStr(ele)
-            if DEBUG: print(rec)
-            count += rec[0]
-            for uni in rec[1]:
-                if DEBUG: print(uni)
-                if uni not in uniList:
-                    uniList.append(uni)
+
+            if not ele == []:
+                if DEBUG: print('FuncEleCountUniStr - ' + "RECURSE HERE")
+                rec = eleCountUniStr(ele)
+                if DEBUG: print('FuncEleCountUniStr - ' + str(rec))
+                #count += rec[0]
+
+                for uni in rec[1]:
+
+                    if DEBUG: print('FuncEleCountUniStr - ' + 'Unique req list: ' + str(uni))
+                    if uni not in uniList:
+                        uniList.append(uni)
+                        #count += 1
         else:
-            if DEBUG: print('Add count with: ' + str(ele))
+
+            if DEBUG: print('FuncEleCountUniStr - ' + 'Add count with string: ' + str(ele))
+
             if ele not in uniList:
+
                 uniList.append(ele)
-            count += 1
-        if len(uniList) < count:
-            count = len(uniList)
-    return count, uniList
+                #count += 1
 
-def cost(inName, inDict):
+        #if len(uniList) < count:
+
+        #    count = len(uniList)
+    if DEBUG: print('FuncEleCountUniStr - ' + 'returns cost: ' + str(len(uniList)) +' and list:' + str(uniList))
+    return len(uniList), uniList
+
+
+def cost(inName, inDict=power):
+#calculate number of prerequisites +1 to get cost of power in points
+
     required = []
+    #required prerequisites
 
-    if DEBUG : print(inName + ' has requisites: ' + str(inDict[inName]['Prereq']))
+    if DEBUG : print('FuncCost - ' + str(inName) + ' has requisites: ' + str(inDict[inName]['Prereq']))
 
     for req in inDict[inName]['Prereq']:
-        if req not in required:
-            if DEBUG: print(req + ' requisite has name: ' + inDict[req]['Name'])
-            required.append(inDict[req]['Name'])
-            subReq = cost(req, inDict)[0]
-            if subReq:
-                required.append(subReq)
 
-    return required, eleCountUniStr(required)
+        if req not in required:
+
+            if DEBUG: print('FuncCost - ' + str(req) + ' requisite has name: ' + str(inDict[req]['Name']))
+            required.append(inDict[req]['Name'])
+            subReq = cost(req, inDict)[2]
+
+            if subReq:
+
+                required.append(subReq)
+    ans = eleCountUniStr(required)
+    if DEBUG: print('FuncCost - ' + str(ans))
+    # enhancment cost = ans[0]+1
+    # unique prereq string = ans[1]
+    return ans[0]+1, ans[1], required
+
 
 def testCost(testPower, dictlist):
+#test function to ensure cost function is working
     costReq = cost(testPower, dictlist)
-    print(testPower + ' of name: "' + dictlist[testPower]['Name'] + '" costs: ' + str(costReq[1][0]+1) + ' and has these prerequisites: ' +str(sorted(costReq[1][1])))
+    print('FuncTestCost - ' + testPower + ' of name: "' + dictlist[testPower]['Name'] + '" costs: ' + str(costReq[0]) + ' and has these prerequisites: ' + str(sorted(costReq[1])))
 
-#if TEST: testCost('regen4', power)
-#if TEST: testCost('regen7', power)
-#if TEST: testCost('regen10', power)
-if TEST: testCost('touch10', power)
+#if TEST: testCost('regen4')
+#if TEST: testCost('regen7')
+#if TEST: testCost('regen10')
+if TEST: testCost('touch10')
 if TEST:
     basic = cost('regen10', power)
     print(basic[0] == basic[1][1])
