@@ -81,20 +81,27 @@ async def spent(ctx):
 
 @client.command(brief="Shows target host's available enhancement points")
 async def points(ctx):
+    level = []
     if ctx.message.mentions:
         user = ctx.message.mentions
         if DEBUG: print("Message mentions: {}".format(user))
     else:
         user = [ctx.message.author]
         if DEBUG: print("Author is: {}".format(user))
-    level = await mee6API.levels.get_user_level(user[0].id)
-    pointTot = int(level/5 + 1)
-    if DEBUG: print(user[0].roles)
-    for role in user[0].roles:
-        if DEBUG: print(role)
-        if str(role) in enhancements.patList:
-            pointTot += 1
-    await ctx.send("{} has {} enhancement points.".format(user[0], pointTot))
+    level = [[user[x], await mee6API.levels.get_user_level(user[x].id)] for x in range(0,len(user))]
+    if DEBUG: print("level is: {}".format(level))
+    for group in level:
+        if DEBUG: print("group in level is: {}".format(group))
+        if group[1]:
+            pointTot = int(group[1]/5 + 1)
+        else:
+            pointTot = 0
+        if DEBUG: print(group[0].roles)
+        for role in group[0].roles:
+            if DEBUG: print(role)
+            if str(role) in enhancements.patList:
+                pointTot += 1
+        await ctx.send("{} has {} enhancement points.".format(group[0], pointTot))
     return
 
 
