@@ -4,7 +4,6 @@
 # blank entry
 #'': {'Name': '', 'Tier': , 'Prereq': []},
 
-<<<<<<< HEAD
 patList = ['Precognition', 'Precognition+', 'Precognition++', 'Boss System', 'System', 'First Rivals', 'Author']
 
 powerTypes = {'Strength': 10, 'Speed': 10, 'Endurance': 10, 'Memory': 10, 'Mental Celerity': 10, 'Mental Clarity': 10, 'Regeneration': 10, 'Pain Tolerance': 10, 'Invisibility': 10, 'Vision': 10, 'Aural Faculty': 10, 'Olfactory Sense': 10, 'Gustatory Ability': 10, 'Tactile Reception': 10, 'Proprioception': 10}
@@ -369,5 +368,5 @@ power = {
 'taste10': {'Name': 'Tier10 Gustatory Ability', 'Tier': 10, 'Prereq': ['taste9', 'memory3', 'clarity6', 'celerity6']},
 'touch10': {'Name': 'Tier10 Tactile Reception', 'Tier': 10, 'Prereq': ['touch9', 'pain3', 'clarity6', 'celerity6', 'space3']},
 'space10': {'Name': 'Tier10 Proprioception', 'Tier': 10, 'Prereq': ['space9', 'memory6', 'clarity6', 'celerity6']},
->>>>>>> sm0zeMain
+
 }
