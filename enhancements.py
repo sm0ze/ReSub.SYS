@@ -1,10 +1,10 @@
-# enhancments.py
+# enhancements.py
 
 DEBUG = 0
 TEST = 0
 
 import functools
-from power import power
+from power import power, powerTypes, patList
 
 def eleCountUniStr(list):
 #count number of unique strings in nested list
@@ -41,7 +41,7 @@ def eleCountUniStr(list):
         #if len(uniList) < count:
 
         #    count = len(uniList)
-    if DEBUG: print('FuncEleCountUniStr - ' + 'returns cost: ' + str(len(uniList)) +' and list:' + str(uniList))
+    if DEBUG: print('FuncEleCountUniStr - ' + 'returns cost: ' + str(len(uniList)) +' and list: ' + str(uniList))
     return len(uniList), uniList
 
 
@@ -66,9 +66,44 @@ def cost(inName, inDict=power):
                 required.append(subReq)
     ans = eleCountUniStr(required)
     if DEBUG: print('FuncCost - ' + str(ans))
-    # enhancment cost = ans[0]+1
+    # enhancement cost = ans[0]+1
     # unique prereq string = ans[1]
     return ans[0]+1, ans[1], required
+
+
+def trim(pList):
+#function to remove lower ranked enhancements from the list
+    if DEBUG: print("funcTrim - " + "Start of function")
+    tierDict = {}
+    trimList = []
+    if DEBUG: print("funcTrim - " + "plist = {}".format(pList))
+    for pow in pList:
+        powRank = int(pow[5:7])
+        powType = pow[7:].strip()
+        if not powType in tierDict.keys():
+            tierDict[powType] = powRank
+            if DEBUG: print("funcTrim - " + "{} of rank {} added to dict".format(powType, powRank))
+        elif powRank > tierDict[powType]:
+            if DEBUG: print("funcTrim - " + "{} of rank {} increased to {}".format(powType, tierDict[powType], powRank))
+            tierDict[powType] = powRank
+    for key, val in tierDict.items():
+        trimList.append("Rank {} {}".format(val,key))
+
+    if DEBUG: print("funcTrim - " + "dict tierDict: {}".format(tierDict))
+    return sorted(trimList, reverse=True, key = lambda x: int(x.split()[1]))
+
+
+def reqEnd(endList):
+    if DEBUG: print("funcReqEnd - " + "{}".format(endList))
+    if str(endList[0]) == '1':
+        reqStr = 'Which has no prerequisites.'
+    else:
+        if DEBUG: print("funcReqEnd - " + "{}".format(endList[1]))
+        trimmedList = trim(list(endList[1]))
+        if DEBUG: print("funcReqEnd - " + "{}".format(trimmedList))
+        reqStr = 'Which requires:\n\n' + "{}".format(trimmedList)
+    if DEBUG: print("funcReqEnd - " + "End of function")
+    return reqStr
 
 
 def testCost(testPower, dictlist):
@@ -76,10 +111,7 @@ def testCost(testPower, dictlist):
     costReq = cost(testPower, dictlist)
     print('FuncTestCost - ' + testPower + ' of name: "' + dictlist[testPower]['Name'] + '" costs: ' + str(costReq[0]) + ' and has these prerequisites: ' + str(sorted(costReq[1])))
 
-#if TEST: testCost('regen4')
-#if TEST: testCost('regen7')
-#if TEST: testCost('regen10')
-if TEST: testCost('touch10')
 if TEST:
-    basic = cost('regen10', power)
-    print(basic[0] == basic[1][1])
+    basic = cost('reg10')
+    print("does required = unilist: " + str(basic[1] == basic[2]))
+    print("{}".format(trim(basic[1])))
