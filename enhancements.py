@@ -1,7 +1,8 @@
 # enhancements.py
 
 from power import power, powerTypes, rankColour, patList, listEnhancements, restrictedList
-import functools, os
+import functools
+import os
 
 DEBUG = 0
 TEST = 0
@@ -14,6 +15,7 @@ if TEST:
 #if TEST: print()
 
 LoE = listEnhancements()
+
 
 def eleCountUniStr(list):
     # count number of unique strings in nested list
@@ -87,7 +89,8 @@ def cost(inName, inDict=power):
 
                 required.append(subReq)
     ans = eleCountUniStr(required)
-    if DEBUG: print('ans before restricted list = {}'.format(ans))
+    if DEBUG:
+        print('ans before restricted list = {}'.format(ans))
     """if ans[0]:
         if DEBUG: print("required = {}, restrictedList = {}".format(required, restrictedList))
         restrictedCount = [x for x in ans[1] if x in restrictedList]
@@ -112,9 +115,13 @@ def trim(pList, inDict=power):
     if DEBUG:
         print("funcTrim - " + "plist = {}".format(pList))
     for pow in pList:
-        powRank = [inDict[x]['Rank'] for x in inDict.keys() if inDict[x]['Name'] == pow][0]
-        powType = [inDict[x]['Type'] for x in inDict.keys() if inDict[x]['Name'] == pow][0]
-        if DEBUG: print("Enhancement: {}, Type: {}, Rank: {}".format(pow, powType, powRank))
+        powRank = [inDict[x]['Rank']
+                   for x in inDict.keys() if inDict[x]['Name'] == pow][0]
+        powType = [inDict[x]['Type']
+                   for x in inDict.keys() if inDict[x]['Name'] == pow][0]
+        if DEBUG:
+            print("Enhancement: {}, Type: {}, Rank: {}".format(
+                pow, powType, powRank))
         if not powType in tierDict.keys():
             tierDict[powType] = powRank
             if DEBUG:
@@ -129,7 +136,8 @@ def trim(pList, inDict=power):
         trimList.append([val, key])
 
     if DEBUG:
-        print("funcTrim - " + "dict tierDict: {}\n\ttrimList: {}".format(tierDict, trimList))
+        print("funcTrim - " +
+              "dict tierDict: {}\n\ttrimList: {}".format(tierDict, trimList))
     return sorted(trimList, reverse=True, key=lambda x: x[0])
 
 
@@ -143,7 +151,7 @@ def reqEnd(endList):
             print("funcReqEnd - " + "{}".format(endList[1]))
         reqStr = 'Which requires at minimum:\n\n'
         for req in endList[1]:
-            reqName = power[req[1][:3].lower()+str(req[0])]['Name']
+            reqName = power[req[1][:3].lower() + str(req[0])]['Name']
             reqStr += '{}\n'.format(reqName)
     if DEBUG:
         print("funcReqEnd - " + "End of function")

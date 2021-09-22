@@ -1,4 +1,4 @@
-#BossSystemExecutable.py
+# BossSystemExecutable.py
 
 import os
 import enhancements
@@ -33,9 +33,10 @@ startup_extensions = ["options.py"]
 cmdPrefix = '~'
 intents = discord.Intents.all()
 
-enhList = [(x, y) for (x, y) in enhancements.powerTypes.items()]
+helpCommand = commands.DefaultHelpCommand(no_category='Basic Options')
+
 bot = commands.Bot(command_prefix=cmdPrefix,
-                   case_insensitive=True, intents=intents)
+                   case_insensitive=True, intents=intents, help_command=helpCommand)
 
 
 @bot.event
@@ -86,7 +87,7 @@ async def update_presence():
     return
 
 
-@bot.command(brief="-Gives the Supe role so host can recieve enhancements.\n")
+@bot.command(brief="-Gives the Supe role so host can recieve enhancements.")
 async def super(ctx):
     member = ctx.message.author
     supeRoleId = get(member.guild.roles, name=supeRole)
@@ -98,7 +99,7 @@ async def super(ctx):
     return
 
 
-@bot.command(brief="-Removes the Supe role and cleans host of host's enhancements.\n")
+@bot.command(brief="-Removes the Supe role and clears host of their existing enhancements.")
 async def noSuper(ctx):
     member = ctx.message.author
     supeRoleId = get(member.guild.roles, name=supeRole)
@@ -138,11 +139,13 @@ def servList(bots):
         print("members_set is: {}".format(members_set))
     return members_set
 
+
 def nickOrName(user):
     if user.nick:
         return user.nick
     else:
         return user.name
+
 
 if __name__ == "__main__":
     for filename in os.listdir('./cogs'):
