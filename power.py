@@ -1,41 +1,42 @@
 # power.py
-# this file is just for the power dictionary
+# this file is a dictionary and other lengthy constant variables dump
 
 DEBUG = 0
 TEST = 0
 
 if DEBUG:
     print("{} DEBUG TRUE".format(os.path.basename(__file__)))
-#if DEBUG: print()
+#if DEBUG: print("".format())
 if TEST:
     print("{} TEST TRUE".format(os.path.basename(__file__)))
-#if TEST: print()
+#if TEST: print("".format())
 
-# blank entry
-# '': {'Name': '', 'Rank': , 'Prereq': []},
+# removal emoji list
+remList = ['( ╥﹏╥) ノシ']
 
+
+# list of roles that give user extra enhancement points, +1 for each match
 patList = ['Supe', 'Precognition', 'Precognition+', 'Precognition++',
            'Boss System', 'System', 'First Rivals', 'Author']
 
+# dictionary of the different types of enhancements and the total number of
+# ranks available for each. * modifier for enhancements with extra restrictions
 powerTypes = {'Strength': 10, 'Speed': 10, 'Endurance': 10, 'Memory': 10, 'Mental Celerity': 10, 'Mental Clarity': 10, 'Regeneration': 10, 'Pain Tolerance': 10,
               'Invisibility': 10, 'Vision': 10, 'Aural Faculty': 10, 'Olfactory Sense': 10, 'Gustatory Ability': 10, 'Tactile Reception': 10, 'Proprioception': 10, '4th Wall Breaker*': 10, 'Intelligence*': 10}
 
+# the different hexcodes for the colour of each role by rank
 rankColour = {1: 0xffffff, 2: 0xcfceeb, 3: 0xaeaddf, 4: 0x8c8bd8, 5: 0x6c6bc7,
               6: 0x4c4ab9, 7: 0x3b38b3, 8: 0x2c29aa, 9: 0x1b188d, 10: 0x0a0863}
 
+# restricted roles, should correspond with * moifiers in powerTypes
+# and cannot be added by the bot
 restrictedList = ['System', 'Author']
 
 
-class enhancementPower():
-    def __init__(self, id: str, name: str, rank: int, prereq: list, type: str):
-        self.id = id
-        self.name = name
-        self.rank = rank
-        self.prereq = prereq
-        self.type = type
-        #self.colour = colour
+# the enhancement dictionary. Holds each enhancement and their attributes.
 
-
+# blank entry
+# '': {'Name': '', 'Rank': , 'Prereq': []},
 power = {
     'sup0': {'Name': 'Supe', 'Type': 'Supe', 'Rank': 0, 'Prereq': []},
     'sys0': {'Name': 'System', 'Type': 'System', 'Rank': 0, 'Prereq': []},
@@ -231,56 +232,3 @@ power = {
     'int10': {'Name': 'Rank 10 Intelligence (only for Systems)', 'Type': 'Intelligence', 'Rank': 10, 'Prereq': ['int9', 'mem6', 'cel6', 'cla6']},
     '4th10': {'Name': 'Rank 10 4th Wall Breaker', 'Type': '4th Wall Breaker', 'Rank': 10, 'Prereq': ['4th9', 'int6']}
 }
-
-
-class enhancementList():
-    def __init__(self):
-        return
-
-    def getName(self, nom: str):
-        for nomId in [x for x in dir(self) if len(x) < 5]:
-            print("possible id = {}".format(nomId))
-            nomIdObj = getattr(self, str(nomId))
-
-            nomIdName = getattr(nomIdObj, 'id')
-            if DEBUG:
-                print("object: {} has with attribute name: {}".format(
-                    nomIdObj, nomIdName))
-
-            if DEBUG:
-                print("Comparing {} to {}".format(nom, nomIdName))
-            if str(nom) == str(nomIdName):
-                return nomIdObj.name
-        return 0
-
-    def getId(self, nom: str):
-        for nomId in [x for x in dir(self) if len(x) < 5]:
-            print("possible id = {}".format(nomId))
-            nomIdObj = getattr(self, str(nomId))
-
-            nomIdName = getattr(nomIdObj, 'name')
-            if DEBUG:
-                print("object: {} has with attribute name: {}".format(
-                    nomIdObj, nomIdName))
-
-            if DEBUG:
-                print("Comparing {} to {}".format(nom, nomIdName))
-            if str(nom) == str(nomIdName):
-                return nomIdObj.id
-        return 0
-
-
-def listEnhancements():
-    list = enhancementList()
-    for powerId in power.keys():
-        setattr(list, powerId, enhancementPower(
-            id=powerId, name=power[powerId]['Name'], rank=power[powerId]['Rank'], prereq=power[powerId]['Prereq'], type=power[powerId]['Type']))
-    return list
-
-
-if DEBUG:
-    powList = listEnhancements()
-    print(dir(powList))
-    print(powList.getName('reg1'))
-
-    print(powList.getId('Rank 1 Regeneration'))
