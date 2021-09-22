@@ -10,6 +10,6 @@ Current system enhancements and their prerequisites can be found here: https://d
 
 # Acknowledgements
  - EvieePy: A Cogs Example for the rewrite version of - discord.py
- * https://gist.github.com/EvieePy/d78c061a4798ae81be9825468fe146be
+    * https://gist.github.com/EvieePy/d78c061a4798ae81be9825468fe146be
 
  - Everyone asking and answering coding questions, and the coding snippets they freely provide
