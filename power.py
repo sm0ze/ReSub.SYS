@@ -25,8 +25,9 @@ rankColour = {1: 0xffffff, 2: 0xcfceeb, 3: 0xaeaddf, 4: 0x8c8bd8, 5: 0x6c6bc7,
 
 restrictedList = ['System', 'Author']
 
+
 class enhancementPower():
-    def __init__(self, id: str, name: str, rank: int, prereq: list, type:str):
+    def __init__(self, id: str, name: str, rank: int, prereq: list, type: str):
         self.id = id
         self.name = name
         self.rank = rank
@@ -38,7 +39,7 @@ class enhancementPower():
 power = {
     'sup0': {'Name': 'Supe', 'Type': 'Supe', 'Rank': 0, 'Prereq': []},
     'sys0': {'Name': 'System', 'Type': 'System', 'Rank': 0, 'Prereq': []},
-    'aut0': {'Name': 'Author', 'Type': 'Author', 'Rank':0, 'Prereq': []},
+    'aut0': {'Name': 'Author', 'Type': 'Author', 'Rank': 0, 'Prereq': []},
 
     'str1': {'Name': 'Rank 1 Strength', 'Type': 'Strength', 'Rank': 1, 'Prereq': []},
     'spe1': {'Name': 'Rank 1 Speed', 'Type': 'Speed', 'Rank': 1, 'Prereq': []},
@@ -231,6 +232,7 @@ power = {
     '4th10': {'Name': 'Rank 10 4th Wall Breaker', 'Type': '4th Wall Breaker', 'Rank': 10, 'Prereq': ['4th9', 'int6']}
 }
 
+
 class enhancementList():
     def __init__(self):
         return
@@ -241,31 +243,40 @@ class enhancementList():
             nomIdObj = getattr(self, str(nomId))
 
             nomIdName = getattr(nomIdObj, 'id')
-            if DEBUG: print("object: {} has with attribute name: {}".format(nomIdObj, nomIdName))
+            if DEBUG:
+                print("object: {} has with attribute name: {}".format(
+                    nomIdObj, nomIdName))
 
-            if DEBUG: print("Comparing {} to {}".format(nom, nomIdName))
+            if DEBUG:
+                print("Comparing {} to {}".format(nom, nomIdName))
             if str(nom) == str(nomIdName):
                 return nomIdObj.name
         return 0
 
-    def getId(self, nom:str):
+    def getId(self, nom: str):
         for nomId in [x for x in dir(self) if len(x) < 5]:
             print("possible id = {}".format(nomId))
             nomIdObj = getattr(self, str(nomId))
 
             nomIdName = getattr(nomIdObj, 'name')
-            if DEBUG: print("object: {} has with attribute name: {}".format(nomIdObj, nomIdName))
+            if DEBUG:
+                print("object: {} has with attribute name: {}".format(
+                    nomIdObj, nomIdName))
 
-            if DEBUG: print("Comparing {} to {}".format(nom, nomIdName))
+            if DEBUG:
+                print("Comparing {} to {}".format(nom, nomIdName))
             if str(nom) == str(nomIdName):
                 return nomIdObj.id
         return 0
 
+
 def listEnhancements():
     list = enhancementList()
     for powerId in power.keys():
-        setattr(list, powerId, enhancementPower(id=powerId, name=power[powerId]['Name'], rank=power[powerId]['Rank'], prereq=power[powerId]['Prereq'], type=power[powerId]['Type']))
+        setattr(list, powerId, enhancementPower(
+            id=powerId, name=power[powerId]['Name'], rank=power[powerId]['Rank'], prereq=power[powerId]['Prereq'], type=power[powerId]['Type']))
     return list
+
 
 if DEBUG:
     powList = listEnhancements()
