@@ -4,9 +4,15 @@
 DEBUG = 0
 TEST = 0
 
-if DEBUG:
-    print("{} DEBUG TRUE".format(os.path.basename(__file__)))
-#if DEBUG: print("".format())
+
+def debug(*args):
+    if DEBUG:
+        print(*args)
+
+
+debug("{} DEBUG TRUE".format(os.path.basename(__file__)))
+
+
 if TEST:
     print("{} TEST TRUE".format(os.path.basename(__file__)))
 #if TEST: print("".format())

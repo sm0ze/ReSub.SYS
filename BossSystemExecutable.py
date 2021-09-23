@@ -13,9 +13,15 @@ from mee6_py_api import API
 DEBUG = 0
 TEST = 0
 
-if DEBUG:
-    print("{} DEBUG TRUE".format(os.path.basename(__file__)))
-#if DEBUG: print("".format())
+
+def debug(*args):
+    if DEBUG:
+        print(*args)
+
+
+debug("{} DEBUG TRUE".format(os.path.basename(__file__)))
+
+
 if TEST:
     print("{} TEST TRUE".format(os.path.basename(__file__)))
 #if TEST: print("".format())
@@ -54,13 +60,13 @@ async def on_ready():
         botGuild = get(bot.guilds)
         botMember = botGuild.me
 
-        print(botGuild)
-        print(botMember)
+        debug(botGuild)
+        debug(botMember)
 
         botGuildPermissions = botMember.guild_permissions
 
         for perm in botGuildPermissions:
-            print(perm)
+            debug(perm)
     return
 
 
@@ -90,8 +96,7 @@ async def update_presence():
     nameSet = "{} users with {} enhancements".format(
         members, len(enhancements.powerTypes.keys()))
 
-    if DEBUG:
-        print("\t\t" + str(nameSet))
+    debug("\t\t" + str(nameSet))
 
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=nameSet))
     return
@@ -141,20 +146,16 @@ async def load(ctx, extension_name: str):
 # function to grab the full member list the bot has access to
 def servList(bots):
     guilds = bots.guilds
-    if DEBUG:
-        print("guilds is: {}".format(guilds))
+    debug("guilds is: {}".format(guilds))
 
     # ensure the member list is unique (a set)
     members_set = set()
     for guild in guilds:
-        if DEBUG:
-            print("Guild in guilds = {}".format(guild))
+        debug("Guild in guilds = {}".format(guild))
         for member in guild.members:
-            if DEBUG:
-                print("\tMember in {} is {}".format(guild, member))
+            debug("\tMember in {} is {}".format(guild, member))
             members_set.add(member)
-    if DEBUG:
-        print("members_set is: {}".format(members_set))
+    debug("members_set is: {}".format(members_set))
     return members_set
 
 
