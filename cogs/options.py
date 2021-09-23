@@ -14,9 +14,15 @@ from mee6_py_api import API
 DEBUG = 0
 TEST = 0
 
-if DEBUG:
-    print("{} DEBUG TRUE".format(os.path.basename(__file__)))
-#if DEBUG: print("".format())
+
+def debug(*args):
+    if DEBUG:
+        print(*args)
+
+
+debug("{} DEBUG TRUE".format(os.path.basename(__file__)))
+
+
 if TEST:
     print("{} TEST TRUE".format(os.path.basename(__file__)))
 #if TEST: print("".format())
@@ -47,16 +53,13 @@ class Options(commands.Cog):
     # Check if user has guild role
     async def cog_check(self, ctx):
 
-        if DEBUG:
-            print("Role check start")
+        debug("Role check start")
 
         async def predicate(ctx):
             for role in PERMROLES:
-                if DEBUG:
-                    print("Role check {} in {}".format(role, PERMROLES))
+                debug("Role check {} in {}".format(role, PERMROLES))
                 chkRole = get(ctx.guild.roles, name=role)
-                if DEBUG:
-                    print("chkRole = {}".format(chkRole))
+                debug("chkRole = {}".format(chkRole))
                 if chkRole in ctx.author.roles:
                     return chkRole
             raise commands.CheckFailure(
@@ -66,33 +69,27 @@ class Options(commands.Cog):
     @commands.command(brief="-Allows a host to remove duplicate enhancements of a lower rank.", description="-Allows a host to remove duplicate enhancements of a lower rank from themself. (Total points spent and eligibility for future enhancements remains unchanged)")
     # command to trim command caller of extra roles. OBSOLETE due to cut call after role add in add command
     async def trim(self, ctx, *, member=''):
-        if DEBUG:
-            print("funcTrim START")
+        debug("funcTrim START")
 
         memberList = await memGrab(self, ctx, '')  # member)
-        if DEBUG:
-            print("\tmemberlist = {}".format(memberList))
+        debug("\tmemberlist = {}".format(memberList))
 
         await cut(ctx, memberList)
-        if DEBUG:
-            print("funcTrim END")
+        debug("funcTrim END")
         return
 
     @commands.command(hidden=True)
     @commands.has_any_role(MANAGER)
     # manager command to role trim all users bot has access to
     async def trimAll(self, ctx):
-        if DEBUG:
-            print("funcTrimAll START")
+        debug("funcTrimAll START")
 
         memberList = isSuper(servList(self.bot))
-        if DEBUG:
-            print("\tmemberlist to cut = {}".format(
-                [x.name for x in memberList]))
+        debug("\tmemberlist to cut = {}".format(
+            [x.name for x in memberList]))
 
         await cut(ctx, memberList)
-        if DEBUG:
-            print("funcTrimAll END")
+        debug("funcTrimAll END")
         return
 
     @commands.command(hidden=True)
@@ -101,8 +98,7 @@ class Options(commands.Cog):
     async def roles(self, ctx, *, roleStr: str):
         supeGuildRoles = await orderRole(self, ctx)
         roleStrId = [x for x in supeGuildRoles if roleStr == x.name]
-        if DEBUG:
-            print("Role string ID is: {}".format(roleStrId[0].id))
+        debug("Role string ID is: {}".format(roleStrId[0].id))
         if roleStrId:
             roleStrId = roleStrId[0]
             await ctx.send("{.name} has: \nposition - {.position}\ncolour - {.colour}".format(roleStrId, roleStrId, roleStrId))
@@ -127,8 +123,7 @@ class Options(commands.Cog):
             fixArg = typeRank.replace(' ', ',')
             fixArg = fixArg.replace(';', ',')
             buildList = [x.strip() for x in fixArg.split(',') if x.strip()]
-            if DEBUG:
-                print(buildList)
+            debug(buildList)
 
         # add requested enhancements to current user build
         # then grab the information for this new user build
@@ -137,9 +132,8 @@ class Options(commands.Cog):
         userWantsCost = userWants[0]
         userWantsBuild = userWants[2]
         pointTot = await count(user)
-        if DEBUG:
-            print("{} with point total {} has {} {} and wants {} {}".format(
-                user, pointTot, userHas[0], userHasBuild, userWantsCost, userWantsBuild))
+        debug("{} with point total {} has {} {} and wants {} {}".format(
+            user, pointTot, userHas[0], userHasBuild, userWantsCost, userWantsBuild))
 
         # check to ensure user has enough enhancement points to get requested additions
         if pointTot < userWants[0]:
@@ -149,14 +143,12 @@ class Options(commands.Cog):
         # the guild role names grabbed from shorthand to add to user
         addList = [enhancements.power[x[1][:3].lower() + str(x[0])]['Name']
                    for x in userWantsBuild]
-        if DEBUG:
-            print("Add list = {}".format(addList))
+        debug("Add list = {}".format(addList))
 
         # restricted roles the user does not have that the build requires
         cantAdd = [x for x in enhancements.restrictedList if x in addList]
         cantAdd = [x for x in cantAdd if x not in [y.name for y in user.roles]]
-        if DEBUG:
-            print("Cant add = {}".format(cantAdd))
+        debug("Cant add = {}".format(cantAdd))
 
         # check to ensure user has restricted roles already if required for build
         if cantAdd:
@@ -168,8 +160,7 @@ class Options(commands.Cog):
 
         # iterate through roles to add to user
         for role in addList:
-            if DEBUG:
-                print("Trying to add role: {}".format(role))
+            debug("Trying to add role: {}".format(role))
 
             # check for if user has enhancement role already
             roleId = get(guildRoles, name=role)
@@ -179,14 +170,12 @@ class Options(commands.Cog):
 
             # role names to add will have format "Rank *Rank* *Type*"
             roleRank = role.split()[1]
-            if DEBUG:
-                print(roleId, roleRank)
+            debug(roleId, roleRank)
 
             # check for role already in guild role list, create it if required
             if not roleId:
                 colour = enhancements.rankColour[int(roleRank)]
-                if DEBUG:
-                    print("colour for rank {} is: {}".format(roleRank, colour))
+                debug("colour for rank {} is: {}".format(roleRank, colour))
                 roleId = await user.guild.create_role(name=role, color=colour)
 
             # add requested role to user
@@ -194,8 +183,7 @@ class Options(commands.Cog):
             await ctx.send("{} now has {}!".format(nON(user), roleId))
 
         # trim the user of excess roles
-        if DEBUG:
-            print("TO CUT")
+        debug("TO CUT")
         await cut(ctx, [user])
         return
 
@@ -227,8 +215,7 @@ class Options(commands.Cog):
 
         # return result
         for group in pointList:
-            if DEBUG:
-                print("group in level is: {}".format(group))
+            debug("group in level is: {}".format(group))
             pointTot = await count(group[0])
             await ctx.send("{} has {} enhancements active out of {} enhancements available.".format(nON(group[0]), group[1], pointTot))
         return
@@ -252,15 +239,12 @@ class Options(commands.Cog):
 
             addMes = "{} ({}) of {} rank(s)\n".format(
                 group[0], shorthand.lower(), group[1])
-            if DEBUG:
-                print(addMes)
+            debug(addMes)
 
             mes += addMes
-            #if DEBUG: print("funcList - " + "message is at {}".format(mes))
 
         # return enhancement list to command caller
-        if DEBUG:
-            print("funcList - " + str(mes))
+        debug("funcList - " + str(mes))
         await ctx.send("{}Starred enhancements require advanced roles".format(mes))
         return
 
@@ -268,10 +252,8 @@ class Options(commands.Cog):
     # build command to theory craft and check the prereqs for differnet enhancement ranks
     # can be used in conjunction with points command to determine if user can implement a build
     async def build(self, ctx, *, typeRank=''):
-        if DEBUG:
-            print("Build command start")
-        if DEBUG:
-            print(typeRank)
+        debug("Build command start")
+        debug(typeRank)
 
         # check for args, else use user's current build
         # split args into iterable shorthand list
@@ -279,12 +261,10 @@ class Options(commands.Cog):
             fixArg = typeRank.replace(' ', ',')
             fixArg = fixArg.replace(';', ',')
             buildList = [x.strip() for x in fixArg.split(',') if x.strip()]
-            if DEBUG:
-                print(buildList)
+            debug(buildList)
         else:
             buildList = spent([ctx.message.author])[0][2]
-        if DEBUG:
-            print("buildList = {}".format(buildList))
+        debug("buildList = {}".format(buildList))
 
         # fetch cost and requisite list for build
         buildTot = funcBuild(buildList)
@@ -299,23 +279,19 @@ class Options(commands.Cog):
 
         # list of users bot has access to
         guildList = servList(self.bot)
-        if DEBUG:
-            print("Guild list is: {}".format(guildList))
+        debug("Guild list is: {}".format(guildList))
 
         # restrict list to those with SUPEROLE
         supeList = isSuper(guildList)
-        if DEBUG:
-            print("Supe list is: {}".format(supeList))
+        debug("Supe list is: {}".format(supeList))
 
         # fetch points of each SUPEROLE user
         pointList = spent(supeList)
-        if DEBUG:
-            print(pointList)
+        debug(pointList)
 
         # sort list of users with enhancements by number of enhancements, descending
         pointList = sorted(pointList, key=lambda x: x[1], reverse=True)
-        if DEBUG:
-            print(pointList)
+        debug(pointList)
 
         # counter and blank message to track user number and return as a single message
         i = 1
@@ -337,52 +313,44 @@ class Options(commands.Cog):
         # rank 0 enhancements are either restricted or the SUPEROLE, which should not be removed with this command
         toCut = [x.name for x in ctx.message.author.roles if x.name in [enhancements.power[y]['Name']
                                                                         for y in enhancements.power.keys() if enhancements.power[y]['Rank'] > 0]]
-        if DEBUG:
-            print(toCut)
+        debug(toCut)
         await cut(ctx, [ctx.message.author], toCut)
         return
 
 
 # function to move roles to correct rank positions
 async def manageRoles(ctx):
-    if DEBUG:
-        print("ManageRoles Start")
+    debug("ManageRoles Start")
 
     # spam message negation
     movedRoles = 'Roles moved:\n'
 
     # iterate through all guild roles
     for role in ctx.message.guild.roles:
-        if DEBUG:
-            print("Looking at role: {}".format(role.name))
+        debug("Looking at role: {}".format(role.name))
 
         # grab shorthand for enhancement
         roleShort = [x for x in enhancements.power.keys(
         ) if enhancements.power[x]['Name'] == role.name]
-        if DEBUG:
-            print("roleShort = {}".format(roleShort))
+        debug("roleShort = {}".format(roleShort))
 
         # check to ensure role is one overseen by this bot
         if roleShort == []:
-            if DEBUG:
-                print("Role not Supe")
+            debug("Role not Supe")
             continue
 
         # check for intelligence roles as they are the rank position constants and should not be changed by this command
         elif 'Intelligence' == enhancements.power[roleShort[0]]['Type']:
-            if DEBUG:
-                print("Role type intelligence")
+            debug("Role type intelligence")
             continue
 
         # fetch enhancement rank
         roleRank = enhancements.power[roleShort[0]]['Rank']
-        if DEBUG:
-            print("Role rank is: {}".format(roleRank))
+        debug("Role rank is: {}".format(roleRank))
 
         # check for restricted roles
         if not roleRank:
-            if DEBUG:
-                print("Role rank zero")
+            debug("Role rank zero")
             continue
 
         # check for rank 1 roles that do not have a lowerbound intelligence role for positioning
@@ -402,16 +370,14 @@ async def manageRoles(ctx):
         # check for if role is already in postion
         if role.position < roleRankUpper:
             if role.position >= roleRankLower:
-                if DEBUG:
-                    print("Role within bounds")
+                debug("Role within bounds")
                 continue
 
         # move role to current upperbound intelligence position, forcing intelligence position to increase
         # ASSUMES current role position is lower than intelligence position
         # TODO remove assumption
-        if DEBUG:
-            print("Role moved from {.position} to {}".format(
-                role, roleRankUpper - 1))
+        debug("Role moved from {.position} to {}".format(
+            role, roleRankUpper - 1))
         movedRoles += "Moving role {} from position {} to position {}\n".format(
             role.name, role.position, roleRankUpper - 1)
         await role.edit(position=roleRankUpper - 1, color=enhancements.rankColour[roleRank])
@@ -431,13 +397,11 @@ async def count(peep):
         pointTot = int(level / 5)
     else:
         level = 0
-    if DEBUG:
-        print(peep.roles)
+    debug(peep.roles)
 
     # + an enhancement point for other roles the user might have
     for role in peep.roles:
-        if DEBUG:
-            print(role)
+        debug(role)
         if str(role) in enhancements.patList:
             pointTot += 1
 
@@ -451,20 +415,17 @@ def isSuper(guildList):
 
     # iterate through users in given list
     for pers in guildList:
-        if DEBUG:
-            print("Pers is {}".format(pers))
+        debug("Pers is {}".format(pers))
 
         # iterate through roles user has in guild
         # TODO fix messy implementation
         for role in pers.roles:
-            if DEBUG:
-                print("role is {}".format(role))
+            debug("role is {}".format(role))
 
             # check role against SUPEROLE, *shrug* messy implementation
             if str(role) == PERMROLES[0]:
                 supeList.append(pers)
-                if DEBUG:
-                    print("{} added to {} list".format(pers, role))
+                debug("{} added to {} list".format(pers, role))
 
     # return reduced user list
     return supeList
@@ -474,18 +435,15 @@ def isSuper(guildList):
 def funcBuild(buildList):
     reqList = []
     nameList = []
-    if DEBUG:
-        print("Build command buildList = {}".format(buildList))
+    debug("Build command buildList = {}".format(buildList))
 
     # iterate through shorthand enhancements
     for item in buildList:
-        if DEBUG:
-            print("Build command item = {}".format(item))
+        debug("Build command item = {}".format(item))
 
         # fetch enhancement prereqs and cost
         temCost = enhancements.cost(item)
-        if DEBUG:
-            print("Build command prereq cost = {}".format(temCost))
+        debug("Build command prereq cost = {}".format(temCost))
 
         # add this enhancement's prereqs to list
         reqList.append(temCost[2])
@@ -496,27 +454,22 @@ def funcBuild(buildList):
         # add enhancement full name to lists
         reqList.append(tempName)
         nameList.append(tempName)
-    if DEBUG:
-        print("Build command reqList is: {}".format(reqList))
+    debug("Build command reqList is: {}".format(reqList))
 
     # restrict nested prereq list to a set of prereqs
     temp = enhancements.eleCountUniStr(reqList)
-    if DEBUG:
-        print("temp = {}".format(temp))
+    debug("temp = {}".format(temp))
 
     # fetch highest ranked prereqs of each type in list
     reqList = enhancements.trim([x for x in temp[1]])
-    if DEBUG:
-        print("reqList = {}".format(reqList))
+    debug("reqList = {}".format(reqList))
 
     # sum cost of build from prereqs
     costTot = 0
     for group in reqList:
-        if DEBUG:
-            print(group)
+        debug(group)
         costTot += group[0]
-    if DEBUG:
-        print(costTot, nameList, reqList)
+    debug(costTot, nameList, reqList)
 
     # return cost of build, role names and prerequisite roles
     return costTot, nameList, reqList
@@ -525,16 +478,13 @@ def funcBuild(buildList):
 # function to grab number of enhancement points spent by each user in given list
 def spent(memList):
     retList = []
-    if DEBUG:
-        print("memList is: {}".format(memList))
+    debug("memList is: {}".format(memList))
 
     # iterate thorugh given list of users
     for peep in memList:
         supeRoles = []
-        if DEBUG:
-            print("current user is: {}".format(peep))
-        if DEBUG:
-            print("current user role list: {}".format(peep.roles))
+        debug("current user is: {}".format(peep))
+        debug("current user role list: {}".format(peep.roles))
 
         # messy implementation to grab shorthand for all unrestricted bot managed roles in user role list
         for roles in peep.roles:
@@ -542,8 +492,7 @@ def spent(memList):
             if str(roles) in [enhancements.power[x]['Name'] for x in enhancements.power.keys() if enhancements.power[x]['Rank'] > 0]:
                 supeRoles.append([x for x in enhancements.power.keys(
                 ) if enhancements.power[x]['Name'] == str(roles)][0])
-        if DEBUG:
-            print("Supe roles: {}".format(supeRoles))
+        debug("Supe roles: {}".format(supeRoles))
 
         # fetch point cost (including prereqs) of enhancements
         pointCount = funcBuild(supeRoles)[0]
@@ -551,45 +500,36 @@ def spent(memList):
         # add (user, total build cost, enhancmeent role names) to list to return
         retList.append([peep, pointCount, supeRoles])
 
-    if DEBUG:
-        print("retlist is: {}".format(retList))
+    debug("retlist is: {}".format(retList))
     return retList
 
 
 # function to fetch all users requested by command caller
 async def memGrab(self, ctx, memList=""):
-    if DEBUG:
-        print("\tfuncGrabList START")
-    if DEBUG:
-        print("\t\tmemList: {}\n\t\t and mentions: {}".format(
-            memList, ctx.message.mentions))
+    debug("\tfuncGrabList START")
+    debug("\t\tmemList: {}\n\t\t and mentions: {}".format(
+        memList, ctx.message.mentions))
 
     # first check for users mentioned in message
     if ctx.message.mentions:
         grabList = ctx.message.mentions
-        if DEBUG:
-            print("\t\t\tMessage mentions: {}".format(grabList))
+        debug("\t\t\tMessage mentions: {}".format(grabList))
 
     # else check for users named by command caller
     elif memList:
         grabList = memList.split(", ")
-        if DEBUG:
-            print("\t\t\tsplit grablist: {}".format(grabList))
+        debug("\t\t\tsplit grablist: {}".format(grabList))
         for i in range(0, len(grabList)):
-            if DEBUG:
-                print("\t\t\t\tposition {} grablist: {}".format(
-                    i, grabList[i]))
+            debug("\t\t\t\tposition {} grablist: {}".format(
+                i, grabList[i]))
             grabList[i] = await MemberConverter().convert(ctx, grabList[i])
 
     # else use the command caller themself
     else:
         grabList = [ctx.message.author]
-        if DEBUG:
-            print("\t\t\tAuthor is: {}".format(grabList))
-    if DEBUG:
-        print("\t\t\tfixed grablist: {}".format(grabList))
-    if DEBUG:
-        print("\tfuncGrabList END")
+        debug("\t\t\tAuthor is: {}".format(grabList))
+    debug("\t\t\tfixed grablist: {}".format(grabList))
+    debug("\tfuncGrabList END")
 
     # return: mentioned users || named users || message author
     return grabList
@@ -597,31 +537,25 @@ async def memGrab(self, ctx, memList=""):
 
 # get roles of a lower rank on member to remove later
 def toCut(member):
-    if DEBUG:
-        print("\tfuncCut START")
+    debug("\tfuncCut START")
 
     # fetch unrestricted managed roles member has
     supeRoles = spent([member])
-    if DEBUG:
-        print("\t\tsupeRoles = {}".format(supeRoles[0][2]))
+    debug("\t\tsupeRoles = {}".format(supeRoles[0][2]))
 
     # fetch build of member
     supeBuild = funcBuild(supeRoles[0][2])
-    if DEBUG:
-        print("\t\tsupeBuild = {}".format(supeBuild[1]))
+    debug("\t\tsupeBuild = {}".format(supeBuild[1]))
 
     # fetch trimmed build of user
     supeTrim = [enhancements.power[x[1][:3].lower() + str(x[0])]['Name']
                 for x in enhancements.trim(supeBuild[1])]
-    if DEBUG:
-        print("\t\tsupeTrim = {}".format(supeTrim))
+    debug("\t\tsupeTrim = {}".format(supeTrim))
 
     # fetch extra roles user has that are to be removed
     toCut = [x for x in supeBuild[1] if x not in supeTrim]
-    if DEBUG:
-        print("\tto CUT = {}".format(toCut))
-    if DEBUG:
-        print("\tfuncCut END")
+    debug("\tto CUT = {}".format(toCut))
+    debug("\tfuncCut END")
 
     # return the roles to be removed
     return toCut
@@ -641,11 +575,9 @@ async def cut(ctx, memberList, cutList=[]):
 
         # for each role to be cut, remove it and send message to discord
         for role in cutting:
-            if DEBUG:
-                print("\t\t role to cut = {}\n\t\t from peep {}".format(role, peep))
+            debug("\t\t role to cut = {}\n\t\t from peep {}".format(role, peep))
             supeRoleId = get(peep.roles, name=role)
-            if DEBUG:
-                print("\t\t role to cut id = {}".format(supeRoleId))
+            debug("\t\t role to cut id = {}".format(supeRoleId))
             if supeRoleId in peep.roles:
                 await peep.remove_roles(supeRoleId)
                 await ctx.send("{} no longer has {} \n( ╥﹏╥) ノシ".format(nON(peep), supeRoleId))
@@ -657,14 +589,12 @@ async def cut(ctx, memberList, cutList=[]):
 
 # function to fetch all guild roles that are managed by bot
 async def orderRole(self, ctx):
-    if DEBUG:
-        print(enhancements.power.values())
+    debug(enhancements.power.values())
 
     supeList = [x for x in ctx.message.author.guild.roles if str(
         x) in [y['Name'] for y in enhancements.power.values()]]
 
-    if DEBUG:
-        print(supeList)
+    debug(supeList)
     return supeList
 
 
