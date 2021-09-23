@@ -1,6 +1,8 @@
 # power.py
 # this file is a dictionary and other lengthy constant variables dump
 
+import os
+
 DEBUG = 0
 TEST = 0
 
