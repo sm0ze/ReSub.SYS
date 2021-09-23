@@ -6,7 +6,7 @@ The story this system comes from is "I’d Like to Change My Reincarnation Subsc
 
 This bot is created originally for Geminel's discord server.
 
-Current system enhancements and their prerequisites can be found here: https://docs.google.com/spreadsheets/d/17BOjAitr1rFfC3HPiqvUNLFrel9aMh0GyePNIuqHrG4/edit?usp=sharing
+Current system enhancements and their prerequisites can be found on page 2 here: https://docs.google.com/spreadsheets/d/17BOjAitr1rFfC3HPiqvUNLFrel9aMh0GyePNIuqHrG4/edit?usp=sharing
 
 # Acknowledgements
  - EvieePy: A Cogs Example for the rewrite version of - discord.py
