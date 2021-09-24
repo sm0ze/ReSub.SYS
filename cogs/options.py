@@ -20,6 +20,15 @@ def debug(*args):
         print(*args)
 
 
+# function to get the guild id from user if not found in the .env
+# keeping the guild token hard coded atm as messy security
+def askToken():
+    tempToken = input("Enter your discord bot GUILD id: ")
+    with open(".env", "a+") as f:
+        f.write("DISCORD_GUILD={}\n".format(tempToken))
+    return tempToken
+
+
 debug("{} DEBUG TRUE".format(os.path.basename(__file__)))
 
 
@@ -33,6 +42,8 @@ if TEST:
 # it's possible to grab this after bot logs into guild instead of hard coding it
 load_dotenv()
 GUILD = os.getenv('DISCORD_GUILD')
+if not GUILD:
+    GUILD = askToken()
 
 mee6API = API(GUILD)
 
@@ -307,7 +318,7 @@ class Options(commands.Cog):
         # return leaderboard to command caller
         await ctx.send(blankMessage)
 
-    @commands.command(aliases=['c'], brief=" -Allows a host to remove all enhancements from themself.")
+    @commands.command(aliases=['c', 'clear'], brief=" -Allows a host to remove all enhancements from themself.")
     # remove unrestricted enhancements from command caller
     async def clean(self, ctx):
         # rank 0 enhancements are either restricted or the SUPEROLE, which should not be removed with this command
