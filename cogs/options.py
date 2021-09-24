@@ -49,7 +49,7 @@ mee6API = API(GUILD)
 
 PERMROLES = ['Supe']  # guild role(s) for using these bot commands
 MANAGER = 'System'  # manager role name for guild
-LOWESTROLE = 1  # bot sorts roles by rank from position of int10 to LOWESTROLE
+LOWESTROLE = 2  # bot sorts roles by rank from position of int10 to LOWESTROLE
 
 # TODO: implement this and similiar instead of multiple enhancement.dict.keys() calls
 # enhancement (type, rank) pairs for list command
@@ -365,7 +365,7 @@ async def manageRoles(ctx):
             continue
 
         # check for rank 1 roles that do not have a lowerbound intelligence role for positioning
-        elif roleRank:
+        elif roleRank == 1:
             roleRankLower = LOWESTROLE
 
         else:
@@ -381,7 +381,7 @@ async def manageRoles(ctx):
         # check for if role is already in postion
         if role.position < roleRankUpper:
             if role.position >= roleRankLower:
-                debug("Role within bounds")
+                debug("Role within bounds {} - {}".format(roleRankUpper, roleRankLower))
                 continue
 
         # move role to current upperbound intelligence position, forcing intelligence position to increase
