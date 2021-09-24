@@ -19,6 +19,14 @@ def debug(*args):
         print(*args)
 
 
+# function to grab a discord bot token from user if one is not found in the .env
+def askToken():
+    tempToken = input("Enter your discord bot TOKEN: ")
+    with open(".env", "a+") as f:
+        f.write("DISCORD_TOKEN={}\n".format(tempToken))
+    return tempToken
+
+
 debug("{} DEBUG TRUE".format(os.path.basename(__file__)))
 
 
@@ -31,6 +39,8 @@ if TEST:
 # TOKEN is the discord bot token to authorise this code for the ReSub.SYS bot
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
+if not TOKEN:
+    TOKEN = askToken()
 
 SUPEROLE = "Supe"
 CMDPREFIX = '~'
