@@ -20,7 +20,8 @@ if TEST:
 #if TEST: print("".format())
 
 # removal emoji list
-remList = ['( ╥﹏╥) ノシ']
+remList = ['( ╥﹏╥) ノシ', '(ᗒᗣᗕ)՞', 'ʕ ಡ ﹏ ಡ ʔ', '●︿●',
+           '(︶︹︺)', '(´°ω°)', 'ू(ʚ̴̶̷́ .̠ ʚ̴̶̷̥̀ ू)', '( ◔ ʖ̯ ◔ )', '(ˊ̥̥̥̥̥ ³ ˋ̥̥̥̥̥)', '(¬▂¬)', '(ﾉ -益-)ﾉ︵ ┻━┻', '(╯°□°）╯']
 
 
 # list of roles that give user extra enhancement points, +1 for each match

@@ -1,6 +1,7 @@
 # options.py
 
 import os
+import random
 
 import discord
 import enhancements
@@ -34,7 +35,7 @@ debug("{} DEBUG TRUE".format(os.path.basename(__file__)))
 
 if TEST:
     print("{} TEST TRUE".format(os.path.basename(__file__)))
-#if TEST: print("".format())
+# if TEST: print("".format())
 
 # .env variables that are not shared with github and other users.
 # Use your own if testing this with your own bot
@@ -47,6 +48,7 @@ if not GUILD:
 
 mee6API = API(GUILD)
 
+SUPEROLE = "Supe"
 PERMROLES = ['Supe']  # guild role(s) for using these bot commands
 MANAGER = 'System'  # manager role name for guild
 LOWESTROLE = 2  # bot sorts roles by rank from position of int10 to LOWESTROLE
@@ -95,7 +97,7 @@ class Options(commands.Cog):
     async def trimAll(self, ctx):
         debug("funcTrimAll START")
 
-        memberList = isSuper(servList(self.bot))
+        memberList = isSuper(self, servList(self.bot))
         debug("\tmemberlist to cut = {}".format(
             [x.name for x in memberList]))
 
@@ -170,13 +172,15 @@ class Options(commands.Cog):
         guildRoles = await user.guild.fetch_roles()
 
         # iterate through roles to add to user
+        sendMes = ""
         for role in addList:
             debug("Trying to add role: {}".format(role))
 
             # check for if user has enhancement role already
             roleId = get(guildRoles, name=role)
             if roleId in user.roles:
-                await ctx.send("{} already has the role {}".format(nON(user), roleId))
+                debug("{} already has the role {}".format(nON(user), roleId))
+                # sendMes += "{} already has the role {}\n".format(nON(user), roleId))
                 continue
 
             # role names to add will have format "Rank *Rank* *Type*"
@@ -191,32 +195,35 @@ class Options(commands.Cog):
 
             # add requested role to user
             await user.add_roles(roleId)
-            await ctx.send("{} now has {}!".format(nON(user), roleId))
+            sendMes += "{} now has {}!\n".format(nON(user), roleId)
 
         # trim the user of excess roles
-        debug("TO CUT")
-        await cut(ctx, [user])
+        # debug("TO CUT")
+        # await cut(ctx, [user])
+        await ctx.send(sendMes)
         return
 
-    @commands.command(hidden=True)
-    @commands.has_any_role(MANAGER)
+    @ commands.command(hidden=True)
+    @ commands.has_any_role(MANAGER)
     # TODO implementation for manager specific help command
     async def hhelp(self, ctx):
-        commands.DefaultHelpCommand(no_category='Basic Options', hidden=True)
+        commands.DefaultHelpCommand(
+            no_category='Basic Options', hidden=True)
         return
 
-    @commands.command(hidden=True)
-    @commands.has_any_role(MANAGER)
+    @ commands.command(hidden=True)
+    @ commands.has_any_role(MANAGER)
     # manager command to correct role position for roles that have been created by bot
     async def moveRoles(self, ctx):
         await ctx.send(await manageRoles(ctx))
         return
 
-    @commands.command(aliases=['p'], brief="-Shows target host's available and spent enhancement points.")
+    @ commands.command(aliases=['p'], brief="-Shows target host's available and spent enhancement points.")
     # command to get author or specified user(s) enhancement total and available points
     async def points(self, ctx, *, member=''):
         users = await memGrab(self, ctx, member)
-        supeUsers = isSuper(users)  # restrict user list to those with SUPEROLE
+        # restrict user list to those with SUPEROLE
+        supeUsers = isSuper(self, users)
         if not supeUsers:  # if no SUPEROLE users in list
             [await ctx.send("{} is not a Supe".format(nON(x))) for x in users]
             return
@@ -231,7 +238,7 @@ class Options(commands.Cog):
             await ctx.send("{} has {} enhancements active out of {} enhancements available.".format(nON(group[0]), group[1], pointTot))
         return
 
-    @commands.command(aliases=['l'], brief="-Lists all available enhancements.")
+    @ commands.command(aliases=['l'], brief="-Lists all available enhancements.")
     # help level command to list the available enhancements and the shorthand to use them in commands
     async def list(self, ctx):
         await ctx.send("Enhancement list is:")
@@ -259,7 +266,7 @@ class Options(commands.Cog):
         await ctx.send("{}Starred enhancements require advanced roles".format(mes))
         return
 
-    @commands.command(aliases=['b'], brief="-Total points required and their prerequisite enhancements.", description="-Use the shorthand enhancement codes separated by commas to find a builds total enhancement cost and prerequisites. \nExample: For a build with Rank 4 Regeneration and Rank 4 Mental Celerity the shorthand would be 'reg4, cel4'")
+    @ commands.command(aliases=['b'], brief="-Total points required and their prerequisite enhancements.", description="-Use the shorthand enhancement codes separated by commas to find a builds total enhancement cost and prerequisites. \nExample: For a build with Rank 4 Regeneration and Rank 4 Mental Celerity the shorthand would be 'reg4, cel4'")
     # build command to theory craft and check the prereqs for differnet enhancement ranks
     # can be used in conjunction with points command to determine if user can implement a build
     async def build(self, ctx, *, typeRank=''):
@@ -284,7 +291,7 @@ class Options(commands.Cog):
         await ctx.send("This build requires {} enhancement(s) for:\n\n {} \n\n{}".format(buildTot[0], buildTot[1], enhancements.reqEnd([buildTot[0], buildTot[2]])))
         return
 
-    @commands.command(aliases=['leaderboard', 't'], brief="-Shows the top ten Supes by their enhancements.")
+    @ commands.command(aliases=['leaderboard', 't'], brief="-Shows the top ten Supes by their enhancements.")
     # top 10 user leaderboard for number of used enhancements
     async def topten(self, ctx):
 
@@ -293,7 +300,7 @@ class Options(commands.Cog):
         debug("Guild list is: {}".format(guildList))
 
         # restrict list to those with SUPEROLE
-        supeList = isSuper(guildList)
+        supeList = isSuper(self, guildList)
         debug("Supe list is: {}".format(supeList))
 
         # fetch points of each SUPEROLE user
@@ -318,7 +325,7 @@ class Options(commands.Cog):
         # return leaderboard to command caller
         await ctx.send(blankMessage)
 
-    @commands.command(aliases=['c', 'clear'], brief=" -Allows a host to remove all enhancements from themself.")
+    @ commands.command(aliases=['c', 'clear'], brief=" -Allows a host to remove all enhancements from themself.")
     # remove unrestricted enhancements from command caller
     async def clean(self, ctx):
         # rank 0 enhancements are either restricted or the SUPEROLE, which should not be removed with this command
@@ -421,22 +428,18 @@ async def count(peep):
 
 
 # restrict list from members to members with SUPEROLE
-def isSuper(guildList):
-    supeList = []
-
-    # iterate through users in given list
-    for pers in guildList:
-        debug("Pers is {}".format(pers))
-
-        # iterate through roles user has in guild
-        # TODO fix messy implementation
-        for role in pers.roles:
-            debug("role is {}".format(role))
-
-            # check role against SUPEROLE, *shrug* messy implementation
-            if str(role) == PERMROLES[0]:
-                supeList.append(pers)
-                debug("{} added to {} list".format(pers, role))
+def isSuper(self, guildList):
+    guilds = self.bot.guilds
+    supeGuildList = []
+    [supeGuildList.append(z) for z in [x.members for x in [
+        get(y.roles, name=SUPEROLE) for y in guilds]]]
+    debug("[get(y.roles, name=SUPEROLE) for y in guilds] = {}".format(
+        [get(y.roles, name=SUPEROLE) for y in guilds]))
+    debug("[x.members for x in [get(y.roles, name=SUPEROLE) for y in guilds]] = {}".format(
+        [x.members for x in [get(y.roles, name=SUPEROLE) for y in guilds]]))
+    debug("[supeGuildList.append(z) for z in [x.members for x in [get(y.roles, name=SUPEROLE) for y in guilds]]] = {}".format(supeGuildList))
+    supeList = [x for x in supeGuildList[0] if x in guildList]
+    debug(supeList)
 
     # return reduced user list
     return supeList
@@ -499,14 +502,16 @@ def spent(memList):
 
         # messy implementation to grab shorthand for all unrestricted bot managed roles in user role list
         for roles in peep.roles:
-            # TODO str(roles) better implemented as roles.name
-            if str(roles) in [enhancements.power[x]['Name'] for x in enhancements.power.keys() if enhancements.power[x]['Rank'] > 0]:
+            if roles.name in [enhancements.power[x]['Name'] for x in enhancements.power.keys() if enhancements.power[x]['Rank'] > 0]:
                 supeRoles.append([x for x in enhancements.power.keys(
-                ) if enhancements.power[x]['Name'] == str(roles)][0])
+                ) if enhancements.power[x]['Name'] == roles.name][0])
         debug("Supe roles: {}".format(supeRoles))
 
         # fetch point cost (including prereqs) of enhancements
-        pointCount = funcBuild(supeRoles)[0]
+        if supeRoles:
+            pointCount = funcBuild(supeRoles)[0]
+        else:
+            pointCount = funcBuild([])[0]
 
         # add (user, total build cost, enhancmeent role names) to list to return
         retList.append([peep, pointCount, supeRoles])
@@ -585,16 +590,19 @@ async def cut(ctx, memberList, cutList=[]):
             cutting = cutList
 
         # for each role to be cut, remove it and send message to discord
+        sendMes = ""
         for role in cutting:
             debug("\t\t role to cut = {}\n\t\t from peep {}".format(role, peep))
             supeRoleId = get(peep.roles, name=role)
             debug("\t\t role to cut id = {}".format(supeRoleId))
             if supeRoleId in peep.roles:
                 await peep.remove_roles(supeRoleId)
-                await ctx.send("{} no longer has {} \n( ╥﹏╥) ノシ".format(nON(peep), supeRoleId))
+                sendMes += "{} no longer has {} \n{}\n".format(
+                    nON(peep), supeRoleId, random.choice(enhancements.remList))
 
         # notify current user has been finished with to discord
-        await ctx.send("{} has been cut down to size!".format(nON(peep)))
+        sendMes += "{} has been cut down to size!".format(nON(peep))
+        await ctx.send(sendMes)
     return
 
 
