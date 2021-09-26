@@ -102,7 +102,9 @@ async def on_command_error(ctx, error):
 @tasks.loop(seconds=150)
 # bot's discord rich presence updater
 async def update_presence():
-    members = len(servList(bot))
+    guilds = bot.guilds
+    members = sum([len(x.members)
+                  for x in [get(y.roles, name=SUPEROLE) for y in guilds]])
     nameSet = "{} users with {} enhancements".format(
         members, len(enhancements.powerTypes.keys()))
 
