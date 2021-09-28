@@ -407,7 +407,7 @@ async def count(peep):
     if level:
         pointTot = int(level / 5)
     else:
-        level = 0
+        pointTot = 0
     debug(peep.roles)
 
     # + an enhancement point for other roles the user might have
