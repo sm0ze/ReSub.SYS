@@ -1,7 +1,9 @@
 # BossSystemExecutable.py
 
+import datetime
 import os
 import random
+import time
 
 import discord
 import enhancements
@@ -61,7 +63,8 @@ async def on_ready():
     # Generalised login message. Once bot is closer to finished and expected to
     # run 24/7, will add a discord channel message on login
     print('We have logged in as {0.user}'.format(bot))
-
+    global startTime
+    startTime = time.time()
     # looped command to update bot's discord presence flavour text
     update_presence.start()
 
@@ -102,13 +105,24 @@ async def on_command_error(ctx, error):
 @tasks.loop(seconds=150)
 # bot's discord rich presence updater
 async def update_presence():
-    members = len(servList(bot))
+    guilds = bot.guilds
+    members = sum([len(x.members)
+                  for x in [get(y.roles, name=SUPEROLE) for y in guilds]])
     nameSet = "{} users with {} enhancements".format(
         members, len(enhancements.powerTypes.keys()))
 
     debug("\t\t" + str(nameSet))
 
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=nameSet))
+    return
+
+
+@bot.command()
+async def uptime(ctx):
+    uptime = str(datetime.timedelta(
+        seconds=int(round(time.time() - startTime))))
+    await ctx.send("{} has been up for {}".format(bot.user.name, uptime))
+
     return
 
 
