@@ -200,7 +200,10 @@ class Options(commands.Cog):
         # trim the user of excess roles
         # debug("TO CUT")
         # await cut(ctx, [user])
-        await ctx.send(sendMes)
+        if not sendMes:
+            await ctx.send("You cannot add the same type of enhancements of an equal or lower rank to those you already have")
+        else:
+            await ctx.send(sendMes)
         return
 
     @ commands.command(hidden=True)
