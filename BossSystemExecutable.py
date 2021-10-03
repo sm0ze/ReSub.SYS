@@ -14,6 +14,7 @@ from mee6_py_api import API
 
 DEBUG = 0
 TEST = 0
+STARTIME = time.time()
 
 
 def debug(*args):
@@ -63,8 +64,9 @@ async def on_ready():
     # Generalised login message. Once bot is closer to finished and expected to
     # run 24/7, will add a discord channel message on login
     print('We have logged in as {0.user}'.format(bot))
-    global startTime
-    startTime = time.time()
+    global loginTime
+    loginTime = time.time()
+
     # looped command to update bot's discord presence flavour text
     update_presence.start()
 
@@ -119,9 +121,11 @@ async def update_presence():
 
 @bot.command()
 async def uptime(ctx):
-    uptime = str(datetime.timedelta(
-        seconds=int(round(time.time() - startTime))))
-    await ctx.send("{} has been up for {}".format(bot.user.name, uptime))
+    uptimeLogin = str(datetime.timedelta(
+        seconds=int(round(time.time() - loginTime))))
+    uptimeStartup = str(datetime.timedelta(
+        seconds=int(round(time.time() - STARTTIME))))
+    await ctx.send("{} has been logged in for {}\nand powered up for {}".format(bot.user.name, uptimeLogin, uptimeStartup))
 
     return
 

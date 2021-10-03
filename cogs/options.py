@@ -201,7 +201,7 @@ class Options(commands.Cog):
         # debug("TO CUT")
         # await cut(ctx, [user])
         if not sendMes:
-            await ctx.send("You cannot add the same type of enhancements of an equal or lower rank to those you already have")
+            await ctx.send("You cannot add enhancements of an equal or lower rank than you already have of that type")
         else:
             await ctx.send(sendMes)
         return
