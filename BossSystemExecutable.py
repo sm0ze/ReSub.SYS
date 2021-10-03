@@ -14,7 +14,7 @@ from mee6_py_api import API
 
 DEBUG = 0
 TEST = 0
-STARTIME = time.time()
+STARTTIME = time.time()
 
 
 def debug(*args):
