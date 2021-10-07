@@ -46,7 +46,6 @@ GUILD = os.getenv('DISCORD_GUILD')
 if not GUILD:
     GUILD = askToken()
 
-mee6API = API(GUILD)
 
 SUPEROLE = "Supe"
 PERMROLES = ['Supe']  # guild role(s) for using these bot commands
@@ -79,7 +78,7 @@ class Options(commands.Cog):
                 "You do not have permission as you are missing a role in this list: {}\nThe super command can be used to gain the Supe role".format(PERMROLES))  # messy implementation for Supe
         return commands.check(await predicate(ctx))
 
-    @commands.command(brief="-Allows a host to remove duplicate enhancements of a lower rank.", description="-Allows a host to remove duplicate enhancements of a lower rank from themself. (Total points spent and eligibility for future enhancements remains unchanged)")
+    @commands.command(brief=enhancements.commandInfo['trim']['brief'], description=enhancements.commandInfo['trim']['description'])
     # command to trim command caller of extra roles. OBSOLETE due to cut call after role add in add command
     async def trim(self, ctx, *, member=''):
         debug("funcTrim START")
@@ -117,7 +116,7 @@ class Options(commands.Cog):
             await ctx.send("{.name} has: \nposition - {.position}\ncolour - {.colour}".format(roleStrId, roleStrId, roleStrId))
         return
 
-    @commands.command(aliases=['a'], brief="-Allows host to add an enhancement and its prerequisites to themself.")
+    @commands.command(aliases=['a'], brief=enhancements.commandInfo['add']['brief'], description=enhancements.commandInfo['add']['description'])
     # add role command available to all PERMROLES users
     async def add(self, ctx, *, typeRank=''):
 
@@ -221,7 +220,7 @@ class Options(commands.Cog):
         await ctx.send(await manageRoles(ctx))
         return
 
-    @ commands.command(aliases=['p'], brief="-Shows target host's available and spent enhancement points.")
+    @ commands.command(aliases=['p'], brief=enhancements.commandInfo['points']['brief'], description=enhancements.commandInfo['points']['description'])
     # command to get author or specified user(s) enhancement total and available points
     async def points(self, ctx, *, member=''):
         users = await memGrab(self, ctx, member)
@@ -241,7 +240,7 @@ class Options(commands.Cog):
             await ctx.send("{} has {} enhancements active out of {} enhancements available.".format(nON(group[0]), group[1], pointTot))
         return
 
-    @ commands.command(aliases=['l'], brief="-Lists all available enhancements.")
+    @ commands.command(aliases=['l'], brief=enhancements.commandInfo['list']['brief'], description=enhancements.commandInfo['list']['description'])
     # help level command to list the available enhancements and the shorthand to use them in commands
     async def list(self, ctx):
         await ctx.send("Enhancement list is:")
@@ -269,7 +268,7 @@ class Options(commands.Cog):
         await ctx.send("{}Starred enhancements require advanced roles".format(mes))
         return
 
-    @ commands.command(aliases=['b'], brief="-Total points required and their prerequisite enhancements.", description="-Use the shorthand enhancement codes separated by commas to find a builds total enhancement cost and prerequisites. \nExample: For a build with Rank 4 Regeneration and Rank 4 Mental Celerity the shorthand would be 'reg4, cel4'")
+    @ commands.command(aliases=['b'], brief=enhancements.commandInfo['build']['brief'], description=enhancements.commandInfo['build']['description'])
     # build command to theory craft and check the prereqs for differnet enhancement ranks
     # can be used in conjunction with points command to determine if user can implement a build
     async def build(self, ctx, *, typeRank=''):
@@ -294,7 +293,7 @@ class Options(commands.Cog):
         await ctx.send("This build requires {} enhancement(s) for:\n\n {} \n\n{}".format(buildTot[0], buildTot[1], enhancements.reqEnd([buildTot[0], buildTot[2]])))
         return
 
-    @ commands.command(aliases=['leaderboard', 't'], brief="-Shows the top ten Supes by their enhancements.")
+    @ commands.command(aliases=['leaderboard', 't'], brief=enhancements.commandInfo['topten']['brief'], description=enhancements.commandInfo['topten']['description'])
     # top 10 user leaderboard for number of used enhancements
     async def topten(self, ctx):
 
@@ -328,7 +327,7 @@ class Options(commands.Cog):
         # return leaderboard to command caller
         await ctx.send(blankMessage)
 
-    @ commands.command(aliases=['c', 'clear'], brief=" -Allows a host to remove all enhancements from themself.")
+    @ commands.command(aliases=['c', 'clear'], brief=enhancements.commandInfo['clean']['brief'], description=enhancements.commandInfo['clean']['description'])
     # remove unrestricted enhancements from command caller
     async def clean(self, ctx):
         # rank 0 enhancements are either restricted or the SUPEROLE, which should not be removed with this command
@@ -338,8 +337,16 @@ class Options(commands.Cog):
         await cut(ctx, [ctx.message.author], toCut)
         return
 
+    @commands.command(hidden=True)
+    @commands.has_any_role(MANAGER)
+    async def xpgrab(self, ctx):
+        xp = await API(GUILD).levels.get_user_xp(ctx.message.author.id)
+        await ctx.send("{} xp is currently {}".format(nON(ctx.message.author), xp))
+        return
 
 # function to move roles to correct rank positions
+
+
 async def manageRoles(ctx):
     debug("ManageRoles Start")
 
@@ -411,21 +418,23 @@ async def manageRoles(ctx):
 async def count(peep):
 
     # fetch MEE6 level
-    level = await mee6API.levels.get_user_level(peep.id)
+    level = await API(GUILD).levels.get_user_level(peep.id)
+    debug(level)
 
     # Enhancement points are equivalent to MEE6 level / 5
     if level:
         pointTot = int(level / 5)
     else:
         pointTot = 0
+    debug(pointTot)
     debug(peep.roles)
 
     # + an enhancement point for other roles the user might have
     for role in peep.roles:
         debug(role)
-        if str(role) in enhancements.patList:
+        if role.name in enhancements.patList:
             pointTot += 1
-
+        debug(pointTot)
     # return total user points to function call
     return pointTot
 

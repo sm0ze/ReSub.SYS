@@ -42,6 +42,43 @@ rankColour = {1: 0xffffff, 2: 0xcfceeb, 3: 0xaeaddf, 4: 0x8c8bd8, 5: 0x6c6bc7,
 restrictedList = ['System', 'Author']
 
 
+commandInfo = {
+    'add': {
+        'brief': '-Allows host to add an enhancement and its prerequisites to themself.',
+        'description': ''},
+    'build': {
+        'brief': '-Total points required and their prerequisite enhancements.',
+        'description': ''},
+    'clean': {
+        'brief': '-Allows a host to remove all enhancements from themself.',
+        'description': ''},
+    'list': {
+        'brief': '-Lists all available enhancements.',
+        'description': ''},
+    'points': {
+        'brief': "-Shows target host's available and spent enhancement points.",
+        'description': ''},
+    'topten': {
+        'brief': '-Shows the top ten Supes by their enhancements.',
+        'description': ''},
+    'trim': {
+        'brief': '-Allows a host to remove duplicate enhancements of a lower rank.',
+        'description': ''},
+    'nosuper': {
+        'brief': '-Removes the Supe role and clears host of their existing enhancements.',
+        'description': ''},
+    'start': {
+        'brief': "-Use this command to get a walkthrough for host's first enhancement",
+        'description': ''},
+    'super': {
+        'brief': '-Gives the Supe role so host can recieve enhancements.',
+        'description': ''},
+    'uptime': {
+        'brief': '',
+        'description': ''},
+}
+
+
 # the enhancement dictionary. Holds each enhancement and their attributes.
 
 # blank entry

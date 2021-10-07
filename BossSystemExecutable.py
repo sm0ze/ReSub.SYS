@@ -119,7 +119,7 @@ async def update_presence():
     return
 
 
-@bot.command()
+@bot.command(brief=enhancements.commandInfo['uptime']['brief'], description=enhancements.commandInfo['uptime']['description'])
 async def uptime(ctx):
     uptimeLogin = str(datetime.timedelta(
         seconds=int(round(time.time() - loginTime))))
@@ -130,7 +130,7 @@ async def uptime(ctx):
     return
 
 
-@bot.command(brief="-Gives the Supe role so host can recieve enhancements.")
+@bot.command(brief=enhancements.commandInfo['super']['brief'], description=enhancements.commandInfo['super']['description'])
 # gives SUPERROLE to command caller
 async def super(ctx):
     member = ctx.message.author
@@ -143,9 +143,9 @@ async def super(ctx):
     return
 
 
-@bot.command(brief="-Removes the Supe role and clears host of their existing enhancements.")
+@bot.command(brief=enhancements.commandInfo['nosuper']['brief'], description=enhancements.commandInfo['nosuper']['description'])
 # removes SUPERROLE and all unrestricted matching roles in power.power
-async def noSuper(ctx):
+async def nosuper(ctx):
     member = ctx.message.author
     supeRoleId = get(member.guild.roles, name=SUPEROLE)
     if supeRoleId in member.roles:
