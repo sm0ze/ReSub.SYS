@@ -201,6 +201,7 @@ async def update(ctx):
 @bot.command(hidden=True)
 @commands.is_owner()
 async def pause(ctx):
+    global asleep
     asleep = True
     return
 
