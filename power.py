@@ -26,7 +26,7 @@ remList = ['( ╥﹏╥) ノシ', '(ᗒᗣᗕ)՞', 'ʕ ಡ ﹏ ಡ ʔ', '●︿�
 
 # list of roles that give user extra enhancement points, +1 for each match
 patList = ['Supe', 'Precognition', 'Precognition+', 'Precognition++',
-           'Boss System', 'System', 'Major Task Tier', 'Authors']
+           'Boss System', 'System', 'Major Task Tier', 'Authors', 'Ping Unto Me My Daily Quack']
 
 # dictionary of the different types of enhancements and the total number of
 # ranks available for each. * modifier for enhancements with extra restrictions
