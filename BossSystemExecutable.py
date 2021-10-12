@@ -102,7 +102,7 @@ async def on_message(message):
     if message.author.id == bot.owner_id:
         if message.content.startswith('{}resume'.format(CMDPREFIX)):
             if asleep:
-                await ctx.send("Bot is now awake")
+                await message.channel.send("Bot is now awake")
                 asleep = False
             return
     if not asleep:
