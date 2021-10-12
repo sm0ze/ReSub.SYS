@@ -162,6 +162,13 @@ async def restart(ctx):
     restart_bot()
 
 
+@bot.command(hidden=True)
+@commands.is_owner()
+async def end(ctx):
+    await bot.close()
+    sys.exit()
+
+
 # function to grab the full member list the bot has access to
 def servList(bots):
     guilds = bots.guilds
