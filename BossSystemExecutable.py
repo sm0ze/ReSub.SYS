@@ -8,6 +8,7 @@ import time
 
 import discord
 import enhancements
+import git
 from discord.ext import commands, tasks
 from discord.utils import get
 from dotenv import load_dotenv
@@ -160,13 +161,26 @@ async def role(ctx, *, roleToAdd: str = enhancements.freeRoles[0]):
 async def restart(ctx):
     await ctx.send("Restarting bot...")
     restart_bot()
+    return
 
 
 @bot.command(hidden=True)
 @commands.is_owner()
 async def end(ctx):
+    StrtChannel = bot.get_channel(823225800073412698)
+    await StrtChannel.send('Bot is terminating')
     await bot.close()
     sys.exit()
+    return
+
+
+@bot.command(hidden=True)
+@commands.is_owner()
+async def update(ctx):
+    git_dir = "/.git/ReSub.SYS"
+    g = git.cmd.Git(git_dir)
+    g.pull()
+    return
 
 
 # function to grab the full member list the bot has access to
@@ -195,6 +209,7 @@ def nON(user):
 
 def restart_bot():
     os.execv(sys.executable, ['python'] + sys.argv)
+    return
 
 
 # general import protection

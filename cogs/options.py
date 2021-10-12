@@ -327,7 +327,7 @@ class Options(commands.Cog):
         # return leaderboard to command caller
         await ctx.send(blankMessage)
 
-    @ commands.command(aliases=['c', 'clear'], brief=enhancements.commandInfo['clean']['brief'], description=enhancements.commandInfo['clean']['description'])
+    @commands.command(aliases=['c', 'clear'], brief=enhancements.commandInfo['clean']['brief'], description=enhancements.commandInfo['clean']['description'])
     # remove unrestricted enhancements from command caller
     async def clean(self, ctx):
         # rank 0 enhancements are either restricted or the SUPEROLE, which should not be removed with this command
@@ -342,6 +342,11 @@ class Options(commands.Cog):
     async def xpgrab(self, ctx):
         xp = await API(GUILD).levels.get_user_xp(ctx.message.author.id)
         await ctx.send("{} xp is currently {}".format(nON(ctx.message.author), xp))
+        return
+
+    @commands.command(aliases=['s'], brief=enhancements.commandInfo['start']['brief'], description=enhancements.commandInfo['start']['description'])
+    async def start(self, ctx):
+
         return
 
 
