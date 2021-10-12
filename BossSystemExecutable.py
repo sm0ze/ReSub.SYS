@@ -14,7 +14,7 @@ from discord.utils import get
 from dotenv import load_dotenv
 from mee6_py_api import API
 
-DEBUG = 0
+DEBUG = 1
 TEST = 0
 
 
@@ -52,6 +52,9 @@ CMDPREFIX = '~'
 STARTTIME = time.time()
 STARTCHANNEL = 823225800073412698
 
+global asleep
+asleep = False
+
 # need all intents to properly manage user roles and fetch MEE6 level
 INTENTS = discord.Intents.all()
 
@@ -71,7 +74,7 @@ async def on_ready():
     global loginTime
     loginTime = time.time()
 
-    StrtChannel = bot.get_channel(823225800073412698)
+    StrtChannel = bot.get_channel(STARTCHANNEL)
     await StrtChannel.send('Bot has logged in as {0.user}'.format(bot))
 
     # looped command to update bot's discord presence flavour text
@@ -90,6 +93,18 @@ async def on_ready():
         for perm in botGuildPermissions:
             debug(perm)
     return
+
+
+@bot.event
+async def on_message(message):
+    global asleep
+    debug(message.author.id == bot.owner_id, message.author.id, bot.owner_id)
+    if message.author.id == bot.owner_id:
+        if message.content.startswith('{}resume'.format(CMDPREFIX)):
+            asleep = False
+            return
+    if not asleep:
+        await bot.process_commands(message)
 
 
 @bot.event
@@ -167,7 +182,7 @@ async def restart(ctx):
 @bot.command(hidden=True)
 @commands.is_owner()
 async def end(ctx):
-    StrtChannel = bot.get_channel(823225800073412698)
+    StrtChannel = bot.get_channel(STARTCHANNEL)
     await StrtChannel.send('Bot is terminating')
     await bot.close()
     sys.exit()
@@ -180,6 +195,13 @@ async def update(ctx):
     git_dir = "/.git/ReSub.SYS"
     g = git.cmd.Git(git_dir)
     g.pull()
+    return
+
+
+@bot.command(hidden=True)
+@commands.is_owner()
+async def pause(ctx):
+    asleep = True
     return
 
 """
