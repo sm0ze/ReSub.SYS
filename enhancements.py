@@ -3,8 +3,8 @@
 import functools
 import os
 
-from power import (commandInfo, patList, power, powerTypes, rankColour,
-                   remList, restrictedList)
+from power import (commandInfo, freeRoles, patList, power, powerTypes,
+                   rankColour, remList, restrictedList)
 
 DEBUG = 0
 TEST = 0

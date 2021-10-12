@@ -3,6 +3,7 @@
 import datetime
 import os
 import random
+import sys
 import time
 
 import discord
@@ -14,7 +15,6 @@ from mee6_py_api import API
 
 DEBUG = 0
 TEST = 0
-STARTTIME = time.time()
 
 
 def debug(*args):
@@ -46,13 +46,16 @@ if not TOKEN:
     TOKEN = askToken()
 
 SUPEROLE = "Supe"
+MANAGER = 'System'  # manager role name for guild
 CMDPREFIX = '~'
+STARTTIME = time.time()
+STARTCHANNEL = 823225800073412698
 
 # need all intents to properly manage user roles and fetch MEE6 level
 INTENTS = discord.Intents.all()
 
 # DefaultHelpCommand along with a no_category rename
-HELPCOMMAND = commands.DefaultHelpCommand(no_category='Basic Options')
+HELPCOMMAND = commands.DefaultHelpCommand(no_category='\nBasic Options')
 
 bot = commands.Bot(command_prefix=CMDPREFIX,
                    case_insensitive=True, intents=INTENTS, help_command=HELPCOMMAND)
@@ -63,9 +66,12 @@ bot = commands.Bot(command_prefix=CMDPREFIX,
 async def on_ready():
     # Generalised login message. Once bot is closer to finished and expected to
     # run 24/7, will add a discord channel message on login
-    print('We have logged in as {0.user}'.format(bot))
+    print('Bot has logged in as {0.user}'.format(bot))
     global loginTime
     loginTime = time.time()
+
+    StrtChannel = bot.get_channel(823225800073412698)
+    await StrtChannel.send('Bot has logged in as {0.user}'.format(bot))
 
     # looped command to update bot's discord presence flavour text
     update_presence.start()
@@ -130,45 +136,30 @@ async def uptime(ctx):
     return
 
 
-@bot.command(brief=enhancements.commandInfo['super']['brief'], description=enhancements.commandInfo['super']['description'])
-# gives SUPERROLE to command caller
-async def super(ctx):
+@bot.command(aliases=['r', 'roles'], brief=enhancements.commandInfo['role']['brief'], description=enhancements.commandInfo['role']['description'])
+# gives requested role to command caller if it is in enhancements.freeRoles
+async def role(ctx, *, roleToAdd: str = enhancements.freeRoles[0]):
     member = ctx.message.author
-    supeRoleId = get(member.guild.roles, name=SUPEROLE)
-    if supeRoleId not in member.roles:
-        await member.add_roles(supeRoleId)
-        await ctx.send("{} is now a {}!".format(nON(member), supeRoleId))
+    debug(roleToAdd)
+    roleAdd = get(member.guild.roles, name=roleToAdd)
+    if not roleAdd:
+        await ctx.send("'{}' is not a valid role.".format(roleToAdd))
+    elif roleAdd.name not in enhancements.freeRoles:
+        await ctx.send("That is not a role you can add with this command!")
+    elif roleAdd not in member.roles:
+        await member.add_roles(roleAdd)
+        await ctx.send("{} is granted the role: '{}'!".format(nON(member), roleAdd))
     else:
-        await ctx.send("{} is already a {}!".format(nON(member), supeRoleId))
-    return
-
-
-@bot.command(brief=enhancements.commandInfo['nosuper']['brief'], description=enhancements.commandInfo['nosuper']['description'])
-# removes SUPERROLE and all unrestricted matching roles in power.power
-async def nosuper(ctx):
-    member = ctx.message.author
-    supeRoleId = get(member.guild.roles, name=SUPEROLE)
-    if supeRoleId in member.roles:
-        await member.remove_roles(supeRoleId)
-        await ctx.send("{} is no longer a {} \n{}".format(nON(member), supeRoleId, random.choice(enhancements.remList)))
-
-    # run clean command to remova all Supe roles as well
-    # due to command being in a cog, it needs to be fetched
-    toRun = bot.get_command('clean')
-    await toRun(ctx)
+        await member.remove_roles(roleAdd)
+        await ctx.send("{} no longer has the role: '{}'!".format(nON(member), roleAdd))
     return
 
 
 @bot.command(hidden=True)
-@commands.is_owner()
-# hidden owner function to test load a cog
-async def load(ctx, extension_name: str):
-    try:
-        bot.load_extension("cogs.{}".format(extension_name))
-    except (AttributeError, ImportError) as e:
-        await ctx.send("```py\n{}: {}\n```".format(type(e).__name__, str(e)))
-        return
-    await ctx.send("{} loaded.".format(extension_name))
+@commands.has_any_role(MANAGER)
+async def restart(ctx):
+    await ctx.send("Restarting bot...")
+    restart_bot()
 
 
 # function to grab the full member list the bot has access to
@@ -193,6 +184,10 @@ def nON(user):
         return user.nick
     else:
         return user.name
+
+
+def restart_bot():
+    os.execv(sys.executable, ['python'] + sys.argv)
 
 
 # general import protection

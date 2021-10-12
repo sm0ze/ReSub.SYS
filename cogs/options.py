@@ -107,7 +107,7 @@ class Options(commands.Cog):
     @commands.command(hidden=True)
     @commands.has_any_role(MANAGER)
     # manager command to check if guild has role and messages some information of the role
-    async def roles(self, ctx, *, roleStr: str):
+    async def roleInf(self, ctx, *, roleStr: str):
         supeGuildRoles = await orderRole(self, ctx)
         roleStrId = [x for x in supeGuildRoles if roleStr == x.name]
         debug("Role string ID is: {}".format(roleStrId[0].id))
@@ -344,9 +344,8 @@ class Options(commands.Cog):
         await ctx.send("{} xp is currently {}".format(nON(ctx.message.author), xp))
         return
 
+
 # function to move roles to correct rank positions
-
-
 async def manageRoles(ctx):
     debug("ManageRoles Start")
 

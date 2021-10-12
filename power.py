@@ -41,41 +41,43 @@ rankColour = {1: 0xffffff, 2: 0xcfceeb, 3: 0xaeaddf, 4: 0x8c8bd8, 5: 0x6c6bc7,
 # and cannot be added by the bot
 restrictedList = ['System', 'Author']
 
+freeRoles = ['Supe', 'Ping Unto Me My Daily Quack']
+
 
 commandInfo = {
     'add': {
         'brief': '-Allows host to add an enhancement and its prerequisites to themself.',
-        'description': ''},
+        'description': '-'},
     'build': {
         'brief': '-Total points required and their prerequisite enhancements.',
-        'description': ''},
+        'description': '-'},
     'clean': {
         'brief': '-Allows a host to remove all enhancements from themself.',
-        'description': ''},
+        'description': '-'},
     'list': {
         'brief': '-Lists all available enhancements.',
-        'description': ''},
+        'description': '-'},
     'points': {
         'brief': "-Shows target host's available and spent enhancement points.",
-        'description': ''},
+        'description': '-'},
     'topten': {
         'brief': '-Shows the top ten Supes by their enhancements.',
-        'description': ''},
+        'description': '-'},
     'trim': {
         'brief': '-Allows a host to remove duplicate enhancements of a lower rank.',
-        'description': ''},
+        'description': '-'},
     'nosuper': {
         'brief': '-Removes the Supe role and clears host of their existing enhancements.',
-        'description': ''},
+        'description': '-'},
     'start': {
         'brief': "-Use this command to get a walkthrough for host's first enhancement",
-        'description': ''},
-    'super': {
-        'brief': '-Gives the Supe role so host can recieve enhancements.',
-        'description': ''},
+        'description': '-'},
+    'role': {
+        'brief': '-Allows user to add freely available roles to themselves.',
+        'description': '-Allows user to add freely available roles to themselves.\n Currently the list to pick from is: {}'.format(freeRoles)},
     'uptime': {
-        'brief': '',
-        'description': ''},
+        'brief': '-Shows how long the bot has been online and logged in.',
+        'description': '-Shows how long the bot has been online and logged in.'},
 }
 
 
