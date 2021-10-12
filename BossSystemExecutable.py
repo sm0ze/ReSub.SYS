@@ -14,7 +14,7 @@ from discord.utils import get
 from dotenv import load_dotenv
 from mee6_py_api import API
 
-DEBUG = 1
+DEBUG = 0
 TEST = 0
 
 
