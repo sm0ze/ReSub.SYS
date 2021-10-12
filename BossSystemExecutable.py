@@ -101,7 +101,9 @@ async def on_message(message):
     debug(message.author.id == bot.owner_id, message.author.id, bot.owner_id)
     if message.author.id == bot.owner_id:
         if message.content.startswith('{}resume'.format(CMDPREFIX)):
-            asleep = False
+            if asleep:
+                await ctx.send("Bot is now awake")
+                asleep = False
             return
     if not asleep:
         await bot.process_commands(message)
@@ -203,6 +205,7 @@ async def update(ctx):
 async def pause(ctx):
     global asleep
     asleep = True
+    await ctx.send("Bot is now asleep")
     return
 
 """
