@@ -156,7 +156,7 @@ async def role(ctx, *, roleToAdd: str = enhancements.freeRoles[0]):
     return
 
 
-@bot.command(hidden=True)
+@bot.command(hidden=True, aliases=['re'])
 @commands.has_any_role(MANAGER)
 async def restart(ctx):
     await ctx.send("Restarting bot...")
@@ -181,6 +181,31 @@ async def update(ctx):
     g = git.cmd.Git(git_dir)
     g.pull()
     return
+
+"""
+@client.event
+async def on_message(self, message):
+    if message.author.id == self.user.id:
+        return
+    if message.content.startswith('{}start'.format(CMDPREFIX)):
+        await ctx.send("To begin use the command 'list'")
+
+        def check(m):
+            return m.author == message.author and m.channel == message.channel and m.content == '{}list'.format(CMDPREFIX)
+
+        try:
+            msg = await self.wait_for('message', check=check, timeout=10.0)
+        except asyncio.TimeoutError:
+            return await message.channel.send('Sorry, you took too long.')
+        await ctx.send("next step")
+
+@bot.command(aliases=['s'], brief=enhancements.commandInfo['start']['brief'], description=enhancements.commandInfo['start']['description'])
+async def start(self, ctx):
+    await ctx.send("To begin use the command 'list'")
+    msg = await discord.Client.wait_for('message', author=ctx.message.author, content='list')
+    await ctx.send("Next step")
+    return
+    """
 
 
 # function to grab the full member list the bot has access to

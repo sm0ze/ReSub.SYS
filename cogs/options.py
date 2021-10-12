@@ -205,22 +205,22 @@ class Options(commands.Cog):
             await ctx.send(sendMes)
         return
 
-    @ commands.command(hidden=True)
-    @ commands.has_any_role(MANAGER)
+    @commands.command(hidden=True)
+    @commands.has_any_role(MANAGER)
     # TODO implementation for manager specific help command
     async def hhelp(self, ctx):
         commands.DefaultHelpCommand(
             no_category='Basic Options', hidden=True)
         return
 
-    @ commands.command(hidden=True)
-    @ commands.has_any_role(MANAGER)
+    @commands.command(hidden=True)
+    @commands.has_any_role(MANAGER)
     # manager command to correct role position for roles that have been created by bot
     async def moveRoles(self, ctx):
         await ctx.send(await manageRoles(ctx))
         return
 
-    @ commands.command(aliases=['p'], brief=enhancements.commandInfo['points']['brief'], description=enhancements.commandInfo['points']['description'])
+    @commands.command(aliases=['p'], brief=enhancements.commandInfo['points']['brief'], description=enhancements.commandInfo['points']['description'])
     # command to get author or specified user(s) enhancement total and available points
     async def points(self, ctx, *, member=''):
         users = await memGrab(self, ctx, member)
@@ -240,7 +240,7 @@ class Options(commands.Cog):
             await ctx.send("{} has {} enhancements active out of {} enhancements available.".format(nON(group[0]), group[1], pointTot))
         return
 
-    @ commands.command(aliases=['l'], brief=enhancements.commandInfo['list']['brief'], description=enhancements.commandInfo['list']['description'])
+    @commands.command(aliases=['l'], brief=enhancements.commandInfo['list']['brief'], description=enhancements.commandInfo['list']['description'])
     # help level command to list the available enhancements and the shorthand to use them in commands
     async def list(self, ctx):
         await ctx.send("Enhancement list is:")
@@ -268,7 +268,7 @@ class Options(commands.Cog):
         await ctx.send("{}Starred enhancements require advanced roles".format(mes))
         return
 
-    @ commands.command(aliases=['b'], brief=enhancements.commandInfo['build']['brief'], description=enhancements.commandInfo['build']['description'])
+    @commands.command(aliases=['b'], brief=enhancements.commandInfo['build']['brief'], description=enhancements.commandInfo['build']['description'])
     # build command to theory craft and check the prereqs for differnet enhancement ranks
     # can be used in conjunction with points command to determine if user can implement a build
     async def build(self, ctx, *, typeRank=''):
@@ -293,7 +293,7 @@ class Options(commands.Cog):
         await ctx.send("This build requires {} enhancement(s) for:\n\n {} \n\n{}".format(buildTot[0], buildTot[1], enhancements.reqEnd([buildTot[0], buildTot[2]])))
         return
 
-    @ commands.command(aliases=['leaderboard', 't'], brief=enhancements.commandInfo['topten']['brief'], description=enhancements.commandInfo['topten']['description'])
+    @commands.command(aliases=['leaderboard', 't'], brief=enhancements.commandInfo['topten']['brief'], description=enhancements.commandInfo['topten']['description'])
     # top 10 user leaderboard for number of used enhancements
     async def topten(self, ctx):
 
@@ -342,11 +342,6 @@ class Options(commands.Cog):
     async def xpgrab(self, ctx):
         xp = await API(GUILD).levels.get_user_xp(ctx.message.author.id)
         await ctx.send("{} xp is currently {}".format(nON(ctx.message.author), xp))
-        return
-
-    @commands.command(aliases=['s'], brief=enhancements.commandInfo['start']['brief'], description=enhancements.commandInfo['start']['description'])
-    async def start(self, ctx):
-
         return
 
 

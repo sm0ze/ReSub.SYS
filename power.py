@@ -50,7 +50,7 @@ commandInfo = {
         'description': '-'},
     'build': {
         'brief': '-Total points required and their prerequisite enhancements.',
-        'description': '-'},
+        'description': "-Use the shorthand enhancement codes separated by commas to find a builds total enhancement cost and prerequisites.\nExample: For a build with Rank 4 Regeneration and Rank 4 Mental Celerity the shorthand would be 'reg4, cel4'"},
     'clean': {
         'brief': '-Allows a host to remove all enhancements from themself.',
         'description': '-'},
