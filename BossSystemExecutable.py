@@ -51,6 +51,7 @@ MANAGER = 'System'  # manager role name for guild
 CMDPREFIX = '~'
 STARTTIME = time.time()
 STARTCHANNEL = 823225800073412698
+HIDE = False
 
 global asleep
 asleep = False
@@ -173,7 +174,7 @@ async def role(ctx, *, roleToAdd: str = enhancements.freeRoles[0]):
     return
 
 
-@bot.command(hidden=True, aliases=['re'])
+@bot.command(hidden=HIDE, aliases=['re'])
 @commands.has_any_role(MANAGER)
 async def restart(ctx):
     await ctx.send("Restarting bot...")
@@ -181,7 +182,7 @@ async def restart(ctx):
     return
 
 
-@bot.command(hidden=True)
+@bot.command(hidden=HIDE)
 @commands.is_owner()
 async def end(ctx):
     StrtChannel = bot.get_channel(STARTCHANNEL)
@@ -191,7 +192,7 @@ async def end(ctx):
     return
 
 
-@bot.command(hidden=True)
+@bot.command(hidden=HIDE)
 @commands.is_owner()
 async def update(ctx):
     git_dir = "/.git/ReSub.SYS"
@@ -200,7 +201,7 @@ async def update(ctx):
     return
 
 
-@bot.command(hidden=True)
+@bot.command(hidden=HIDE)
 @commands.is_owner()
 async def pause(ctx):
     global asleep
