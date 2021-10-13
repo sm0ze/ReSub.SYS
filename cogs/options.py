@@ -91,7 +91,7 @@ class Options(commands.Cog):
         debug("funcTrim END")
         return
 
-    @commands.command(hidden=HIDE)
+    @commands.command(hidden=HIDE, brief=enhancements.commandInfo['trimAll']['brief'], description=enhancements.commandInfo['trimAll']['description'])
     @commands.has_any_role(MANAGER)
     # manager command to role trim all users bot has access to
     async def trimAll(self, ctx):
@@ -105,7 +105,7 @@ class Options(commands.Cog):
         debug("funcTrimAll END")
         return
 
-    @commands.command(hidden=HIDE)
+    @commands.command(hidden=HIDE, brief=enhancements.commandInfo['roleInf']['brief'], description=enhancements.commandInfo['roleInf']['description'])
     @commands.has_any_role(MANAGER)
     # manager command to check if guild has role and messages some information of the role
     async def roleInf(self, ctx, *, roleStr: str):
@@ -214,7 +214,7 @@ class Options(commands.Cog):
             no_category='Basic Options', hidden=True)
         return
 
-    @commands.command(hidden=HIDE)
+    @commands.command(hidden=HIDE, brief=enhancements.commandInfo['moveRoles']['brief'], description=enhancements.commandInfo['moveRoles']['description'])
     @commands.has_any_role(MANAGER)
     # manager command to correct role position for roles that have been created by bot
     async def moveRoles(self, ctx):
@@ -338,7 +338,7 @@ class Options(commands.Cog):
         await cut(ctx, [ctx.message.author], toCut)
         return
 
-    @commands.command(hidden=HIDE)
+    @commands.command(hidden=HIDE, brief=enhancements.commandInfo['xpgrab']['brief'], description=enhancements.commandInfo['xpgrab']['description'])
     @commands.has_any_role(MANAGER)
     async def xpgrab(self, ctx):
         xp = await API(GUILD).levels.get_user_xp(ctx.message.author.id)

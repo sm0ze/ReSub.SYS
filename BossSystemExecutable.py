@@ -174,7 +174,7 @@ async def role(ctx, *, roleToAdd: str = enhancements.freeRoles[0]):
     return
 
 
-@bot.command(hidden=HIDE, aliases=['re'])
+@bot.command(hidden=HIDE, aliases=['re'], brief=enhancements.commandInfo['restart']['brief'], description=enhancements.commandInfo['restart']['description'])
 @commands.has_any_role(MANAGER)
 async def restart(ctx):
     await ctx.send("Restarting bot...")
@@ -182,7 +182,7 @@ async def restart(ctx):
     return
 
 
-@bot.command(hidden=HIDE)
+@bot.command(hidden=HIDE, brief=enhancements.commandInfo['end']['brief'], description=enhancements.commandInfo['end']['description'])
 @commands.is_owner()
 async def end(ctx):
     StrtChannel = bot.get_channel(STARTCHANNEL)
@@ -192,7 +192,7 @@ async def end(ctx):
     return
 
 
-@bot.command(hidden=HIDE)
+@bot.command(hidden=HIDE, brief=enhancements.commandInfo['update']['brief'], description=enhancements.commandInfo['update']['description'])
 @commands.is_owner()
 async def update(ctx):
     git_dir = "/.git/ReSub.SYS"
@@ -201,7 +201,7 @@ async def update(ctx):
     return
 
 
-@bot.command(hidden=HIDE)
+@bot.command(hidden=HIDE, brief=enhancements.commandInfo['pause']['brief'], description=enhancements.commandInfo['pause']['description'])
 @commands.is_owner()
 async def pause(ctx):
     global asleep
