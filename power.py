@@ -46,22 +46,22 @@ freeRoles = ['Ping Unto Me My Daily Quack', 'Supe']
 
 commandInfo = {
     'add': {
-        'brief': '-Allows host to add enhancement(s) and the prerequisites to self',
+        'brief': '-Allows host to add enhancement(s) and their prereqs to themself.',
         'description': '-'},
     'build': {
         'brief': '-Total points required and their prerequisite enhancements.',
         'description': "-Use the shorthand enhancement codes separated by commas to find a builds total enhancement cost and prerequisites.\nExample: For a build with Rank 4 Regeneration and Rank 4 Mental Celerity the shorthand would be 'reg4, cel4'"},
     'clean': {
-        'brief': '-Allows a host to remove all enhancements from themself.',
+        'brief': '-Allows a host to reset their enhancements for reallocation.',
         'description': '-'},
     'end': {
-        'brief': '-',
+        'brief': '-Kills the bot',
         'description': '-'},
     'list': {
         'brief': '-Lists all available enhancements.',
         'description': '-'},
     'pause': {
-        'brief': '-',
+        'brief': "-Puts the bot to sleep, 'resume' to wake.",
         'description': '-'},
     'points': {
         'brief': "-Shows target host's available and spent enhancement points.",
@@ -70,37 +70,37 @@ commandInfo = {
         'brief': '-Shows the top ten Supes by their enhancements.',
         'description': '-'},
     'moveRoles': {
-        'brief': "-",
+        'brief': "-Repositions the server roles so they are in correct tiers.",
         'description': '-'},
     'nosuper': {
         'brief': '-Removes the Supe role and clears host of their existing enhancements.',
         'description': '-'},
     'restart': {
-        'brief': '-',
+        'brief': '-Tells the bot to reboot.',
         'description': '-'},
     'roleInf': {
-        'brief': '-',
+        'brief': '-Gives role info, such as position and colour.',
         'description': '-'},
     'role': {
         'brief': '-Allows user to add freely available roles to themselves.',
         'description': '-Allows user to add freely available roles to themselves.\n Currently the list to pick from is: {}'.format(freeRoles)},
     'start': {
-        'brief': "-Use this command to get a walkthrough for host's first enhancement",
+        'brief': "-Use this command to get a walkthrough for host's first enhancement.",
         'description': '-'},
     'trimAll': {
-        'brief': "-",
+        'brief': "-Trims excess roles from all guild members.",
         'description': '-'},
     'trim': {
         'brief': '-Allows a host to remove duplicate enhancements of a lower rank.',
         'description': '-'},
     'update': {
-        'brief': '-',
+        'brief': '-pulls the latest update from github.',
         'description': '-'},
     'uptime': {
         'brief': '-Shows how long the bot has been online and logged in.',
         'description': '-Shows how long the bot has been online and logged in.'},
     'xpgrab': {
-        'brief': '-',
+        'brief': '-shows the command callers Mee6 XP total.',
         'description': '-'}
 
 }
