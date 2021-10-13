@@ -294,9 +294,9 @@ class Options(commands.Cog):
         await ctx.send("This build requires {} enhancement(s) for:\n\n {} \n\n{}".format(buildTot[0], buildTot[1], enhancements.reqEnd([buildTot[0], buildTot[2]])))
         return
 
-    @commands.command(aliases=['leaderboard', 't'], brief=enhancements.commandInfo['topten']['brief'], description=enhancements.commandInfo['topten']['description'])
+    @commands.command(aliases=['leaderboard', 't'], brief=enhancements.commandInfo['topTen']['brief'], description=enhancements.commandInfo['topTen']['description'])
     # top 10 user leaderboard for number of used enhancements
-    async def topten(self, ctx):
+    async def topTen(self, ctx):
 
         # list of users bot has access to
         guildList = servList(self.bot)
@@ -338,9 +338,9 @@ class Options(commands.Cog):
         await cut(ctx, [ctx.message.author], toCut)
         return
 
-    @commands.command(hidden=HIDE, brief=enhancements.commandInfo['xpgrab']['brief'], description=enhancements.commandInfo['xpgrab']['description'])
+    @commands.command(hidden=HIDE, brief=enhancements.commandInfo['xpGrab']['brief'], description=enhancements.commandInfo['xpGrab']['description'])
     @commands.has_any_role(MANAGER)
-    async def xpgrab(self, ctx):
+    async def xpGrab(self, ctx):
         xp = await API(GUILD).levels.get_user_xp(ctx.message.author.id)
         await ctx.send("{} xp is currently {}".format(nON(ctx.message.author), xp))
         return

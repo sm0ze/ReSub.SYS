@@ -47,61 +47,58 @@ freeRoles = ['Ping Unto Me My Daily Quack', 'Supe']
 commandInfo = {
     'add': {
         'brief': '-Allows host to add enhancement(s) and their prereqs to themself.',
-        'description': '-'},
+        'description': "-Use the shorthand enhancement codes separated by commas to add to host's build.\nExample: For a build with Rank 4 Regeneration and Rank 4 Mental Celerity the shorthand would be 'reg4, cel4'. The bot will attempt to add those 2 enhancements and their prerequisites to the host if they have enough enhancement points."},
     'build': {
         'brief': '-Total points required and their prerequisite enhancements.',
-        'description': "-Use the shorthand enhancement codes separated by commas to find a builds total enhancement cost and prerequisites.\nExample: For a build with Rank 4 Regeneration and Rank 4 Mental Celerity the shorthand would be 'reg4, cel4'"},
+        'description': "-Use the shorthand enhancement codes separated by commas to find a builds total enhancement cost and prerequisites.\nExample: For a build with Rank 4 Regeneration and Rank 4 Mental Celerity the shorthand would be 'reg4, cel4'."},
     'clean': {
         'brief': '-Allows a host to reset their enhancements for reallocation.',
-        'description': '-'},
+        'description': '-This command will remove all Supe related roles from the host so they can start a new build.'},
     'end': {
-        'brief': '-Kills the bot',
-        'description': '-'},
+        'brief': '-Kills the bot.',
+        'description': '-Kills the bot. sm0ze will have to turn it back on again... That is why he is the only one able to use this command :P'},
     'list': {
         'brief': '-Lists all available enhancements.',
-        'description': '-'},
+        'description': '-Lists all available enhancements. It also lets you know how many ranks of each enhancement there are as well as the 3 letter shorthand.'},
     'pause': {
         'brief': "-Puts the bot to sleep, 'resume' to wake.",
-        'description': '-'},
+        'description': "-Puts the bot to sleep, 'resume' to wake. This command mainly exists so that the 24/7 bot does not need to be killed when updating/troubleshooting and can just be restarted."},
     'points': {
         'brief': "-Shows target host's available and spent enhancement points.",
-        'description': '-'},
-    'topten': {
+        'description': "-Shows target host's available and spent enhancement points.\nThis command can take multiple users as arguments as long as they are separated by commas. It is also possible to mention all users you wish to geth the points of.\nIf no arguments are provided the command defaults to the command caller's points."},
+    'topTen': {
         'brief': '-Shows the top ten Supes by their enhancements.',
-        'description': '-'},
+        'description': "-Shows the top ten Supes by their enhancements.\nIt's just a leaderboard."},
     'moveRoles': {
-        'brief': "-Repositions the server roles so they are in correct tiers.",
-        'description': '-'},
-    'nosuper': {
-        'brief': '-Removes the Supe role and clears host of their existing enhancements.',
-        'description': '-'},
+        'brief': "-Repositions the server roles so they are in the correct tier order.",
+        'description': '-Repositions the server roles so they are in the correct tier order. Does not sort the roles within the tier.'},
     'restart': {
         'brief': '-Tells the bot to reboot.',
-        'description': '-'},
+        'description': '-Tells the bot to reboot. It will be back soon, do not worry.'},
     'roleInf': {
         'brief': '-Gives role info, such as position and colour.',
-        'description': '-'},
+        'description': '-Gives role info, such as position and colour. Can only take one role as an argument, requres correct spelling and capitalisation.'},
     'role': {
         'brief': '-Allows user to add freely available roles to themselves.',
         'description': '-Allows user to add freely available roles to themselves.\n Currently the list to pick from is: {}'.format(freeRoles)},
     'start': {
         'brief': "-Use this command to get a walkthrough for host's first enhancement.",
-        'description': '-'},
+        'description': "-Use this command to get a walkthrough for host's first enhancement.\nIf you have no idea how to use the bot, this is a good place to start."},
     'trimAll': {
-        'brief': "-Trims excess roles from all guild members.",
-        'description': '-'},
+        'brief': "-Trims excess low rank roles from all supes.",
+        'description': '-Trims excess low rank roles from all supes. Some users like the role bloat, so do not abuse this command.'},
     'trim': {
         'brief': '-Allows a host to remove duplicate enhancements of a lower rank.',
-        'description': '-'},
+        'description': '-Allows a host to remove duplicate enhancements of a lower rank from themself.'},
     'update': {
-        'brief': '-pulls the latest update from github.',
-        'description': '-'},
+        'brief': '-Pulls the latest update from github.',
+        'description': "-Pulls the latest update from github. If you ain't sm0ze, why do you care about this command?"},
     'uptime': {
         'brief': '-Shows how long the bot has been online and logged in.',
-        'description': '-Shows how long the bot has been online and logged in.'},
-    'xpgrab': {
-        'brief': '-shows the command callers Mee6 XP total.',
-        'description': '-'}
+        'description': '-Shows how long the bot has been online and logged in. Highscores are always fun!'},
+    'xpGrab': {
+        'brief': '-Shows the command callers Mee6 XP total.',
+        'description': '-Shows the command callers Mee6 XP total. Can also be used to ensure the python module for gettin Mee6 user info is still working.'}
 
 }
 
