@@ -52,6 +52,7 @@ PERMROLES = ['Supe']  # guild role(s) for using these bot commands
 MANAGER = 'System'  # manager role name for guild
 LOWESTROLE = 2  # bot sorts roles by rank from position of int10 to LOWESTROLE
 HIDE = False
+LEADLIMIT = 10
 
 # TODO: implement this and similiar instead of multiple enhancement.dict.keys() calls
 # enhancement (type, rank) pairs for list command
@@ -296,33 +297,62 @@ class Options(commands.Cog):
 
     @commands.command(aliases=['leaderboard', 't'], brief=enhancements.commandInfo['topTen']['brief'], description=enhancements.commandInfo['topTen']['description'])
     # top 10 user leaderboard for number of used enhancements
-    async def topTen(self, ctx):
+    async def topTen(self, ctx, *, enh=""):
+        if enh:
+            if enh not in enhancements.leader.keys():
+                if enh not in enhancements.leader.values():
+                    await ctx.send("No enhancement could be found for type: {}".format(enh))
+                    return
+            else:
+                enh = enhancements.leader[enh]
+            enhNameList = {enhancements.power[x]['Name']: 0 for x in enhancements.power.keys(
+            ) if enh == enhancements.power[x]['Type']}
+            peepDict = {}
+            for peep in ctx.author.guild.members:
+                for role in peep.roles:
+                    if role.name in enhNameList.keys():
+                        enhNameList[role.name] += 1
+                        if peep not in peepDict.keys():
+                            peepDict[peep] = [enhancements.power[x]['Rank'] for x in enhancements.power.keys(
+                            ) if enhancements.power[x]['Name'] == role.name][0]
+                        else:
+                            rank = [enhancements.power[x]['Rank'] for x in enhancements.power.keys(
+                            ) if enhancements.power[x]['Name'] == role.name][0]
+                            if rank > peepDict[peep]:
+                                peepDict[peep] = rank
+            blankMessage = "{} is being used by {} hosts for a total of {} enhancement points spent.\n".format(
+                enh, len(peepDict.keys()), sum(peepDict.values()))
+            unsortedDict = [(x, y) for x, y in peepDict.items()]
+            pointList = sorted(unsortedDict, key=lambda x: x[1], reverse=True)
+        else:
+            # list of users bot has access to
+            guildList = servList(self.bot)
+            debug("Guild list is: {}".format(guildList))
 
-        # list of users bot has access to
-        guildList = servList(self.bot)
-        debug("Guild list is: {}".format(guildList))
+            # restrict list to those with SUPEROLE
+            supeList = isSuper(self, guildList)
+            debug("Supe list is: {}".format(supeList))
 
-        # restrict list to those with SUPEROLE
-        supeList = isSuper(self, guildList)
-        debug("Supe list is: {}".format(supeList))
+            # fetch points of each SUPEROLE user
+            pointList = spent(supeList)
+            debug(pointList)
 
-        # fetch points of each SUPEROLE user
-        pointList = spent(supeList)
-        debug(pointList)
-
-        # sort list of users with enhancements by number of enhancements, descending
-        pointList = sorted(pointList, key=lambda x: x[1], reverse=True)
-        debug(pointList)
-
+            # sort list of users with enhancements by number of enhancements, descending
+            pointList = sorted(pointList, key=lambda x: x[1], reverse=True)
+            debug(pointList)
+            blankMessage = "There are {} hosts with a total of {} enhancement points spent.\n".format(
+                sum([len(x.members) for x in [get(y.roles, name=SUPEROLE) for y in self.bot.guilds]]), sum([x[1] for x in pointList]))
         # counter and blank message to track user number and return as a single message
         i = 1
-        blankMessage = ""
-        for group in pointList[:10]:
-            blankMessage += "**{}** - {} \n\t {} enhancements\n".format(
-                i, nON(group[0]), group[1])
-
-            # OBSOLETE message spam
-            # await ctx.send("{} is number {} with {} enhancements".format(group[0], i, group[1]))
+        for group in pointList[:LEADLIMIT]:
+            if not enh:
+                blankMessage += "**{}** - {} \n\t {} enhancements\n".format(
+                    i, nON(group[0]), group[1])
+            else:
+                blankMessage += "**{}** - {} \n\t Rank {} {}\n".format(
+                    i, nON(group[0]), group[1], enh)
+                # OBSOLETE message spam
+                # await ctx.send("{} is number {} with {} enhancements".format(group[0], i, group[1]))
             i += 1
 
         # return leaderboard to command caller
