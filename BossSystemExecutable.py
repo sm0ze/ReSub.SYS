@@ -144,7 +144,7 @@ async def update_presence():
     return
 
 
-@bot.command(brief=enhancements.commandInfo['uptime']['brief'], description=enhancements.commandInfo['uptime']['description'])
+@bot.command(aliases=['u'], brief=enhancements.commandInfo['uptime']['brief'], description=enhancements.commandInfo['uptime']['description'])
 async def uptime(ctx):
     uptimeLogin = str(datetime.timedelta(
         seconds=int(round(time.time() - loginTime))))

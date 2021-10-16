@@ -143,9 +143,16 @@ def reqEnd(endList):
         debug("funcReqEnd - " + "{}".format(endList[1]))
         reqStr = 'Which requires at minimum:\n\n'
         for req in endList[1]:
-            reqName = power[req[1][:3].lower() + str(req[0])]['Name']
+            reqName = power[toType(req[1]) + str(req[0])]['Name']
             reqStr += '{}\n'.format(reqName)
     debug("funcReqEnd - " + "End of function")
 
     # return message
     return reqStr
+
+
+def toType(role):
+    debug(role)
+    thing = [x for x in leader.keys() if role == leader[x]][0]
+    debug(thing)
+    return thing

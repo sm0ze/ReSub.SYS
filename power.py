@@ -34,7 +34,7 @@ powerTypes = {'Strength': 10, 'Speed': 10, 'Endurance': 10, 'Memory': 10, 'Menta
               'Invisibility': 10, 'Vision': 10, 'Aural Faculty': 10, 'Olfactory Sense': 10, 'Gustatory Ability': 10, 'Tactile Reception': 10, 'Proprioception': 10, '4th Wall Breaker*': 10, 'Intelligence*': 10}
 
 leader = {'str': 'Strength', 'spe': 'Speed', 'end': 'Endurance', 'mem': 'Memory', 'cel': 'Mental Celerity', 'cla': 'Mental Clarity', 'reg': 'Regeneration', 'pai': 'Pain Tolerance', 'inv': 'Invisibility',
-          'vis': 'Vision', 'aur': 'Aural Faculty', 'olf': 'Olfactory Sense', 'gus': 'Gustatory Ability', 'tac': 'Tactile Reception', 'pro': 'Proprioception', '4th': '4th Wall Breaker', 'int': 'Intelligence'}
+          'vis': 'Vision', 'aur': 'Aural Faculty', 'olf': 'Olfactory Sense', 'gus': 'Gustatory Ability', 'tac': 'Tactile Reception', 'pro': 'Proprioception', '4th': '4th Wall Breaker', 'int': 'Intelligence', 'sys': 'System', 'aut': 'Author'}
 
 # the different hexcodes for the colour of each role by rank
 rankColour = {1: 0xffffff, 2: 0xcfceeb, 3: 0xaeaddf, 4: 0x8c8bd8, 5: 0x6c6bc7,
@@ -69,7 +69,7 @@ commandInfo = {
     'points': {
         'brief': "-Shows target host's available and spent enhancement points.",
         'description': "-Shows target host's available and spent enhancement points.\nThis command can take multiple users as arguments as long as they are separated by commas. It is also possible to mention all users you wish to geth the points of.\nIf no arguments are provided the command defaults to the command caller's points."},
-    'topTen': {
+    'top': {
         'brief': '-Shows the top hosts by their enhancements.',
         'description': "-Shows the top hosts by their enhancements.\nA variable 'enh' can be given if user would like to get the top hosts of a specific enhancement."},
     'moveRoles': {

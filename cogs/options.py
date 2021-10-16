@@ -155,7 +155,7 @@ class Options(commands.Cog):
             return
 
         # the guild role names grabbed from shorthand to add to user
-        addList = [enhancements.power[x[1][:3].lower() + str(x[0])]['Name']
+        addList = [enhancements.power[enhancements.toType(x[1]) + str(x[0])]['Name']
                    for x in userWantsBuild]
         debug("Add list = {}".format(addList))
 
@@ -295,9 +295,9 @@ class Options(commands.Cog):
         await ctx.send("This build requires {} enhancement(s) for:\n\n {} \n\n{}".format(buildTot[0], buildTot[1], enhancements.reqEnd([buildTot[0], buildTot[2]])))
         return
 
-    @commands.command(aliases=['leaderboard', 't'], brief=enhancements.commandInfo['topTen']['brief'], description=enhancements.commandInfo['topTen']['description'])
+    @commands.command(aliases=['leaderboard', 't'], brief=enhancements.commandInfo['top']['brief'], description=enhancements.commandInfo['top']['description'])
     # top 10 user leaderboard for number of used enhancements
-    async def topTen(self, ctx, *, enh=""):
+    async def top(self, ctx, *, enh=""):
         if enh:
             if enh not in enhancements.leader.keys():
                 if enh not in enhancements.leader.values():
@@ -496,7 +496,6 @@ def funcBuild(buildList):
     # iterate through shorthand enhancements
     for item in buildList:
         debug("Build command item = {}".format(item))
-
         # fetch enhancement prereqs and cost
         temCost = enhancements.cost(item)
         debug("Build command prereq cost = {}".format(temCost))
@@ -606,7 +605,7 @@ def toCut(member):
     debug("\t\tsupeBuild = {}".format(supeBuild[1]))
 
     # fetch trimmed build of user
-    supeTrim = [enhancements.power[x[1][:3].lower() + str(x[0])]['Name']
+    supeTrim = [enhancements.power[enhancements.ToType(x[1]) + str(x[0])]['Name']
                 for x in enhancements.trim(supeBuild[1])]
     debug("\t\tsupeTrim = {}".format(supeTrim))
 
@@ -660,5 +659,7 @@ async def orderRole(self, ctx):
 
 
 # function to setup cog
+
+
 def setup(bot):
     bot.add_cog(Options(bot))
