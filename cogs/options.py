@@ -605,7 +605,7 @@ def toCut(member):
     debug("\t\tsupeBuild = {}".format(supeBuild[1]))
 
     # fetch trimmed build of user
-    supeTrim = [enhancements.power[enhancements.ToType(x[1]) + str(x[0])]['Name']
+    supeTrim = [enhancements.power[enhancements.toType(x[1]) + str(x[0])]['Name']
                 for x in enhancements.trim(supeBuild[1])]
     debug("\t\tsupeTrim = {}".format(supeTrim))
 
