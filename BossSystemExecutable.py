@@ -1,5 +1,6 @@
 # BossSystemExecutable.py
 
+import asyncio
 import datetime
 import os
 import random
@@ -24,10 +25,10 @@ def debug(*args):
 
 
 # function to grab a discord bot token from user if one is not found in the .env
-def askToken():
-    tempToken = input("Enter your discord bot TOKEN: ")
+def askToken(var):
+    tempToken = input("Enter your {}: ".format(var))
     with open(".env", "a+") as f:
-        f.write("DISCORD_TOKEN={}\n".format(tempToken))
+        f.write("{}={}\n".format(var, tempToken))
     return tempToken
 
 
@@ -44,7 +45,7 @@ if TEST:
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 if not TOKEN:
-    TOKEN = askToken()
+    TOKEN = askToken('DISCORD_TOKEN')
 
 SUPEROLE = "Supe"
 MANAGER = 'System'  # manager role name for guild
@@ -100,14 +101,48 @@ async def on_ready():
 async def on_message(message):
     global asleep
     debug(message.author.id == bot.owner_id, message.author.id, bot.owner_id)
+
+    if message.author.bot:
+        # skip message if a bot posted it
+        return
+
     if message.author.id == bot.owner_id:
         if message.content.startswith('{}resume'.format(CMDPREFIX)):
+            # wake up the bot if it is asleep
             if asleep:
                 await message.channel.send("Bot is now awake")
                 asleep = False
             return
-    if not asleep:
-        await bot.process_commands(message)
+
+    if asleep:
+        # stop parsing the message if the bot is asleep
+        return
+
+    if message.content.startswith("{}{}".format(CMDPREFIX, CMDPREFIX)):
+        return
+
+    """
+    # begining implementation for ~start
+    if message.content.startswith('{}start'.format(CMDPREFIX)):
+        if SUPEROLE not in [x.name for x in message.author.roles]:
+            await message.channel.send("You do not have the role {}.\nCome back after you use the command '{}role {}'".format(SUPEROLE, CMDPREFIX, SUPEROLE))
+            return
+        await message.channel.send("To begin use the command '{}list'".format(CMDPREFIX))
+
+        def check(m):
+            return m.author == message.author and m.channel == message.channel and m.content == '{}list'.format(CMDPREFIX)
+
+        try:
+            msg = await bot.wait_for('message', check=check, timeout=10.0)
+        except asyncio.TimeoutError:
+            return await message.channel.send('Sorry, you took too long.')
+        await asyncio.sleep(2)
+        await message.channel.send(":point_up: These are the enhancements you can pick from. \nEach rank of an enhancement costs one enhancement point and there are prerequisite enhancements for higher ranks. \nFor example, Rank 3 Strength requires 3 enhancement points and Rank 4 Strength requires 7 enhancement points.")
+        await message.channel.send("You can see how many enhancement points you have with the command '{}points'".format(CMDPREFIX))
+        return
+    """
+
+    await bot.process_commands(message)
 
 
 @bot.event
@@ -119,7 +154,7 @@ async def on_command_error(ctx, error):
     if isinstance(error, commands.CommandNotFound):
         em = discord.Embed(
             title=f"Error!!!", description=f"Command not found.", color=ctx.author.color)
-        await ctx.send(embed=em)
+        # await ctx.send(embed=em)
 
     elif splitError[4] == 'KeyError:':
         await ctx.send("{} is not a recognised option".format(splitError[-1]))

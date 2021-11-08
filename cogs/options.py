@@ -1,11 +1,13 @@
 # options.py
 
+import math
 import os
 import random
 
 import discord
 import enhancements
-from BossSystemExecutable import nON, servList
+import tatsu
+from BossSystemExecutable import askToken, nON, servList
 from discord.ext import commands
 from discord.ext.commands import MemberConverter
 from discord.utils import get
@@ -21,15 +23,6 @@ def debug(*args):
         print(*args)
 
 
-# function to get the guild id from user if not found in the .env
-# keeping the guild token hard coded atm as messy security
-def askToken():
-    tempToken = input("Enter your discord bot GUILD id: ")
-    with open(".env", "a+") as f:
-        f.write("DISCORD_GUILD={}\n".format(tempToken))
-    return tempToken
-
-
 debug("{} DEBUG TRUE".format(os.path.basename(__file__)))
 
 
@@ -43,8 +36,13 @@ if TEST:
 # it's possible to grab this after bot logs into guild instead of hard coding it
 load_dotenv()
 GUILD = os.getenv('DISCORD_GUILD')
+TATSU = os.getenv('TATSU_TOKEN')
+
 if not GUILD:
-    GUILD = askToken()
+    GUILD = askToken('DISCORD_GUILD')
+
+if not TATSU:
+    TATSU = askToken('TATSU_TOKEN')
 
 
 SUPEROLE = "Supe"
@@ -53,6 +51,8 @@ MANAGER = 'System'  # manager role name for guild
 LOWESTROLE = 2  # bot sorts roles by rank from position of int10 to LOWESTROLE
 HIDE = False
 LEADLIMIT = 10
+NEWCALC = 0
+GEMDIFF = 0.5
 
 # TODO: implement this and similiar instead of multiple enhancement.dict.keys() calls
 # enhancement (type, rank) pairs for list command
@@ -147,11 +147,11 @@ class Options(commands.Cog):
         userWantsBuild = userWants[2]
         pointTot = await count(user)
         debug("{} with point total {} has {} {} and wants {} {}".format(
-            user, pointTot, userHas[0], userHasBuild, userWantsCost, userWantsBuild))
+            user, pointTot[0], userHas[0], userHasBuild, userWantsCost, userWantsBuild))
 
         # check to ensure user has enough enhancement points to get requested additions
-        if pointTot < userWants[0]:
-            await ctx.send("{} needs {} available enhancements for {} but only has {}".format(nON(user), userWantsCost, [enhancements.power[x]['Name'] for x in buildList], pointTot))
+        if pointTot[0] < userWants[0]:
+            await ctx.send("{} needs {} available enhancements for {} but only has {}".format(nON(user), userWantsCost, [enhancements.power[x]['Name'] for x in buildList], pointTot[0]))
             return
 
         # the guild role names grabbed from shorthand to add to user
@@ -239,7 +239,7 @@ class Options(commands.Cog):
         for group in pointList:
             debug("group in level is: {}".format(group))
             pointTot = await count(group[0])
-            await ctx.send("{} has {} enhancements active out of {} enhancements available.".format(nON(group[0]), group[1], pointTot))
+            await ctx.send("{} has {} enhancements active out of {} enhancements available.".format(nON(group[0]), group[1], pointTot[0]))
         return
 
     @commands.command(aliases=['l'], brief=enhancements.commandInfo['list']['brief'], description=enhancements.commandInfo['list']['description'])
@@ -309,6 +309,8 @@ class Options(commands.Cog):
             ) if enh == enhancements.power[x]['Type']}
             peepDict = {}
             for peep in ctx.author.guild.members:
+                if SUPEROLE not in [x.name for x in peep.roles]:
+                    continue
                 for role in peep.roles:
                     if role.name in enhNameList.keys():
                         enhNameList[role.name] += 1
@@ -369,10 +371,25 @@ class Options(commands.Cog):
         return
 
     @commands.command(hidden=HIDE, brief=enhancements.commandInfo['xpGrab']['brief'], description=enhancements.commandInfo['xpGrab']['description'])
-    @commands.has_any_role(MANAGER)
-    async def xpGrab(self, ctx):
-        xp = await API(GUILD).levels.get_user_xp(ctx.message.author.id)
-        await ctx.send("{} xp is currently {}".format(nON(ctx.message.author), xp))
+    # @commands.has_any_role(MANAGER)
+    async def xpGrab(self, ctx, *, mem=''):
+        typeMem = await memGrab(self, ctx, mem)
+
+        for peep in typeMem:
+            mes = ''
+            stuff = await count(peep, 1)
+            mes += "{} MEE6 xp is currently {}\n".format(
+                nON(peep), stuff[3][0])
+            mes += "{} TATSU xp is currently {}\n".format(
+                nON(peep), stuff[3][1])
+            mes += "{} Total xp is currently {}\n".format(
+                nON(peep), stuff[2])
+            mes += "{} resub GDV is currently {}\n".format(
+                nON(peep), round(stuff[1], 2))
+            mes += "{} enhancement points is currently {}".format(
+                nON(peep), stuff[0])
+
+            await ctx.send(mes)
         return
 
 
@@ -445,28 +462,43 @@ async def manageRoles(ctx):
 
 
 # function to get specified user's enhancement points
-async def count(peep):
+async def count(peep, typ=NEWCALC):
+    if not typ:
+        # fetch MEE6 level
+        level = await API(GUILD).levels.get_user_level(peep.id)
+        debug(level)
 
-    # fetch MEE6 level
-    level = await API(GUILD).levels.get_user_level(peep.id)
-    debug(level)
-
-    # Enhancement points are equivalent to MEE6 level / 5
-    if level:
-        pointTot = int(level / 5)
-    else:
-        pointTot = 0
-    debug(pointTot)
-    debug(peep.roles)
-
-    # + an enhancement point for other roles the user might have
-    for role in peep.roles:
-        debug(role)
-        if role.name in enhancements.patList:
-            pointTot += 1
+        # Enhancement points are equivalent to MEE6 level / 5
+        if level:
+            pointTot = int(level / 5)
+        else:
+            pointTot = 0
         debug(pointTot)
-    # return total user points to function call
-    return pointTot
+        debug(peep.roles)
+
+        # + an enhancement point for other roles the user might have
+        for role in peep.roles:
+            debug(role)
+            if role.name in enhancements.patList:
+                pointTot += 1
+            debug(pointTot)
+        # return total user points to function call
+        return [pointTot]
+    else:
+        MEE6xp = await API(GUILD).levels.get_user_xp(peep.id)
+        TATSUmem = await tatsu.wrapper.ApiWrapper(key=TATSU).get_profile(peep.id)
+
+        try:
+            TATSUxp = TATSUmem.xp
+        except:
+            TATSUxp = None
+
+        totXP = MEE6xp + TATSUxp / 2
+        if nON(peep) == 'Geminel':
+            totXP = totXP * GEMDIFF
+        gdv = math.sqrt((1.25 * totXP) / 20)
+        enhP = math.floor(gdv / 5)
+        return enhP, gdv, totXP, [MEE6xp, TATSUxp]
 
 
 # restrict list from members to members with SUPEROLE
