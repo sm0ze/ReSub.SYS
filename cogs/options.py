@@ -576,7 +576,7 @@ async def count(peep, typ=NEWCALC):
         if not MEE6xp:
             MEE6xp = 0
 
-        if MEE6xp | | TATSUxp:
+        if MEE6xp or TATSUxp:
             totXP = MEE6xp + TATSUxp / 2
         else:
             totXP = 0
