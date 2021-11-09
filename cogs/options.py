@@ -156,7 +156,7 @@ class Options(commands.Cog):
                 debug("peeps list is: {}".format(addPeeps))
                 if ctx.message.author in addPeeps:
                     addPeeps.remove(ctx.message.author)
-                addNames = [nON(x) for x in addPeeps[:3]]
+                addNames = [nON(x) for x in addPeeps[:taskAdd]]
         else:
             addPeeps = ''
         debug("{}\nTask XP: {}\n10 XP in GDV: {}".format(
