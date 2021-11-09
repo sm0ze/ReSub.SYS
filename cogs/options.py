@@ -571,9 +571,15 @@ async def count(peep, typ=NEWCALC):
         try:
             TATSUxp = TATSUmem.xp
         except:
-            TATSUxp = None
+            TATSUxp = 0
 
-        totXP = MEE6xp + TATSUxp / 2
+        if not MEE6xp:
+            MEE6xp = 0
+
+        if MEE6xp | | TATSUxp:
+            totXP = MEE6xp + TATSUxp / 2
+        else:
+            totXP = 0
         if nON(peep) == 'Geminel':
             totXP = totXP * GEMDIFF
 
