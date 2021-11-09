@@ -8,7 +8,7 @@ import sys
 import time
 
 import discord
-import enhancements
+import enhancements as enm
 import git
 from discord.ext import commands, tasks
 from discord.utils import get
@@ -171,7 +171,7 @@ async def update_presence():
     members = sum([len(x.members)
                   for x in [get(y.roles, name=SUPEROLE) for y in guilds]])
     nameSet = "{} users with {} enhancements".format(
-        members, len(enhancements.powerTypes.keys()))
+        members, len(enm.powerTypes.keys()))
 
     debug("\t\t" + str(nameSet))
 
@@ -179,7 +179,7 @@ async def update_presence():
     return
 
 
-@bot.command(aliases=['u'], brief=enhancements.commandInfo['uptime']['brief'], description=enhancements.commandInfo['uptime']['description'])
+@bot.command(aliases=['u'], brief=enm.cmdInf['uptime']['brief'], description=enm.cmdInf['uptime']['description'])
 async def uptime(ctx):
     uptimeLogin = str(datetime.timedelta(
         seconds=int(round(time.time() - loginTime))))
@@ -190,15 +190,15 @@ async def uptime(ctx):
     return
 
 
-@bot.command(aliases=['r', 'roles'], brief=enhancements.commandInfo['role']['brief'], description=enhancements.commandInfo['role']['description'])
-# gives requested role to command caller if it is in enhancements.freeRoles
-async def role(ctx, *, roleToAdd: str = enhancements.freeRoles[0]):
+@bot.command(aliases=['r', 'roles'], brief=enm.cmdInf['role']['brief'], description=enm.cmdInf['role']['description'])
+# gives requested role to command caller if it is in enm.freeRoles
+async def role(ctx, *, roleToAdd: str = enm.freeRoles[0]):
     member = ctx.message.author
     debug(roleToAdd)
     roleAdd = get(member.guild.roles, name=roleToAdd)
     if not roleAdd:
         await ctx.send("'{}' is not a valid role.".format(roleToAdd))
-    elif roleAdd.name not in enhancements.freeRoles:
+    elif roleAdd.name not in enm.freeRoles:
         await ctx.send("That is not a role you can add with this command!")
     elif roleAdd not in member.roles:
         await member.add_roles(roleAdd)
@@ -209,7 +209,7 @@ async def role(ctx, *, roleToAdd: str = enhancements.freeRoles[0]):
     return
 
 
-@bot.command(hidden=HIDE, aliases=['re'], brief=enhancements.commandInfo['restart']['brief'], description=enhancements.commandInfo['restart']['description'])
+@bot.command(hidden=HIDE, aliases=['re'], brief=enm.cmdInf['restart']['brief'], description=enm.cmdInf['restart']['description'])
 @commands.has_any_role(MANAGER)
 async def restart(ctx):
     await ctx.send("Restarting bot...")
@@ -217,7 +217,7 @@ async def restart(ctx):
     return
 
 
-@bot.command(hidden=HIDE, brief=enhancements.commandInfo['end']['brief'], description=enhancements.commandInfo['end']['description'])
+@bot.command(hidden=HIDE, brief=enm.cmdInf['end']['brief'], description=enm.cmdInf['end']['description'])
 @commands.is_owner()
 async def end(ctx):
     StrtChannel = bot.get_channel(STARTCHANNEL)
@@ -227,7 +227,7 @@ async def end(ctx):
     return
 
 
-@bot.command(hidden=HIDE, brief=enhancements.commandInfo['update']['brief'], description=enhancements.commandInfo['update']['description'])
+@bot.command(hidden=HIDE, brief=enm.cmdInf['update']['brief'], description=enm.cmdInf['update']['description'])
 @commands.is_owner()
 async def update(ctx):
     git_dir = "/.git/ReSub.SYS"
@@ -236,7 +236,7 @@ async def update(ctx):
     return
 
 
-@bot.command(hidden=HIDE, brief=enhancements.commandInfo['pause']['brief'], description=enhancements.commandInfo['pause']['description'])
+@bot.command(hidden=HIDE, brief=enm.cmdInf['pause']['brief'], description=enm.cmdInf['pause']['description'])
 @commands.is_owner()
 async def pause(ctx):
     global asleep
@@ -261,7 +261,7 @@ async def on_message(self, message):
             return await message.channel.send('Sorry, you took too long.')
         await ctx.send("next step")
 
-@bot.command(aliases=['s'], brief=enhancements.commandInfo['start']['brief'], description=enhancements.commandInfo['start']['description'])
+@bot.command(aliases=['s'], brief=enm.cmdInf['start']['brief'], description=enm.cmdInf['start']['description'])
 async def start(self, ctx):
     await ctx.send("To begin use the command 'list'")
     msg = await discord.Client.wait_for('message', author=ctx.message.author, content='list')
