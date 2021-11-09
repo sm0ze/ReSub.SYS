@@ -24,7 +24,7 @@ if TEST:
 SHEET_ID = "1LfSqavVskaKWM0yhKO1ZyqU1154TuYwPzt_3eFZOymQ"
 
 taskVar = {'taskOpt':  ['Minor', 'Moderate', 'Major', 'Urgent'], 'taskWeight': [
-    60, 60, 60, 60]}
+    60, 85, 95, 100]}
 
 posTask = {
     'Minor': {
