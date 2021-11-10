@@ -137,7 +137,7 @@ class Options(commands.Cog):
         """
 
         taskType = random.choices(
-            enm.taskVar['taskOpt'], cum_weights=enm.taskVar['taskWeight'])
+            enm.taskVar['taskOpt'][0], cum_weights=enm.taskVar['taskWeight'])
         taskShrt = enm.posTask[taskType[0]]
         taskWorth = taskShrt['Worth']
         debug("Task is worth {}".format(taskWorth))
@@ -152,7 +152,7 @@ class Options(commands.Cog):
                 addPeeps = peepToAdd.members
                 addNames = ['ALL SUPES!']
             else:
-                addPeeps = random.choices(peepToAdd.members, k=taskAdd + 1)
+                addPeeps = random.sample(peepToAdd.members, k=taskAdd + 1)
                 debug("peeps list is: {}".format(addPeeps))
                 if ctx.message.author in addPeeps:
                     addPeeps.remove(ctx.message.author)
@@ -160,14 +160,12 @@ class Options(commands.Cog):
         else:
             addPeeps = ''
         debug("{}\nTask XP: {}\n10 XP in GDV: {}".format(
-            taskType, lvlEqu(taskWorth, 1), lvlEqu(10)))
+            taskType, lvlEqu(taskWorth[0], 1), lvlEqu(10)))
         emptMes = "Host {} is assigned a task of {[0]} importance!\n\n".format(
             nON(ctx.message.author), taskType)
 
         taskDesc = taskShrt['Layout']
         debug("Task layout is: ", taskDesc)
-        taskDiff = 42
-        debug(taskDiff)
 
         debug("Possible Adjective: {}".format(taskShrt['Adjective']))
         selAdj = random.choice(taskShrt['Adjective'])
@@ -188,12 +186,12 @@ class Options(commands.Cog):
         emptMes += str(taskDesc).format(
             plurality(selAdj[:1]), selAdj, selPeep, selAct, selPlace)
 
-        taskGrant = round(taskWorth * taskDiff, 2)
+        taskGrant = random.randrange(taskWorth[0], taskWorth[1])
 
-        emptMes += "\nDifficulty of the task is {} and the granted GDV on task success will be {}".format(
-            taskDiff, taskGrant)
+        emptMes += "\nTask will grant {} XP, come back in {} minutes.".format(
+            taskGrant, int(taskShrt['Timer'] / 60))
         if addPeeps:
-            emptMes += "\nDue to task difficulty, help will be recieved from {}".format(
+            emptMes += "\nDue to task difficulty, help will be received from {}".format(
                 addNames)
         await ctx.send(emptMes)
         return
@@ -585,7 +583,7 @@ async def count(peep, typ=NEWCALC):
 
         gdv = lvlEqu(totXP)
 
-        enhP = math.floor(gdv / 5)
+        enhP = math.floor(gdv / 5) + 1
         return enhP, gdv, totXP, [MEE6xp, TATSUxp]
 
 
@@ -780,7 +778,7 @@ async def orderRole(self, ctx):
 
 def lvlEqu(givVar, inv=0):
     if inv:
-        calVar = (20 * givVar ** 2) / 1.25
+        calVar = (20 * math.pow(givVar, 2)) / 1.25
         debug("{} GDV is equivalent to {} XP".format(givVar, calVar))
     else:
         calVar = math.sqrt((1.25 * givVar) / 20)

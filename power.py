@@ -19,33 +19,36 @@ debug("{} DEBUG TRUE".format(os.path.basename(__file__)))
 
 if TEST:
     print("{} TEST TRUE".format(os.path.basename(__file__)))
-#if TEST: print("".format())
+# if TEST: print("".format())
 
-SHEET_ID = "1LfSqavVskaKWM0yhKO1ZyqU1154TuYwPzt_3eFZOymQ"
 
-taskVar = {'taskOpt':  ['Minor', 'Moderate', 'Major', 'Urgent'], 'taskWeight': [
+taskVar = {'taskOpt':  [['Minor', 'Moderate', 'Major', 'Imperative'], ['1LfSqavVskaKWM0yhKO1ZyqU1154TuYwPzt_3eFZOymQ', '1ZS3or-b1uA0-Btv0oiZQkT7Nu12NMNkP-fRdE2dcHTw', '1TKeG8wNanj_tUfFgRVPj020cfY1F22e0Jn-lh345nXM', '1B3YIU6O6FuoUFl5snlMh8DF4OgbpYo4kxqv6YGXw_HY']], 'taskWeight': [
     60, 85, 95, 100]}
 
 posTask = {
     'Minor': {
         'Layout': "{} {} {} is {} {}.\n",
-        'Worth': 0.1,
-        'Add': 0
+        'Worth': [1, 100],
+        'Add': 0,
+        'Timer': 300,
     },
     'Moderate': {
         'Layout': "{} {} {} is {} {}.\n",
-        'Worth': 1,
-        'Add': 1
+        'Worth': [50, 150],
+        'Add': 1,
+        'Timer': 600,
     },
     'Major': {
         'Layout': "{} {} {} is {} {}.\n",
-        'Worth': 5,
-        'Add': 3
+        'Worth': [100, 200],
+        'Add': 3,
+        'Timer': 900,
     },
-    'Urgent': {
+    'Imperative': {
         'Layout': "{} {} {} is {} {}.\n",
-        'Worth': 10,
-        'Add': -1
+        'Worth': [150, 250],
+        'Add': -1,
+        'Timer': 1200,
     },
 }
 
@@ -347,15 +350,30 @@ def remove_values_from_list(the_list, val):
     return [value for value in the_list if str(value) != val]
 
 
-sheet_names = [x for x in taskVar['taskOpt']]
-for sheet in sheet_names:
+sheet_names = [[taskVar['taskOpt'][0][x], taskVar['taskOpt'][1][x]]
+               for x in range(0, len(taskVar['taskOpt'][0]))]
+debug(sheet_names)
+for sheetL in sheet_names:
+    urlToken = sheetL[1]
+    sheet = sheetL[0]
+    debug("sheet name is: ", sheet)
+    debug("url token is: ", urlToken)
     url = "https://docs.google.com/spreadsheets/d/{}/gviz/tq?tqx=out:csv&sheet={}".format(
-        SHEET_ID, sheet)
-    frame = pd.read_csv(url)
-    debug(sheet)
+        urlToken, sheet)
+    debug("At URL: ", url)
+    try:
+        frame = None
+        frame = pd.read_csv(url)
+    except Exception as e:
+        print(e)
+        continue
+
     for i in frame:
-        debug(i)
+        debug("i in frame is: ", i, type(i))
+        if i.startswith('Unnamed'):
+            debug("skipping: ", i)
+            continue
         currList = remove_values_from_list([x for x in frame[i]], 'nan')
-        debug(currList)
+        debug("Current list of {} is: ".format(i), currList)
         posTask[sheet][i] = currList
 debug(posTask)
