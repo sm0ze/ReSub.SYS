@@ -13,6 +13,7 @@ from discord.ext.commands import MemberConverter
 from discord.utils import get
 from dotenv import load_dotenv
 from mee6_py_api import API
+from sqlitedict import SqliteDict
 
 DEBUG = 0
 TEST = 0
@@ -74,7 +75,7 @@ class Options(commands.Cog):
                 debug("Role check {} in {}".format(role, PERMROLES))
                 chkRole = get(ctx.guild.roles, name=role)
                 debug("chkRole = {}".format(chkRole))
-                if chkRole in ctx.author.roles:
+                if chkRole in ctx.message.author.roles:
                     return chkRole
             raise commands.CheckFailure(
                 "You do not have permission as you are missing a role in this list: {}\nThe super command can be used to gain the Supe role".format(PERMROLES))  # messy implementation for Supe
@@ -150,6 +151,7 @@ class Options(commands.Cog):
             debug(peepToAdd.id, peepToAdd.name)
             if taskAdd == -1:
                 addPeeps = peepToAdd.members
+                addPeeps.remove(ctx.message.author)
                 addNames = ['ALL SUPES!']
             else:
                 addPeeps = random.sample(peepToAdd.members, k=taskAdd + 1)
@@ -157,8 +159,12 @@ class Options(commands.Cog):
                 if ctx.message.author in addPeeps:
                     addPeeps.remove(ctx.message.author)
                 addNames = [nON(x) for x in addPeeps[:taskAdd]]
+            xpList = [[x, taskShrt['Aid']] for x in addPeeps[:taskAdd]]
+            xpList.append([ctx.message.author, 1])
         else:
             addPeeps = ''
+            xpList = [[ctx.message.author, 1]]
+        debug("xpList = ", xpList)
         debug("{}\nTask XP: {}\n10 XP in GDV: {}".format(
             taskType, lvlEqu(taskWorth[0], 1), lvlEqu(10)))
         emptMes = "Host {} is assigned a task of {[0]} importance!\n\n".format(
@@ -191,9 +197,31 @@ class Options(commands.Cog):
         emptMes += "\nTask will grant {} XP, come back in {} minutes.".format(
             taskGrant, int(taskShrt['Timer'] / 60))
         if addPeeps:
-            emptMes += "\nDue to task difficulty, help will be received from {}".format(
+            emptMes += "\nDue to task difficulty, help will be received from {}\n".format(
                 addNames)
+        try:
+            authInf = load(ctx.message.author.guild.id)
+        except Exception as e:
+            debug(e)
+        if not authInf:
+            authInf = {}
+
+        for peep in xpList:
+            debug("peep is: ", peep)
+            if peep[0].id in authInf.keys():
+                authInf[peep[0].id]['invXP'][-1] += taskGrant * peep[1]
+            else:
+                authInf[peep[0].id] = {'Name': peep[0].name}
+                authInf[peep[0].id]['invXP'] = [0, 0, taskGrant * peep[1]]
+            if taskAdd != -1:
+                emptMes += "\n{} just earnt {} ReSubXP for a total of: {}".format(
+                    nON(peep[0]), taskGrant * peep[1], authInf[peep[0].id]['invXP'][-1])
+        if taskAdd == -1:
+            emptMes += "\n All Supes just earnt {} ReSubXP except for {} who earnt {}.".format(
+                taskGrant * taskShrt['Aid'], nON(ctx.message.author), taskGrant)
+
         await ctx.send(emptMes)
+        save(ctx.message.author.guild.id, authInf)
         return
 
     @ commands.command(aliases=['a'], brief=enm.cmdInf['add']['brief'], description=enm.cmdInf['add']['description'])
@@ -316,7 +344,7 @@ class Options(commands.Cog):
         # return result
         for group in pointList:
             debug("group in level is: {}".format(group))
-            pointTot = await count(group[0])
+            pointTot = await countOf(group[0])
             await ctx.send("{} has {} enhancements active out of {} enhancements available.".format(nON(group[0]), group[1], pointTot[0]))
         return
 
@@ -386,7 +414,7 @@ class Options(commands.Cog):
             enhNameList = {enm.power[x]['Name']: 0 for x in enm.power.keys(
             ) if enh == enm.power[x]['Type']}
             peepDict = {}
-            for peep in ctx.author.guild.members:
+            for peep in ctx.message.author.guild.members:
                 if SUPEROLE not in [x.name for x in peep.roles]:
                     continue
                 for role in peep.roles:
@@ -442,8 +470,8 @@ class Options(commands.Cog):
     # remove unrestricted enhancements from command caller
     async def clean(self, ctx):
         # rank 0 enhancements are either restricted or the SUPEROLE, which should not be removed with this command
-        toCut = [x.name for x in ctx.message.author.roles if x.name in [enm.power[y]['Name']
-                                                                        for y in enm.power.keys() if enm.power[y]['Rank'] > 0]]
+        toCut = [x.name for x in ctx.message.author.roles if x.name in [
+            enm.power[y]['Name'] for y in enm.power.keys() if enm.power[y]['Rank'] > 0]]
         debug(toCut)
         await cut(ctx, [ctx.message.author], toCut)
         return
@@ -460,6 +488,8 @@ class Options(commands.Cog):
                 nON(peep), stuff[3][0])
             mes += "{} TATSU xp is currently {}\n".format(
                 nON(peep), stuff[3][1])
+            mes += "{} ReSub xp is currently {}\n".format(
+                nON(peep), stuff[3][-1])
             mes += "{} Total xp is currently {}\n".format(
                 nON(peep), stuff[2])
             mes += "{} resub GDV is currently {}\n".format(
@@ -541,6 +571,7 @@ async def manageRoles(ctx):
 
 # function to get specified user's enhancement points
 async def count(peep, typ=NEWCALC):
+    debug("Start count")
     if not typ:
         # fetch MEE6 level
         level = await API(GUILD).levels.get_user_level(peep.id)
@@ -561,34 +592,70 @@ async def count(peep, typ=NEWCALC):
                 pointTot += 1
             debug(pointTot)
         # return total user points to function call
+        debug("End count")
         return [pointTot]
     else:
         MEE6xp = await API(GUILD).levels.get_user_xp(peep.id)
         TATSUmem = await tatsu.wrapper.ApiWrapper(key=TATSU).get_profile(peep.id)
+        try:
+            pickle_file = load(peep.guild.id)
+            debug(pickle_file)
+            ReSubXP = pickle_file[peep.id]['invXP'][-1]
+        except:
+            ReSubXP = 0
+        debug("ReSubXP = ", ReSubXP)
 
         try:
             TATSUxp = TATSUmem.xp
         except:
             TATSUxp = 0
+        debug("TATSUxp = ", TATSUxp)
 
         if not MEE6xp:
             MEE6xp = 0
+        debug("MEE6xp = ", MEE6xp)
 
-        if MEE6xp or TATSUxp:
-            totXP = MEE6xp + TATSUxp / 2
+        if MEE6xp or TATSUxp or ReSubXP:
+            totXP = ReSubXP + MEE6xp + (TATSUxp / 2)
         else:
             totXP = 0
         if nON(peep) == 'Geminel':
             totXP = totXP * GEMDIFF
+        debug("totXP = ", totXP)
 
         gdv = lvlEqu(totXP)
+        debug("gdv = ", gdv)
 
         enhP = math.floor(gdv / 5) + 1
-        return enhP, gdv, totXP, [MEE6xp, TATSUxp]
+        debug("enhP = ", enhP)
+        if pickle_file:
+            pickle_file[peep.id] = {'Name': peep.name,
+                                    'enhP': enhP, 'gdv': gdv, 'totXP': totXP, 'invXP': [MEE6xp, TATSUxp, ReSubXP]}
+            save(peep.guild.id, pickle_file)
+        else:
+            save(peep.guild.id, {peep.id: {'Name': peep.name,
+                                 'enhP': enhP, 'gdv': gdv, 'totXP': totXP, 'invXP': [MEE6xp, TATSUxp, ReSubXP]}})
+        debug("End count")
+        return enhP, gdv, totXP, [MEE6xp, TATSUxp, ReSubXP]
+
+
+async def countOf(peep):
+    debug("Start countOf")
+    try:
+        valDict = load(peep.guild.id)
+        debug('valDict = ', valDict)
+        shrt = valDict[peep.id]
+        debug('shrt = ', shrt)
+        debug("End countOf - succ load")
+        return shrt['enhP'], shrt['gdv'], shrt['totXP'], shrt['invXP']
+    except:
+        debug("End countOf - fail load")
+        return await count(peep)
 
 
 # restrict list from members to members with SUPEROLE
 def isSuper(self, guildList):
+    debug("Start isSuper")
     guilds = self.bot.guilds
     supeGuildList = []
     [supeGuildList.append(z) for z in [x.members for x in [
@@ -602,11 +669,13 @@ def isSuper(self, guildList):
     debug(supeList)
 
     # return reduced user list
+    debug("End isSuper")
     return supeList
 
 
 # from shorthand enhancement list return cost of build, role names and prerequisite roles
 def funcBuild(buildList):
+    debug("Start funcBuild")
     reqList = []
     nameList = []
     debug("Build command buildList = {}".format(buildList))
@@ -645,11 +714,13 @@ def funcBuild(buildList):
     debug(costTot, nameList, reqList)
 
     # return cost of build, role names and prerequisite roles
+    debug("End funcBuild")
     return costTot, nameList, reqList
 
 
 # function to grab number of enhancement points spent by each user in given list
 def spent(memList):
+    debug("Start spent")
     retList = []
     debug("memList is: {}".format(memList))
 
@@ -676,35 +747,36 @@ def spent(memList):
         retList.append([peep, pointCount, supeRoles])
 
     debug("retlist is: {}".format(retList))
+    debug("End spent")
     return retList
 
 
 # function to fetch all users requested by command caller
 async def memGrab(self, ctx, memList=""):
-    debug("\tfuncGrabList START")
-    debug("\t\tmemList: {}\n\t\t and mentions: {}".format(
+    debug("Start memGrab")
+    debug("memList: {}\nand mentions: {}".format(
         memList, ctx.message.mentions))
 
     # first check for users mentioned in message
     if ctx.message.mentions:
         grabList = ctx.message.mentions
-        debug("\t\t\tMessage mentions: {}".format(grabList))
+        debug("Message mentions: {}".format(grabList))
 
     # else check for users named by command caller
     elif memList:
         grabList = memList.split(", ")
-        debug("\t\t\tsplit grablist: {}".format(grabList))
+        debug("split grablist: {}".format(grabList))
         for i in range(0, len(grabList)):
-            debug("\t\t\t\tposition {} grablist: {}".format(
+            debug("position {} grablist: {}".format(
                 i, grabList[i]))
             grabList[i] = await MemberConverter().convert(ctx, grabList[i])
 
     # else use the command caller themself
     else:
         grabList = [ctx.message.author]
-        debug("\t\t\tAuthor is: {}".format(grabList))
-    debug("\t\t\tfixed grablist: {}".format(grabList))
-    debug("\tfuncGrabList END")
+        debug("Author is: {}".format(grabList))
+    debug("fixed grablist: {}".format(grabList))
+    debug("End memGrab")
 
     # return: mentioned users || named users || message author
     return grabList
@@ -712,32 +784,33 @@ async def memGrab(self, ctx, memList=""):
 
 # get roles of a lower rank on member to remove later
 def toCut(member):
-    debug("\tfuncCut START")
+    debug("Start toCut")
 
     # fetch unrestricted managed roles member has
     supeRoles = spent([member])
-    debug("\t\tsupeRoles = {}".format(supeRoles[0][2]))
+    debug("supeRoles = {}".format(supeRoles[0][2]))
 
     # fetch build of member
     supeBuild = funcBuild(supeRoles[0][2])
-    debug("\t\tsupeBuild = {}".format(supeBuild[1]))
+    debug("supeBuild = {}".format(supeBuild[1]))
 
     # fetch trimmed build of user
     supeTrim = [enm.power[enm.toType(x[1]) + str(x[0])]['Name']
                 for x in enm.trim(supeBuild[1])]
-    debug("\t\tsupeTrim = {}".format(supeTrim))
+    debug("supeTrim = {}".format(supeTrim))
 
     # fetch extra roles user has that are to be removed
     toCut = [x for x in supeBuild[1] if x not in supeTrim]
-    debug("\tto CUT = {}".format(toCut))
-    debug("\tfuncCut END")
+    debug("to CUT = {}".format(toCut))
 
     # return the roles to be removed
+    debug("End toCut")
     return toCut
 
 
 # function to remove extra or specified roles from list of users
 async def cut(ctx, memberList, cutList=[]):
+    debug("Start cut")
     # iterate through given user list
     # assumed list has already been reduced to users with SUPEROLE
     for peep in memberList:
@@ -762,37 +835,69 @@ async def cut(ctx, memberList, cutList=[]):
         # notify current user has been finished with to discord
         sendMes += "{} has been cut down to size!".format(nON(peep))
         await ctx.send(sendMes)
+    debug("End cut")
     return
 
 
 # function to fetch all guild roles that are managed by bot
 async def orderRole(self, ctx):
+    debug("Start orderRole")
     debug(enm.power.values())
 
     supeList = [x for x in ctx.message.author.guild.roles if str(
         x) in [y['Name'] for y in enm.power.values()]]
 
     debug(supeList)
+    debug("End orderRole")
     return supeList
 
 
 def lvlEqu(givVar, inv=0):
+    debug("Start lvlEqu")
     if inv:
         calVar = (20 * math.pow(givVar, 2)) / 1.25
         debug("{} GDV is equivalent to {} XP".format(givVar, calVar))
     else:
         calVar = math.sqrt((1.25 * givVar) / 20)
         debug("{} XP is equivalent to {} GDV".format(givVar, calVar))
+    debug("End lvlEqu")
     return round(calVar, 2)
 
 
 def plurality(inp):
+    debug("Start plurality")
     if inp.lower() in "aeiou":
+        debug("end plurality")
         return 'An'
+    debug("End plurality")
     return 'A'
 
+
+def save(key, value, cache_file="cache.sqlite3"):
+    debug("Start save")
+    try:
+        with SqliteDict(cache_file) as mydict:
+            mydict[key] = value  # Using dict[key] to store
+            mydict.commit()  # Need to commit() to actually flush the data
+        debug("saved {}: {}".format(key, value))
+    except Exception as ex:
+        print("Error during storing data (Possibly unsupported):", ex)
+    debug("End save")
+
+
+def load(key, cache_file="cache.sqlite3"):
+    debug("Start load")
+    try:
+        with SqliteDict(cache_file) as mydict:
+            # No need to use commit(), since we are only loading data!
+            value = mydict[key]
+        debug("Loaded: ", value)
+        return value
+    except Exception as ex:
+        print("Error during loading data:", ex)
+    debug("End load")
+
+
 # function to setup cog
-
-
 def setup(bot):
     bot.add_cog(Options(bot))

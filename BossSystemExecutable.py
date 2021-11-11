@@ -209,7 +209,7 @@ async def role(ctx, *, roleToAdd: str = enm.freeRoles[0]):
     return
 
 
-@bot.command(hidden=HIDE, aliases=['re'], brief=enm.cmdInf['restart']['brief'], description=enm.cmdInf['restart']['description'])
+@bot.command(hidden=HIDE, aliases=['re', 'reboot'], brief=enm.cmdInf['restart']['brief'], description=enm.cmdInf['restart']['description'])
 @commands.has_any_role(MANAGER)
 async def restart(ctx):
     await ctx.send("Restarting bot...")
@@ -227,7 +227,7 @@ async def end(ctx):
     return
 
 
-@bot.command(hidden=HIDE, brief=enm.cmdInf['update']['brief'], description=enm.cmdInf['update']['description'])
+@bot.command(hidden=HIDE, aliases=['up'], brief=enm.cmdInf['update']['brief'], description=enm.cmdInf['update']['description'])
 @commands.is_owner()
 async def update(ctx):
     git_dir = "/.git/ReSub.SYS"
@@ -236,7 +236,7 @@ async def update(ctx):
     return
 
 
-@bot.command(hidden=HIDE, brief=enm.cmdInf['pause']['brief'], description=enm.cmdInf['pause']['description'])
+@bot.command(hidden=HIDE, aliases=['sleep'],  brief=enm.cmdInf['pause']['brief'], description=enm.cmdInf['pause']['description'])
 @commands.is_owner()
 async def pause(ctx):
     global asleep

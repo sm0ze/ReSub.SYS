@@ -30,24 +30,28 @@ posTask = {
         'Layout': "{} {} {} is {} {}.\n",
         'Worth': [25, 75],
         'Add': 0,
+        'Aid': 0,
         'Timer': 300,
     },
     'Moderate': {
         'Layout': "{} {} {} is {} {}.\n",
         'Worth': [75, 150],
         'Add': 1,
+        'Aid': 0.5,
         'Timer': 600,
     },
     'Major': {
         'Layout': "{} {} {} is {} {}.\n",
         'Worth': [150, 225],
         'Add': 3,
+        'Aid': 0.5,
         'Timer': 900,
     },
     'Imperative': {
         'Layout': "{} {} {} is {} {}.\n",
         'Worth': [225, 300],
         'Add': -1,
+        'Aid': 0.25,
         'Timer': 1200,
     },
 }
