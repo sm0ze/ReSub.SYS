@@ -497,30 +497,32 @@ class Options(commands.Cog):
         for peep in typeMem:
             mes = ''
             stuff = await count(peep, 1)
-            mes += "{} MEE6 xp is currently {}\n".format(
+            mes += "{}'s MEE6 xp is currently {}\n".format(
                 nON(peep), stuff[3][0])
-            mes += "{} TATSU xp is currently {}\n".format(
+            mes += "{}'s TATSU xp is currently {}\n".format(
                 nON(peep), stuff[3][1])
-            mes += "{} ReSub xp is currently {}\n".format(
+            mes += "{}'s ReSub xp is currently {}\n".format(
                 nON(peep), stuff[3][-1])
-            mes += "{} Total xp is currently {}\n".format(
+            mes += "{}'s Total xp is currently {}\n".format(
                 nON(peep), stuff[2])
-            mes += "{} resub GDV is currently {}\n".format(
+            mes += "{}'s resub GDV is currently {}\n".format(
                 nON(peep), round(stuff[1], 2))
-            mes += "{} enhancement points is currently {}\n".format(
+            mes += "{}'s enhancement points is currently {}\n".format(
                 nON(peep), stuff[0])
 
             nextGDV = int(stuff[1]) + 1
             nextGDV_XP = lvlEqu(nextGDV, 1)
             nextGDVneedXP = nextGDV_XP - stuff[2]
 
-            mes += "XP to next GDV is {}\n".format(nextGDVneedXP)
+            mes += "{}'s XP to next GDV is {}\n".format(
+                nON(peep), nextGDVneedXP)
 
             nextEnhP = int(5 * (int(stuff[1] / 5) + 1))
             nextEnhP_XP = lvlEqu(nextEnhP, 1)
             nextEnhPneedXP = nextEnhP_XP - stuff[2]
 
-            mes += "XP to next enhancement point is {}".format(nextEnhPneedXP)
+            mes += "{}'s XP to next enhancement point is {}".format(
+                nON(peep), nextEnhPneedXP)
             await ctx.send(mes)
         return
 
