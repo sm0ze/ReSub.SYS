@@ -174,7 +174,7 @@ class Options(commands.Cog):
         debug("{}\nTask XP: {}\n10 XP in GDV: {}".format(
             taskType, lvlEqu(taskWorth[0], 1), lvlEqu(10)))
         emptMes = "Host {} has received {} {[0]} task! ".format(
-            nON(ctx.message.author), aOrAn(taskType[0]), taskType)
+            nON(ctx.message.author), aOrAn(taskType[0][0]).lower(), taskType)
 
         taskDesc = taskShrt['Layout']
         debug("Task layout is: ", taskDesc)
@@ -890,6 +890,7 @@ def lvlEqu(givVar, inv=0):
 
 def aOrAn(inp):
     debug("Start aOrAn")
+    debug("input is: ", inp)
     ret = 'A'
     if inp.lower() in "aeiou":
         ret = 'An'
