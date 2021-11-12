@@ -54,6 +54,7 @@ HIDE = False
 LEADLIMIT = 10
 NEWCALC = 1
 GEMDIFF = 0.5
+taskCD = 60 * 30
 
 # TODO: implement this and similiar instead of multiple enhancement.dict.keys() calls
 # enhancement (type, rank) pairs for list command
@@ -128,6 +129,7 @@ class Options(commands.Cog):
             await ctx.send("{} XP is equivalent to {} GDV".format(inVar, feedback))
 
     @commands.command(aliases=['t'], brief=enm.cmdInf['task']['brief'], description=enm.cmdInf['task']['description'])
+    @commands.cooldown(1, taskCD, type=commands.BucketType.user)
     async def task(self, ctx):
         """
         It can be 60% minor, you only,
@@ -152,7 +154,7 @@ class Options(commands.Cog):
             if taskAdd == -1:
                 addPeeps = peepToAdd.members
                 addPeeps.remove(ctx.message.author)
-                addNames = ['ALL SUPES!']
+                addNames = "every host of the Superhero Enhancement System!"
             else:
                 addPeeps = random.sample(peepToAdd.members, k=taskAdd + 1)
                 debug("peeps list is: {}".format(addPeeps))
@@ -167,7 +169,7 @@ class Options(commands.Cog):
         debug("xpList = ", xpList)
         debug("{}\nTask XP: {}\n10 XP in GDV: {}".format(
             taskType, lvlEqu(taskWorth[0], 1), lvlEqu(10)))
-        emptMes = "Host {} is assigned a task of {[0]} importance!\n\n".format(
+        emptMes = "Host {} has received a {[0]} task! ".format(
             nON(ctx.message.author), taskType)
 
         taskDesc = taskShrt['Layout']
@@ -189,16 +191,15 @@ class Options(commands.Cog):
         selPlace = random.choice(taskShrt['Location'])
         debug("Selected Location: {}".format(selPlace))
 
-        emptMes += str(taskDesc).format(
-            plurality(selAdj[:1]), selAdj, selPeep, selAct, selPlace)
-
         taskGrant = random.randrange(taskWorth[0], taskWorth[1])
 
-        emptMes += "\nTask will grant {} XP, come back in {} minutes.".format(
-            taskGrant, int(taskShrt['Timer'] / 60))
         if addPeeps:
-            emptMes += "\nDue to task difficulty, help will be received from {}\n".format(
+            emptMes += " Due to the task difficulty, assistance has been provided by {}.".format(
                 addNames)
+
+        emptMes += "\n\n" + str(taskDesc).format(
+            plurality(selAdj[:1]), selAdj, selPeep, selAct, selPlace)
+
         try:
             authInf = load(ctx.message.author.guild.id)
         except Exception as e:
@@ -206,7 +207,7 @@ class Options(commands.Cog):
         if not authInf:
             authInf = {}
 
-        for peep in xpList:
+        for peep in reversed(xpList):
             debug("peep is: ", peep)
             if peep[0].id in authInf.keys():
                 authInf[peep[0].id]['invXP'][-1] += taskGrant * peep[1]
@@ -214,11 +215,11 @@ class Options(commands.Cog):
                 authInf[peep[0].id] = {'Name': peep[0].name}
                 authInf[peep[0].id]['invXP'] = [0, 0, taskGrant * peep[1]]
             if taskAdd != -1:
-                emptMes += "\n{} just earnt {} ReSubXP for a total of: {}".format(
+                emptMes += "\n{} earned {} ReSubXP for a total of: {}".format(
                     nON(peep[0]), taskGrant * peep[1], authInf[peep[0].id]['invXP'][-1])
         if taskAdd == -1:
-            emptMes += "\n All Supes just earnt {} ReSubXP except for {} who earnt {}.".format(
-                taskGrant * taskShrt['Aid'], nON(ctx.message.author), taskGrant)
+            emptMes += "\n{} earned {} ReSubXP for a total of: {}\nEveryone else earned {} ReSubXP.".format(
+                nON(ctx.message.author), taskGrant, authInf[ctx.message.author.id]['invXP'][-1], taskGrant * taskShrt['Aid'])
 
         await ctx.send(emptMes)
         save(ctx.message.author.guild.id, authInf)

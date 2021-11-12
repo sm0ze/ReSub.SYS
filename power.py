@@ -28,31 +28,27 @@ taskVar = {'taskOpt':  [['Minor', 'Moderate', 'Major', 'Imperative'], ['1LfSqavV
 posTask = {
     'Minor': {
         'Layout': "{} {} {} is {} {}.\n",
-        'Worth': [25, 75],
+        'Worth': [200, 400],
         'Add': 0,
         'Aid': 0,
-        'Timer': 300,
     },
     'Moderate': {
         'Layout': "{} {} {} is {} {}.\n",
-        'Worth': [75, 150],
+        'Worth': [400, 600],
         'Add': 1,
         'Aid': 0.5,
-        'Timer': 600,
     },
     'Major': {
         'Layout': "{} {} {} is {} {}.\n",
-        'Worth': [150, 225],
+        'Worth': [600, 800],
         'Add': 3,
         'Aid': 0.5,
-        'Timer': 900,
     },
     'Imperative': {
         'Layout': "{} {} {} is {} {}.\n",
-        'Worth': [225, 300],
+        'Worth': [800, 1000],
         'Add': -1,
         'Aid': 0.25,
-        'Timer': 1200,
     },
 }
 
