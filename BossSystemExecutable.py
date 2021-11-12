@@ -159,6 +159,10 @@ async def on_command_error(ctx, error):
     elif splitError[4] == 'KeyError:':
         await ctx.send("{} is not a recognised option".format(splitError[-1]))
 
+    elif isinstance(error, commands.CommandOnCooldown):
+        cdTime = float(splitError[-1][:-1])
+        await ctx.send("You have no available tasks at this time. Please search again in {} minutes or {} seconds.".format(round(cdTime / 60, 2), cdTime))
+
     else:  # just send the error to discord
         await ctx.send("Error: " + str(error))
     return
