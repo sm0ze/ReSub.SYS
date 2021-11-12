@@ -4,6 +4,7 @@ import asyncio
 import datetime
 import os
 import random
+import socket
 import sys
 import time
 
@@ -262,7 +263,7 @@ async def pause(ctx):
 
 @bot.command(brief=enm.cmdInf['about']['brief'], description=enm.cmdInf['about']['description'])
 async def about(ctx):
-    hostname = os.environ['COMPUTERNAME']
+    hostname = socket.gethostname()
     await ctx.send("This is a bot coded by sm0ze#3542.\nThis initially started as a way to automatically assign roles for Geminel#1890's novel.\nNow the bot is capable enough to allow users to gain bot specific experience, level up their GDV and gain system enhancements. \n\nYou can find the code at this url here:\nhttps://github.com/sm0ze/ReSub.SYS \n\n It is currently running on {}.".format(hostname))
 
 """
