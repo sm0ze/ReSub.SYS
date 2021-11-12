@@ -81,6 +81,9 @@ freeRoles = ['Ping Unto Me My Daily Quack', 'Supe']
 
 
 cmdInf = {
+    'about': {
+        'brief': '-quick blurb for info about the bot.',
+        'description': "-quick blurb for info about the bot. Also has the hostname of the os the bot is running on for troubleshooting."},
     'add': {
         'brief': '-Allows host to add enhancement(s) and their prereqs to themself.',
         'description': "-Use the shorthand enhancement codes separated by commas to add to host's build.\nExample: For a build with Rank 4 Regeneration and Rank 4 Mental Celerity the shorthand would be 'reg4, cel4'. The bot will attempt to add those 2 enhancements and their prerequisites to the host if they have enough enhancement points."},
@@ -91,8 +94,8 @@ cmdInf = {
         'brief': '-Allows a host to reset their enhancements for reallocation.',
         'description': '-This command will remove all Supe related roles from the host so they can start a new build.'},
     'convert': {
-        'brief': '-.',
-        'description': '-.'},
+        'brief': '-Converts between GDV and XP values.',
+        'description': '-Converts between GDV and XP values.\n"~convert x" will convert x from XP to GDV\n"~convert x 1" will convert x from GDV to XP.'},
     'end': {
         'brief': '-Kills the bot.',
         'description': '-Kills the bot. sm0ze will have to turn it back on again... That is why he is the only one able to use this command :P'},
@@ -136,8 +139,8 @@ cmdInf = {
         'brief': '-Pulls the latest update from github.',
         'description': "-Pulls the latest update from github. If you ain't sm0ze, why do you care about this command?"},
     'upload': {
-        'brief': '-.',
-        'description': '-.'},
+        'brief': '-Uploads the memberlist xp value cache.',
+        'description': '-Uploads the memberlist xp value cache. Server ID as Key will return a dictionary with keys of different member IDs. This makes the ReSub Bot a server specific XP bot.'},
     'uptime': {
         'brief': '-Shows how long the bot has been online and logged in.',
         'description': '-Shows how long the bot has been online and logged in. Highscores are always fun!'},

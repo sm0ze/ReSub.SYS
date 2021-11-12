@@ -507,21 +507,21 @@ class Options(commands.Cog):
                 nON(peep), stuff[2])
             mes += "{}'s resub GDV is currently {}\n".format(
                 nON(peep), round(stuff[1], 2))
-            mes += "{}'s enhancement points is currently {}\n".format(
+            mes += "{}'s enhancement points are currently {}\n".format(
                 nON(peep), stuff[0])
 
             nextGDV = int(stuff[1]) + 1
             nextGDV_XP = lvlEqu(nextGDV, 1)
             nextGDVneedXP = nextGDV_XP - stuff[2]
 
-            mes += "{}'s XP to next GDV is {}\n".format(
+            mes += "{}'s required XP to next GDV is {}\n".format(
                 nON(peep), nextGDVneedXP)
 
             nextEnhP = int(5 * (int(stuff[1] / 5) + 1))
             nextEnhP_XP = lvlEqu(nextEnhP, 1)
             nextEnhPneedXP = nextEnhP_XP - stuff[2]
 
-            mes += "{}'s XP to next enhancement point is {}".format(
+            mes += "{}'s required XP to next enhancement point is {}".format(
                 nON(peep), nextEnhPneedXP)
             await ctx.send(mes)
         return
