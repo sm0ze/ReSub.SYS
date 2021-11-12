@@ -67,7 +67,7 @@ powerTypes = {'Strength': 10, 'Speed': 10, 'Endurance': 10, 'Memory': 10, 'Menta
               'Invisibility': 10, 'Vision': 10, 'Aural Faculty': 10, 'Olfactory Sense': 10, 'Gustatory Ability': 10, 'Tactile Reception': 10, 'Proprioception': 10, '4th Wall Breaker*': 10, 'Intelligence*': 10}
 
 leader = {'str': 'Strength', 'spe': 'Speed', 'end': 'Endurance', 'mem': 'Memory', 'cel': 'Mental Celerity', 'cla': 'Mental Clarity', 'reg': 'Regeneration', 'pai': 'Pain Tolerance', 'inv': 'Invisibility',
-          'vis': 'Vision', 'aur': 'Aural Faculty', 'olf': 'Olfactory Sense', 'gus': 'Gustatory Ability', 'tac': 'Tactile Reception', 'pro': 'Proprioception', '4th': '4th Wall Breaker', 'int': 'Intelligence', 'sys': 'System', 'aut': 'Author'}
+          'vis': 'Vision', 'aur': 'Aural Faculty', 'olf': 'Olfactory Sense', 'gus': 'Gustatory Ability', 'tac': 'Tactile Reception', 'pro': 'Proprioception', '4th': '4th Wall Breaker', 'int': 'Intelligence', 'sys': 'System', 'aut': 'Authors'}
 
 # the different hexcodes for the colour of each role by rank
 rankColour = {1: 0xffffff, 2: 0xcfceeb, 3: 0xaeaddf, 4: 0x8c8bd8, 5: 0x6c6bc7,
@@ -75,7 +75,7 @@ rankColour = {1: 0xffffff, 2: 0xcfceeb, 3: 0xaeaddf, 4: 0x8c8bd8, 5: 0x6c6bc7,
 
 # restricted roles, should correspond with * moifiers in powerTypes
 # and cannot be added by the bot
-restrictedList = ['System', 'Author']
+restrictedList = ['System', 'Authors']
 
 freeRoles = ['Ping Unto Me My Daily Quack', 'Supe']
 
@@ -152,7 +152,7 @@ cmdInf = {
 power = {
     'sup0': {'Name': 'Supe', 'Type': 'Supe', 'Rank': 0, 'Prereq': []},
     'sys0': {'Name': 'System', 'Type': 'System', 'Rank': 0, 'Prereq': []},
-    'aut0': {'Name': 'Author', 'Type': 'Author', 'Rank': 0, 'Prereq': []},
+    'aut0': {'Name': 'Authors', 'Type': 'Authors', 'Rank': 0, 'Prereq': []},
 
     'str1': {'Name': 'Rank 1 Strength', 'Type': 'Strength', 'Rank': 1, 'Prereq': []},
     'spe1': {'Name': 'Rank 1 Speed', 'Type': 'Speed', 'Rank': 1, 'Prereq': []},
