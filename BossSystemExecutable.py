@@ -44,8 +44,12 @@ if TEST:
 # TOKEN is the discord bot token to authorise this code for the ReSub.SYS bot
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
+SAVEFILE = os.getenv('SAVEFILE')
+
 if not TOKEN:
     TOKEN = askToken('DISCORD_TOKEN')
+if not SAVEFILE:
+    SAVEFILE = askToken('SAVEFILE')
 
 SUPEROLE = "Supe"
 MANAGER = 'System'  # manager role name for guild
@@ -219,6 +223,12 @@ async def restart(ctx):
     await ctx.send("Restarting bot...")
     restart_bot()
     return
+
+
+@bot.command(hidden=HIDE, brief=enm.cmdInf['upload']['brief'], description=enm.cmdInf['upload']['description'])
+@commands.has_any_role(MANAGER)
+async def upload(ctx):
+    await ctx.send(file=discord.File(SAVEFILE))
 
 
 @bot.command(hidden=HIDE, brief=enm.cmdInf['end']['brief'], description=enm.cmdInf['end']['description'])

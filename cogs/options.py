@@ -38,12 +38,16 @@ if TEST:
 load_dotenv()
 GUILD = os.getenv('DISCORD_GUILD')
 TATSU = os.getenv('TATSU_TOKEN')
+SAVEFILE = os.getenv('SAVEFILE')
 
 if not GUILD:
     GUILD = askToken('DISCORD_GUILD')
 
 if not TATSU:
     TATSU = askToken('TATSU_TOKEN')
+
+if not SAVEFILE:
+    SAVEFILE = askToken('SAVEFILE')
 
 
 SUPEROLE = "Supe"
@@ -135,7 +139,7 @@ class Options(commands.Cog):
         It can be 60% minor, you only,
         25% moderate +1 random supe gets half xp,
         10% major +3 random supes get half and
-        5% urgent everyone gets quarter xp - Geminel
+        5% [imperative] everyone gets quarter xp - Geminel
         https://discord.com/channels/822410354860097577/823225800073412698/907167823284019231
         """
 
@@ -169,8 +173,8 @@ class Options(commands.Cog):
         debug("xpList = ", xpList)
         debug("{}\nTask XP: {}\n10 XP in GDV: {}".format(
             taskType, lvlEqu(taskWorth[0], 1), lvlEqu(10)))
-        emptMes = "Host {} has received a {[0]} task! ".format(
-            nON(ctx.message.author), taskType)
+        emptMes = "Host {} has received {} {[0]} task! ".format(
+            nON(ctx.message.author), aOrAn(taskType[0]), taskType)
 
         taskDesc = taskShrt['Layout']
         debug("Task layout is: ", taskDesc)
@@ -198,7 +202,7 @@ class Options(commands.Cog):
                 addNames)
 
         emptMes += "\n\n" + str(taskDesc).format(
-            plurality(selAdj[:1]), selAdj, selPeep, selAct, selPlace)
+            aOrAn(selAdj[:1]), selAdj, selPeep, selAct, selPlace)
 
         try:
             authInf = load(ctx.message.author.guild.id)
@@ -405,7 +409,13 @@ class Options(commands.Cog):
     @ commands.command(aliases=['leaderboard'], brief=enm.cmdInf['top']['brief'], description=enm.cmdInf['top']['description'])
     # top 10 user leaderboard for number of used enhancements
     async def top(self, ctx, *, enh=""):
-        if enh:
+        if enh.lower() == "resub":
+            serverXP = load(ctx.message.author.guild.id)
+            resubXPList = [[ctx.message.guild.get_member(x), serverXP[x]['invXP'][-1]]
+                           for x in serverXP.keys()]
+            pointList = sorted(resubXPList, key=lambda x: x[1], reverse=True)
+            blankMessage = ""
+        elif enh:
             if enh not in enm.leader.keys():
                 if enh not in enm.leader.values():
                     await ctx.send("No enhancement could be found for type: {}".format(enh))
@@ -458,10 +468,12 @@ class Options(commands.Cog):
                 blankMessage += "**{}** - {} \n\t {} enhancements\n".format(
                     i, nON(group[0]), group[1])
             else:
-                blankMessage += "**{}** - {} \n\t Rank {} {}\n".format(
-                    i, nON(group[0]), group[1], enh)
-                # OBSOLETE message spam
-                # await ctx.send("{} is number {} with {} enhancements".format(group[0], i, group[1]))
+                if not enh.lower() == "resub":
+                    blankMessage += "**{}** - {} \n\t Rank {} {}\n".format(
+                        i, nON(group[0]), group[1], enh)
+                else:
+                    blankMessage += "**{}** - {} \n\t {} ReSub XP\n".format(
+                        i, nON(group[0]), group[1])
             i += 1
 
         # return leaderboard to command caller
@@ -491,13 +503,24 @@ class Options(commands.Cog):
                 nON(peep), stuff[3][1])
             mes += "{} ReSub xp is currently {}\n".format(
                 nON(peep), stuff[3][-1])
-            mes += "{} Total xp is currently {}\n".format(
+            mes += "{} Total xp is currently {}\nMEE6 + 0.5*TATSU + ReSub\n".format(
                 nON(peep), stuff[2])
             mes += "{} resub GDV is currently {}\n".format(
                 nON(peep), round(stuff[1], 2))
-            mes += "{} enhancement points is currently {}".format(
+            mes += "{} enhancement points is currently {}\n".format(
                 nON(peep), stuff[0])
 
+            nextGDV = int(stuff[1]) + 1
+            nextGDV_XP = lvlEqu(nextGDV, 1)
+            nextGDVneedXP = nextGDV_XP - stuff[2]
+
+            mes += "XP to next GDV is {}\n".format(nextGDVneedXP)
+
+            nextEnhP = int(5 * (int(stuff[1] / 5) + 1))
+            nextEnhP_XP = lvlEqu(nextEnhP, 1)
+            nextEnhPneedXP = nextEnhP_XP - stuff[2]
+
+            mes += "XP to next enhancement point is {}".format(nextEnhPneedXP)
             await ctx.send(mes)
         return
 
@@ -865,16 +888,17 @@ def lvlEqu(givVar, inv=0):
     return round(calVar, 2)
 
 
-def plurality(inp):
-    debug("Start plurality")
+def aOrAn(inp):
+    debug("Start aOrAn")
+    ret = 'A'
     if inp.lower() in "aeiou":
-        debug("end plurality")
-        return 'An'
-    debug("End plurality")
-    return 'A'
+        ret = 'An'
+    debug("ret = ", ret)
+    debug("End aOrAn")
+    return ret
 
 
-def save(key, value, cache_file="cache.sqlite3"):
+def save(key, value, cache_file=SAVEFILE):
     debug("Start save")
     try:
         with SqliteDict(cache_file) as mydict:
@@ -886,7 +910,7 @@ def save(key, value, cache_file="cache.sqlite3"):
     debug("End save")
 
 
-def load(key, cache_file="cache.sqlite3"):
+def load(key, cache_file=SAVEFILE):
     debug("Start load")
     try:
         with SqliteDict(cache_file) as mydict:

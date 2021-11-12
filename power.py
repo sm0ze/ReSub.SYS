@@ -122,7 +122,7 @@ cmdInf = {
         'description': "-Use this command to get a walkthrough for host's first enhancement.\nIf you have no idea how to use the bot, this is a good place to start."},
     'task': {
         'brief': "-Grants host a task to complete.",
-        'description': "-Grants host a task to complete.\nTask may be of type minor, moderate, major or urgent. Completion of task will grant the host 100% GDV with partial GDV given to those that help. Different number of maximum additional helpers for different task tiers of respectively 0, 1, 3 and All System hosts"},
+        'description': "-Grants host a task to complete.\nTask may be of type minor, moderate, major or imperative. Completion of task will grant the host 100% GDV with partial GDV given to those that help. Different number of maximum additional helpers for different task tiers of respectively 0, 1, 3 and All System hosts"},
     'top': {
         'brief': '-Shows the top hosts by their enhancements.',
         'description': "-Shows the top hosts by their enhancements.\nA variable 'enh' can be given if user would like to get the top hosts of a specific enhancement."},
@@ -135,6 +135,9 @@ cmdInf = {
     'update': {
         'brief': '-Pulls the latest update from github.',
         'description': "-Pulls the latest update from github. If you ain't sm0ze, why do you care about this command?"},
+    'upload': {
+        'brief': '-.',
+        'description': '-.'},
     'uptime': {
         'brief': '-Shows how long the bot has been online and logged in.',
         'description': '-Shows how long the bot has been online and logged in. Highscores are always fun!'},
