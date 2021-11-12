@@ -143,7 +143,7 @@ cmdInf = {
         'description': '-Shows how long the bot has been online and logged in. Highscores are always fun!'},
     'xpGrab': {
         'brief': '-Shows the command callers XP total.',
-        'description': '-Shows the command callers XP total. Can also be used to ensure the python modules for getting user info is still working.'}
+        'description': '-Shows the command callers XP total. total xp is calculated with: MEE6 + 0.5*TATSU + ReSub. Can also be used to ensure the python modules for getting user info is still working.'}
 
 }
 
@@ -230,8 +230,8 @@ power = {
     'tac4': {'Name': 'Rank 4 Tactile Reception', 'Type': 'Tactile Reception', 'Rank': 4, 'Prereq': ['tac3', 'cla1', 'cel1']},
     'pro4': {'Name': 'Rank 4 Proprioception', 'Type': 'Proprioception', 'Rank': 4, 'Prereq': ['pro3', 'cla1', 'cel1']},
 
-    'int4': {'Name': 'Rank 4 Intelligence (only for Systems)', 'Type': 'Intelligence', 'Rank': 4, 'Prereq': ['int3', 'mem1', 'cel1', 'cla1']},
-    '4th4': {'Name': 'Rank 4 4th Wall Breaker', 'Type': '4th Wall Breaker', 'Rank': 4, 'Prereq': ['4th3', 'int1']},
+    'int4': {'Name': 'Rank 4 Intelligence (only for Systems)', 'Type': 'Intelligence', 'Rank': 4, 'Prereq': ['int3', 'cel1', 'cla1']},
+    '4th4': {'Name': 'Rank 4 4th Wall Breaker', 'Type': '4th Wall Breaker', 'Rank': 4, 'Prereq': ['4th3', 'str1', 'end1', 'pro1']},
 
     'str5': {'Name': 'Rank 5 Strength', 'Type': 'Strength', 'Rank': 5, 'Prereq': ['str4']},
     'spe5': {'Name': 'Rank 5 Speed', 'Type': 'Speed', 'Rank': 5, 'Prereq': ['spe4']},
@@ -287,8 +287,8 @@ power = {
     'tac7': {'Name': 'Rank 7 Tactile Reception', 'Type': 'Tactile Reception', 'Rank': 7, 'Prereq': ['tac6', 'pro1', 'cla3', 'cel3']},
     'pro7': {'Name': 'Rank 7 Proprioception', 'Type': 'Proprioception', 'Rank': 7, 'Prereq': ['pro6', 'mem3', 'cla3', 'cel3']},
 
-    'int7': {'Name': 'Rank 7 Intelligence (only for Systems)', 'Type': 'Intelligence', 'Rank': 7, 'Prereq': ['int6', 'mem3', 'cel3', 'cla3']},
-    '4th7': {'Name': 'Rank 7 4th Wall Breaker', 'Type': '4th Wall Breaker', 'Rank': 7, 'Prereq': ['4th6', 'int3']},
+    'int7': {'Name': 'Rank 7 Intelligence (only for Systems)', 'Type': 'Intelligence', 'Rank': 7, 'Prereq': ['int6', 'mem1', 'cel3', 'cla3']},
+    '4th7': {'Name': 'Rank 7 4th Wall Breaker', 'Type': '4th Wall Breaker', 'Rank': 7, 'Prereq': ['4th6', 'str3', 'end3', 'pro3']},
 
     'str8': {'Name': 'Rank 8 Strength', 'Type': 'Strength', 'Rank': 8, 'Prereq': ['str7']},
     'spe8': {'Name': 'Rank 8 Speed', 'Type': 'Speed', 'Rank': 8, 'Prereq': ['spe7']},
@@ -344,8 +344,8 @@ power = {
     'tac10': {'Name': 'Rank 10 Tactile Reception', 'Type': 'Tactile Reception', 'Rank': 10, 'Prereq': ['tac9', 'pai3', 'cla6', 'cel6', 'pro3']},
     'pro10': {'Name': 'Rank 10 Proprioception', 'Type': 'Proprioception', 'Rank': 10, 'Prereq': ['pro9', 'mem6', 'cla6', 'cel6']},
 
-    'int10': {'Name': 'Rank 10 Intelligence (only for Systems)', 'Type': 'Intelligence', 'Rank': 10, 'Prereq': ['int9', 'mem6', 'cel6', 'cla6']},
-    '4th10': {'Name': 'Rank 10 4th Wall Breaker', 'Type': '4th Wall Breaker', 'Rank': 10, 'Prereq': ['4th9', 'int6']}
+    'int10': {'Name': 'Rank 10 Intelligence (only for Systems)', 'Type': 'Intelligence', 'Rank': 10, 'Prereq': ['int9', 'mem3', 'cel6', 'cla6']},
+    '4th10': {'Name': 'Rank 10 4th Wall Breaker', 'Type': '4th Wall Breaker', 'Rank': 10, 'Prereq': ['4th9', 'str6', 'end6', 'pro6']}
 }
 
 

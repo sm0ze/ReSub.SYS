@@ -503,7 +503,7 @@ class Options(commands.Cog):
                 nON(peep), stuff[3][1])
             mes += "{} ReSub xp is currently {}\n".format(
                 nON(peep), stuff[3][-1])
-            mes += "{} Total xp is currently {}\nMEE6 + 0.5*TATSU + ReSub\n".format(
+            mes += "{} Total xp is currently {}\n".format(
                 nON(peep), stuff[2])
             mes += "{} resub GDV is currently {}\n".format(
                 nON(peep), round(stuff[1], 2))
