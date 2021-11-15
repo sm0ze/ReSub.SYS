@@ -32,7 +32,6 @@ rsltDict = {
     'great': [0.7, 0.8],
     'spectacular': [0.8, 0.9],
     'superlative': [0.9, 1],
-    'flawless': [1, 1]
 }
 posTask = {
     'Minor': {

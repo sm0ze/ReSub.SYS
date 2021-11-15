@@ -215,7 +215,7 @@ class Options(commands.Cog):
         selPlace = random.choice(taskShrt['Location'])
         debug("Selected Location: {}".format(selPlace))
 
-        taskGrant = random.randrange(taskWorth[0], taskWorth[1])
+        taskGrant = random.randrange(taskWorth[0], taskWorth[1] + 1)
         debug("task Grant = ", taskGrant)
         taskDiff = taskWorth[1] - taskWorth[0]
         debug("task diff = ", taskDiff)
@@ -229,6 +229,8 @@ class Options(commands.Cog):
         debug("selected resulting word = ", selRsltWrd)
         if selRsltWrd:
             selRsltWrd = selRsltWrd[0]
+        elif taskWorth[1] == taskGrant:
+            selRsltWrd = "flawless"
 
         if addPeeps:
             emptMes += " Due to the task difficulty, assistance has been provided by {}".format(
