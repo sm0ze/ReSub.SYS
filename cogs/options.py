@@ -308,7 +308,7 @@ class Options(commands.Cog):
         userWants = funcBuild(userEnhancements)
         userWantsCost = userWants[0]
         userWantsBuild = userWants[2]
-        pointTot = await count(user)
+        pointTot = await count(user, 1, 1)
         debug("{} with point total {} has {} {} and wants {} {}".format(
             user, pointTot[0], userHas[0], userHasBuild, userWantsCost, userWantsBuild))
 
