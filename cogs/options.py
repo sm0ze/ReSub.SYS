@@ -8,7 +8,7 @@ import discord
 import enhancements as enm
 import tatsu
 from BossSystemExecutable import askToken, nON, servList
-from discord.ext import commands
+from discord.ext import commands, tasks
 from discord.ext.commands import MemberConverter
 from discord.utils import get
 from dotenv import load_dotenv
@@ -68,7 +68,8 @@ ENHLIST = [(x, y) for (x, y) in enm.powerTypes.items()]
 class Options(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        return
+        self.grabLoop.start()
+        self._connection = bot._connection
 
     # Check if user has guild role
     async def cog_check(self, ctx):
@@ -85,6 +86,17 @@ class Options(commands.Cog):
             raise commands.CheckFailure(
                 "You do not have permission as you are missing a role in this list: {}\nThe super command can be used to gain the Supe role".format(PERMROLES))  # messy implementation for Supe
         return commands.check(await predicate(ctx))
+
+    @tasks.loop(minutes=30)
+    async def grabLoop(self):
+        await self.bot.wait_until_ready()
+        roleGrab = None
+        for guild in self.bot.guilds:
+            roleGrab = get(guild.roles, name=SUPEROLE)
+            debug("role grabbed = ", roleGrab)
+            if roleGrab:
+                for peep in roleGrab.members:
+                    await count(peep)
 
     @commands.command(brief=enm.cmdInf['trim']['brief'], description=enm.cmdInf['trim']['description'])
     # command to trim command caller of extra roles. OBSOLETE due to cut call after role add in add command
@@ -125,7 +137,7 @@ class Options(commands.Cog):
         return
 
     @commands.command(brief=enm.cmdInf['convert']['brief'], description=enm.cmdInf['convert']['description'])
-    async def convert(self, ctx, inVar=0, gdv=0):
+    async def convert(self, ctx, inVar: float = 0, gdv=0):
         feedback = lvlEqu(inVar, gdv)
         if gdv:
             await ctx.send("{} GDV is equivalent to {} XP".format(inVar, feedback))
@@ -196,6 +208,19 @@ class Options(commands.Cog):
         debug("Selected Location: {}".format(selPlace))
 
         taskGrant = random.randrange(taskWorth[0], taskWorth[1])
+        debug("task Grant = ", taskGrant)
+        taskDiff = taskWorth[1] - taskWorth[0]
+        debug("task diff = ", taskDiff)
+
+        selResult = round(
+            ((taskGrant - taskWorth[0]) / (2 * taskDiff)) + 0.5, 2)
+        debug("selected result = ", selResult)
+
+        selRsltWrd = [x for x in enm.rsltDict.keys() if int(selResult * 100) in range(
+            int(100 * enm.rsltDict[x][0]), int(100 * enm.rsltDict[x][1]))]
+        debug("selected resulting word = ", selRsltWrd)
+        if selRsltWrd:
+            selRsltWrd = selRsltWrd[0]
 
         if addPeeps:
             emptMes += " Due to the task difficulty, assistance has been provided by {}".format(
@@ -203,6 +228,9 @@ class Options(commands.Cog):
 
         emptMes += "\n\n" + str(taskDesc).format(
             aOrAn(selAdj[:1]), selAdj, selPeep, selAct, selPlace)
+
+        emptMes += "\nThey accomplished {} results in their endeavors, resulting in:".format(
+            selRsltWrd)
 
         try:
             authInf = load(ctx.message.author.guild.id)
@@ -219,14 +247,28 @@ class Options(commands.Cog):
                 authInf[peep[0].id] = {'Name': peep[0].name}
                 authInf[peep[0].id]['invXP'] = [0, 0, taskGrant * peep[1]]
             if taskAdd != -1:
-                emptMes += "\n{} earned {} ReSubXP for a total of: {}".format(
+                emptMes += "\n{} earning {} ReSubXP for a total of: {}".format(
                     nON(peep[0]), taskGrant * peep[1], authInf[peep[0].id]['invXP'][-1])
         if taskAdd == -1:
-            emptMes += "\n{} earned {} ReSubXP for a total of: {}\nEveryone else earned {} ReSubXP.".format(
+            emptMes += "\n{} earning {} ReSubXP for a total of: {}\nEveryone else earns {} ReSubXP.".format(
                 nON(ctx.message.author), taskGrant, authInf[ctx.message.author.id]['invXP'][-1], taskGrant * taskShrt['Aid'])
 
-        await ctx.send(emptMes)
         save(ctx.message.author.guild.id, authInf)
+        stateL = await countOf(ctx.message.author)
+        currEnhP = stateL[0]
+        debug("{} has {} available enhancements".format(
+            nON(ctx.message.author), currEnhP))
+        stateG = spent([ctx.message.author])
+        currEnh = int(stateG[0][1])
+        debug("and enhancments of number = ", currEnh)
+        debug("currEnh {} < currEnhP {}".format(
+            currEnh, currEnhP), currEnh < currEnhP)
+        if currEnh < currEnhP:
+            emptMes += "\n{} has unspent enhancement points.".format(
+                nON(ctx.message.author))
+
+        await ctx.send(emptMes)
+
         return
 
     @ commands.command(aliases=['a'], brief=enm.cmdInf['add']['brief'], description=enm.cmdInf['add']['description'])
@@ -887,7 +929,7 @@ async def orderRole(self, ctx):
     return supeList
 
 
-def lvlEqu(givVar, inv=0):
+def lvlEqu(givVar: float = 0, inv=0):
     debug("Start lvlEqu")
     if inv:
         calVar = (20 * math.pow(givVar, 2)) / 1.25

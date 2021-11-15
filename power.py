@@ -25,6 +25,15 @@ if TEST:
 taskVar = {'taskOpt':  [['Minor', 'Moderate', 'Major', 'Imperative'], ['1LfSqavVskaKWM0yhKO1ZyqU1154TuYwPzt_3eFZOymQ', '1ZS3or-b1uA0-Btv0oiZQkT7Nu12NMNkP-fRdE2dcHTw', '1TKeG8wNanj_tUfFgRVPj020cfY1F22e0Jn-lh345nXM', '1B3YIU6O6FuoUFl5snlMh8DF4OgbpYo4kxqv6YGXw_HY']], 'taskWeight': [
     60, 85, 95, 100]}
 
+rsltDict = {
+    'Error': [0, 0.5],
+    'sufficient': [0.5, 0.6],
+    'good': [0.6, 0.7],
+    'great': [0.7, 0.8],
+    'spectacular': [0.8, 0.9],
+    'superlative': [0.9, 1],
+    'flawless': [1, 1]
+}
 posTask = {
     'Minor': {
         'Layout': "{} {} {} is {} {}.\n",
@@ -120,6 +129,9 @@ cmdInf = {
     'role': {
         'brief': '-Allows user to add freely available roles to themselves.',
         'description': '-Allows user to add freely available roles to themselves.\n Currently the list to pick from is: {}'.format(freeRoles)},
+    'run': {
+        'brief': '-tells user where the bot is running.',
+        'description': "-just the hostname of the os the bot is running on for troubleshooting."},
     'start': {
         'brief': "-Use this command to get a walkthrough for host's first enhancement.",
         'description': "-Use this command to get a walkthrough for host's first enhancement.\nIf you have no idea how to use the bot, this is a good place to start."},
