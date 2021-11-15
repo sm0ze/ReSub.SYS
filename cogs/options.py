@@ -39,15 +39,16 @@ load_dotenv()
 GUILD = os.getenv('DISCORD_GUILD')
 TATSU = os.getenv('TATSU_TOKEN')
 SAVEFILE = os.getenv('SAVEFILE')
+STARTCHANNEL = os.getenv('STARTCHANNEL')
 
 if not GUILD:
     GUILD = askToken('DISCORD_GUILD')
-
 if not TATSU:
     TATSU = askToken('TATSU_TOKEN')
-
 if not SAVEFILE:
     SAVEFILE = askToken('SAVEFILE')
+if not STARTCHANNEL:
+    STARTCHANNEL = askToken('STARTCHANNEL')
 
 
 SUPEROLE = "Supe"
@@ -90,6 +91,11 @@ class Options(commands.Cog):
     @tasks.loop(minutes=30)
     async def grabLoop(self):
         await self.bot.wait_until_ready()
+        debug("Start channel id is", STARTCHANNEL)
+        StrtChannel = self.bot.get_channel(int(STARTCHANNEL))
+        debug("Start channel is", StrtChannel)
+        if DEBUG and StrtChannel:
+            await StrtChannel.send('Bot has started xp update')
         roleGrab = None
         for guild in self.bot.guilds:
             roleGrab = get(guild.roles, name=SUPEROLE)
@@ -97,6 +103,8 @@ class Options(commands.Cog):
             if roleGrab:
                 for peep in roleGrab.members:
                     await count(peep)
+        if DEBUG and StrtChannel:
+            await StrtChannel.send('Bot has finished xp update')
 
     @commands.command(brief=enm.cmdInf['trim']['brief'], description=enm.cmdInf['trim']['description'])
     # command to trim command caller of extra roles. OBSOLETE due to cut call after role add in add command
@@ -539,10 +547,13 @@ class Options(commands.Cog):
     # @commands.has_any_role(MANAGER)
     async def xpGrab(self, ctx, *, mem=''):
         typeMem = await memGrab(self, ctx, mem)
-
+        tatForce = 0
+        for role in ctx.author.roles:
+            if role.name == MANAGER:
+                tatForce = 1
         for peep in typeMem:
             mes = ''
-            stuff = await count(peep, 1)
+            stuff = await count(peep, 1, tatForce)
             mes += "{}'s MEE6 xp is currently {}\n".format(
                 nON(peep), stuff[3][0])
             mes += "{}'s TATSU xp is currently {}\n".format(
@@ -647,7 +658,7 @@ async def manageRoles(ctx):
 # function to get specified user's enhancement points
 
 
-async def count(peep, typ=NEWCALC):
+async def count(peep, typ=NEWCALC, tatFrc=0):
     debug("Start count")
     if not typ:
         # fetch MEE6 level
@@ -672,8 +683,12 @@ async def count(peep, typ=NEWCALC):
         debug("End count")
         return [pointTot]
     else:
-        MEE6xp = await API(GUILD).levels.get_user_xp(peep.id)
-        TATSUmem = await tatsu.wrapper.ApiWrapper(key=TATSU).get_profile(peep.id)
+        if tatFrc:
+            MEE6xp = await API(GUILD).levels.get_user_xp(peep.id)
+            TATSUmem = await tatsu.wrapper.ApiWrapper(key=TATSU).get_profile(peep.id)
+        else:
+            TATSUmem = None
+            MEE6xp = 0
         try:
             pickle_file = load(peep.guild.id)
             debug(pickle_file)

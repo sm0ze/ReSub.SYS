@@ -46,17 +46,19 @@ if TEST:
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 SAVEFILE = os.getenv('SAVEFILE')
+STARTCHANNEL = os.getenv('STARTCHANNEL')
 
 if not TOKEN:
     TOKEN = askToken('DISCORD_TOKEN')
 if not SAVEFILE:
     SAVEFILE = askToken('SAVEFILE')
+if not STARTCHANNEL:
+    STARTCHANNEL = askToken('STARTCHANNEL')
 
 SUPEROLE = "Supe"
 MANAGER = 'System'  # manager role name for guild
 CMDPREFIX = '~'
 STARTTIME = time.time()
-STARTCHANNEL = 823225800073412698
 HIDE = False
 
 global asleep
@@ -81,7 +83,7 @@ async def on_ready():
     global loginTime
     loginTime = time.time()
 
-    StrtChannel = bot.get_channel(STARTCHANNEL)
+    StrtChannel = bot.get_channel(int(STARTCHANNEL))
     await StrtChannel.send('Bot has logged in as {0.user}'.format(bot))
 
     # looped command to update bot's discord presence flavour text
@@ -235,7 +237,7 @@ async def upload(ctx):
 @bot.command(hidden=HIDE, brief=enm.cmdInf['end']['brief'], description=enm.cmdInf['end']['description'])
 @commands.is_owner()
 async def end(ctx):
-    StrtChannel = bot.get_channel(STARTCHANNEL)
+    StrtChannel = bot.get_channel(int(STARTCHANNEL))
     await StrtChannel.send('Bot is terminating')
     await bot.close()
     sys.exit()
