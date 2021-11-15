@@ -547,6 +547,7 @@ class Options(commands.Cog):
 
     @ commands.command(hidden=HIDE, brief=enm.cmdInf['xpGrab']['brief'], description=enm.cmdInf['xpGrab']['description'])
     # @commands.has_any_role(MANAGER)
+    @commands.cooldown(1, 1, commands.BucketType.default)
     async def xpGrab(self, ctx, *, mem=''):
         typeMem = await memGrab(self, ctx, mem)
         tatForce = 0
@@ -555,7 +556,7 @@ class Options(commands.Cog):
                 tatForce = 1
         for peep in typeMem:
             mes = ''
-            stuff = await count(peep, 1, tatForce)
+            stuff = await count(peep, 1, 1)
             mes += "{}'s MEE6 xp is currently {}\n".format(
                 nON(peep), stuff[3][0])
             mes += "{}'s TATSU xp is currently {}\n".format(

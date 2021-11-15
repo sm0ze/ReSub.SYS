@@ -74,8 +74,8 @@ patList = ['Supe', 'Precognition', 'Precognition+', 'Precognition++',
 powerTypes = {'Strength': 10, 'Speed': 10, 'Endurance': 10, 'Memory': 10, 'Mental Celerity': 10, 'Mental Clarity': 10, 'Regeneration': 10, 'Pain Tolerance': 10,
               'Invisibility': 10, 'Vision': 10, 'Aural Faculty': 10, 'Olfactory Sense': 10, 'Gustatory Ability': 10, 'Tactile Reception': 10, 'Proprioception': 10, '4th Wall Breaker*': 10, 'Intelligence*': 10}
 
-leader = {'str': 'Strength', 'spe': 'Speed', 'end': 'Endurance', 'mem': 'Memory', 'cel': 'Mental Celerity', 'cla': 'Mental Clarity', 'reg': 'Regeneration', 'pai': 'Pain Tolerance', 'inv': 'Invisibility',
-          'vis': 'Vision', 'aur': 'Aural Faculty', 'olf': 'Olfactory Sense', 'gus': 'Gustatory Ability', 'tac': 'Tactile Reception', 'pro': 'Proprioception', '4th': '4th Wall Breaker', 'int': 'Intelligence', 'sys': 'System', 'aut': 'Authors'}
+leader = {'str': 'Strength', 'spe': 'Speed', 'end': 'Endurance', 'mem': 'Memory', 'cel': 'Mental Celerity', 'cla': 'Mental Clarity', 'reg': 'Regeneration', 'pai': 'Pain Tolerance', 'inv': 'Invisibility', 'vis': 'Vision',
+          'aur': 'Aural Faculty', 'olf': 'Olfactory Sense', 'gus': 'Gustatory Ability', 'tac': 'Tactile Reception', 'pro': 'Proprioception', '4th': '4th Wall Breaker', 'int': 'Intelligence', 'sys': 'System', 'aut': 'Authors'}
 
 # the different hexcodes for the colour of each role by rank
 rankColour = {1: 0xffffff, 2: 0xcfceeb, 3: 0xaeaddf, 4: 0x8c8bd8, 5: 0x6c6bc7,
