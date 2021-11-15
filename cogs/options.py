@@ -198,7 +198,7 @@ class Options(commands.Cog):
         taskGrant = random.randrange(taskWorth[0], taskWorth[1])
 
         if addPeeps:
-            emptMes += " Due to the task difficulty, assistance has been provided by {}.".format(
+            emptMes += " Due to the task difficulty, assistance has been provided by {}".format(
                 addNames)
 
         emptMes += "\n\n" + str(taskDesc).format(
@@ -330,7 +330,11 @@ class Options(commands.Cog):
     @ commands.has_any_role(MANAGER)
     # manager command to correct role position for roles that have been created by bot
     async def moveRoles(self, ctx):
-        await ctx.send(await manageRoles(ctx))
+        managed = await manageRoles(ctx)
+        if managed:
+            await ctx.send(managed)
+        else:
+            await ctx.send("No roles moved")
         return
 
     @ commands.command(aliases=['p'], brief=enm.cmdInf['points']['brief'], description=enm.cmdInf['points']['description'])
@@ -533,6 +537,7 @@ async def manageRoles(ctx):
 
     # spam message negation
     movedRoles = 'Roles moved:\n'
+    toMove = {}
 
     # iterate through all guild roles
     for role in ctx.message.guild.roles:
@@ -585,17 +590,21 @@ async def manageRoles(ctx):
         # move role to current upperbound intelligence position, forcing intelligence position to increase
         # ASSUMES current role position is lower than intelligence position
         # TODO remove assumption
-        debug("Role moved from {.position} to {}".format(
+        debug("Role to be moved from {.position} to {}".format(
             role, roleRankUpper - 1))
         movedRoles += "Moving role {} from position {} to position {}\n".format(
-            role.name, role.position, roleRankUpper - 1)
-        await role.edit(position=roleRankUpper - 1, color=enm.rankColour[roleRank])
+            role.name, role.position, roleRankUpper)
+        toMove[role] = roleRankUpper
+    await ctx.message.guild.edit_role_positions(positions=toMove)
 
     # return moved roles as single message to function call
-    return movedRoles
-
+    if movedRoles != 'Roles moved:\n':
+        return movedRoles
+    return ""
 
 # function to get specified user's enhancement points
+
+
 async def count(peep, typ=NEWCALC):
     debug("Start count")
     if not typ:
