@@ -105,9 +105,14 @@ async def on_ready():
 
 
 @bot.event
+async def on_thread_update(before, after):
+    debug("before = ", before)
+    debug("after = ", after)
+
+
+@bot.event
 async def on_message(message):
     global asleep
-    debug(message.author.id == bot.owner_id, message.author.id, bot.owner_id)
 
     if message.author.bot:
         # skip message if a bot posted it
@@ -345,4 +350,4 @@ if __name__ == "__main__":
             print(f'Unable to load {filename[:-3]}')
 
     # and to finish. run the bot
-    bot.run(TOKEN, bot=True, reconnect=True)
+    bot.run(TOKEN, reconnect=True)

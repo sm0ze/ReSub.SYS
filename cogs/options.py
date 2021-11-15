@@ -706,10 +706,20 @@ async def count(peep, typ=NEWCALC, tatFrc=0):
             TATSUxp = 0
         debug("TATSUxp = ", TATSUxp)
 
-        if not MEE6xp:
+        try:
+            if not MEE6xp:
+                if pickle_file[peep.id]['invXP'][0]:
+                    MEE6xp = pickle_file[peep.id]['invXP'][0]
+        except:
             MEE6xp = 0
         debug("MEE6xp = ", MEE6xp)
 
+        try:
+            if not TATSUxp:
+                if pickle_file[peep.id]['invXP'][0]:
+                    TATSUxp = pickle_file[peep.id]['invXP'][1]
+        except:
+            TATSUxp = 0
         if MEE6xp or TATSUxp or ReSubXP:
             totXP = ReSubXP + MEE6xp + (TATSUxp / 2)
         else:
