@@ -550,6 +550,8 @@ class Options(commands.Cog):
     @commands.cooldown(1, 1, commands.BucketType.default)
     async def xpGrab(self, ctx, *, mem=''):
         typeMem = await memGrab(self, ctx, mem)
+        if typeMem:
+            typeMem = [typeMem[0]]
         tatForce = 0
         for role in ctx.author.roles:
             if role.name == MANAGER:
