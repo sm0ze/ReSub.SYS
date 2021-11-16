@@ -18,6 +18,7 @@ from mee6_py_api import API
 
 DEBUG = 0
 TEST = 0
+HOSTNAME = socket.gethostname()
 
 
 def debug(*args):
@@ -79,13 +80,22 @@ bot = commands.Bot(command_prefix=CMDPREFIX,
 async def on_ready():
     # Generalised login message. Once bot is closer to finished and expected to
     # run 24/7, will add a discord channel message on login
+    global STRCHNL
+    channelList = [x for y in bot.guilds for x in y.channels]
+    debug(channelList)
+    debug([["{} == {}".format(x.id, STARTCHANNEL), int(x.id) == int(STARTCHANNEL)]
+          for x in channelList])
+    debug("STARTCHANNEL: ", STARTCHANNEL)
+    STRCHNL = [x for x in channelList if int(x.id) == int(STARTCHANNEL)]
+    if STRCHNL:
+        STRCHNL = STRCHNL[0]
+    debug("STRCHNL: ", STRCHNL)
     print('Bot has logged in as {} on {}'.format(
-        bot.user, socket.gethostname()))
+        bot.user, HOSTNAME))
     global loginTime
     loginTime = time.time()
 
-    StrtChannel = bot.get_channel(int(STARTCHANNEL))
-    await StrtChannel.send('Bot has logged in as {} on {}'.format(bot.user, socket.gethostname()))
+    await STRCHNL.send('Bot has logged in as {} on {}'.format(bot.user, HOSTNAME))
 
     # looped command to update bot's discord presence flavour text
     update_presence.start()
@@ -95,8 +105,8 @@ async def on_ready():
         botGuild = get(bot.guilds)
         botMember = botGuild.me
 
-        debug(botGuild)
-        debug(botMember)
+        debug("botGuild = ", botGuild)
+        debug("botMember = ", botMember)
 
         botGuildPermissions = botMember.guild_permissions
 
@@ -123,7 +133,7 @@ async def on_message(message):
         if message.content.startswith('{}resume'.format(CMDPREFIX)):
             # wake up the bot if it is asleep
             if asleep:
-                await message.channel.send("Bot is now awake")
+                await dupeMes(message.channel, "Bot is now awake on {}".format(HOSTNAME))
                 asleep = False
             return
 
@@ -229,7 +239,8 @@ async def role(ctx, *, roleToAdd: str = enm.freeRoles[0]):
 @bot.command(hidden=HIDE, aliases=['re', 'reboot'], brief=enm.cmdInf['restart']['brief'], description=enm.cmdInf['restart']['description'])
 @commands.has_any_role(MANAGER)
 async def restart(ctx):
-    await ctx.send("Restarting bot...")
+    text = "Restarting bot on {}...".format(HOSTNAME)
+    await dupeMes(ctx, text)
     restart_bot()
     return
 
@@ -237,14 +248,14 @@ async def restart(ctx):
 @bot.command(hidden=HIDE, brief=enm.cmdInf['upload']['brief'], description=enm.cmdInf['upload']['description'])
 @commands.has_any_role(MANAGER)
 async def upload(ctx):
-    await ctx.send(file=discord.File(SAVEFILE))
+    await ctx.send("File {} from {}".format(SAVEFILE, HOSTNAME), file=discord.File(SAVEFILE))
 
 
 @bot.command(hidden=HIDE, brief=enm.cmdInf['end']['brief'], description=enm.cmdInf['end']['description'])
 @commands.is_owner()
 async def end(ctx):
-    StrtChannel = bot.get_channel(int(STARTCHANNEL))
-    await StrtChannel.send('Bot is terminating')
+    text = 'Bot on {} is terminating'.format(HOSTNAME)
+    await dupeMes(ctx, text)
     await bot.close()
     sys.exit()
     return
@@ -253,10 +264,13 @@ async def end(ctx):
 @bot.command(hidden=HIDE, aliases=['up'], brief=enm.cmdInf['update']['brief'], description=enm.cmdInf['update']['description'])
 @commands.is_owner()
 async def update(ctx):
+    text1 = "Update starting on {}".format(HOSTNAME)
+    text2 = "Update complete on {}".format(HOSTNAME)
+    await dupeMes(ctx, text1)
     git_dir = "/.git/ReSub.SYS"
     g = git.cmd.Git(git_dir)
     g.pull()
-    await ctx.send("Update complete")
+    await dupeMes(ctx, text2)
     return
 
 
@@ -265,20 +279,18 @@ async def update(ctx):
 async def pause(ctx):
     global asleep
     asleep = True
-    await ctx.send("Bot is now asleep")
+    await dupeMes(ctx, "Bot is now asleep on {}".format(HOSTNAME))
     return
 
 
 @bot.command(brief=enm.cmdInf['about']['brief'], description=enm.cmdInf['about']['description'])
 async def about(ctx):
-    hostname = socket.gethostname()
-    await ctx.send("This is a bot coded by sm0ze#3542.\nThis initially started as a way to automatically assign roles for Geminel#1890's novel.\nNow the bot is capable enough to allow users to gain bot specific experience, level up their GDV and gain system enhancements. \n\nYou can find the code at this url here:\nhttps://github.com/sm0ze/ReSub.SYS \n\n It is currently running on {}.".format(hostname))
+    await ctx.send("This is a bot coded by sm0ze#3542.\nThis initially started as a way to automatically assign roles for Geminel#1890's novel.\nNow the bot is capable enough to allow users to gain bot specific experience, level up their GDV and gain system enhancements. \n\nYou can find the code at this url here:\nhttps://github.com/sm0ze/ReSub.SYS \n\n It is currently running on {}.".format(HOSTNAME))
 
 
 @bot.command(brief=enm.cmdInf['run']['brief'], description=enm.cmdInf['run']['description'])
 async def run(ctx):
-    hostname = socket.gethostname()
-    await ctx.send("Bot is running on {}".format(hostname))
+    await ctx.send("Bot is running on {}".format(HOSTNAME))
 
 """
 @client.event
@@ -334,6 +346,11 @@ def restart_bot():
     os.execv(sys.executable, ['python'] + sys.argv)
     return
 
+
+async def dupeMes(ctx, mes):
+    await STRCHNL.send(mes)
+    if not STRCHNL == ctx.channel:
+        await ctx.send(mes)
 
 # general import protection
 if __name__ == "__main__":
