@@ -79,12 +79,13 @@ bot = commands.Bot(command_prefix=CMDPREFIX,
 async def on_ready():
     # Generalised login message. Once bot is closer to finished and expected to
     # run 24/7, will add a discord channel message on login
-    print('Bot has logged in as {0.user}'.format(bot))
+    print('Bot has logged in as {} on {}'.format(
+        bot.user, socket.gethostname()))
     global loginTime
     loginTime = time.time()
 
     StrtChannel = bot.get_channel(int(STARTCHANNEL))
-    await StrtChannel.send('Bot has logged in as {0.user}'.format(bot))
+    await StrtChannel.send('Bot has logged in as {} on {}'.format(bot.user, socket.gethostname()))
 
     # looped command to update bot's discord presence flavour text
     update_presence.start()

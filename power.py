@@ -35,25 +35,21 @@ rsltDict = {
 }
 posTask = {
     'Minor': {
-        'Layout': "{} {} {} is {} {}.\n",
         'Worth': [200, 400],
         'Add': 0,
         'Aid': 0,
     },
     'Moderate': {
-        'Layout': "{} {} {} is {} {}.\n",
         'Worth': [400, 600],
         'Add': 1,
         'Aid': 0.5,
     },
     'Major': {
-        'Layout': "{} {} {} is {} {}.\n",
         'Worth': [600, 800],
         'Add': 3,
         'Aid': 0.5,
     },
     'Imperative': {
-        'Layout': "{} {} {} is {} {}.\n",
         'Worth': [800, 1000],
         'Add': -1,
         'Aid': 0.25,
@@ -118,7 +114,7 @@ cmdInf = {
         'description': "-Puts the bot to sleep, 'resume' to wake. This command mainly exists so that the 24/7 bot does not need to be killed when updating/troubleshooting and can just be restarted."},
     'points': {
         'brief': "-Shows target host's available and spent enhancement points.",
-        'description': "-Shows target host's available and spent enhancement points.\nThis command can take multiple users as arguments as long as they are separated by commas. It is also possible to mention all users you wish to geth the points of.\nIf no arguments are provided the command defaults to the command caller's points."},
+        'description': "-Shows target host's available and spent enhancement points.\nThis command can take multiple users as arguments as long as they are separated by commas. It is also possible to mention all users you wish to get the points of.\nIf no arguments are provided the command defaults to the command caller's points."},
     'restart': {
         'brief': '-Tells the bot to reboot.',
         'description': '-Tells the bot to reboot. It will be back soon, do not worry.'},

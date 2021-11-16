@@ -193,11 +193,8 @@ class Options(commands.Cog):
         debug("xpList = ", xpList)
         debug("{}\nTask XP: {}\n10 XP in GDV: {}".format(
             taskType, lvlEqu(taskWorth[0], 1), lvlEqu(10)))
-        emptMes = "Host {} has received {} {[0]} task! ".format(
-            nON(ctx.message.author), aOrAn(taskType[0][0]).lower(), taskType)
-
-        taskDesc = taskShrt['Layout']
-        debug("Task layout is: ", taskDesc)
+        emptMes = "Alert, {}; a new {} GDV task has been assigned.".format(
+            nON(ctx.message.author), taskType[0])
 
         debug("Possible Adjective: {}".format(taskShrt['Adjective']))
         selAdj = random.choice(taskShrt['Adjective'])
@@ -232,15 +229,15 @@ class Options(commands.Cog):
         elif taskWorth[1] == taskGrant:
             selRsltWrd = "flawless"
 
-        if addPeeps:
+        """if addPeeps:
             emptMes += " Due to the task difficulty, assistance has been provided by {}".format(
-                addNames)
+                addNames)"""
 
-        emptMes += "\n\n" + str(taskDesc).format(
-            aOrAn(selAdj[:1]), selAdj, selPeep, selAct, selPlace)
+        emptMes += " Please prevent the {} {} from {} {}.".format(
+            selAdj, selPeep, selAct, selPlace)
 
-        emptMes += "\nThey accomplished {} results in their endeavors, resulting in:".format(
-            selRsltWrd)
+        emptMes += "\n\nCongratulations on completing your {} GDV task. You accomplished {} results in your endeavors, resulting in;\n".format(
+            taskType[0], selRsltWrd)
 
         try:
             authInf = load(ctx.message.author.guild.id)
@@ -257,10 +254,10 @@ class Options(commands.Cog):
                 authInf[peep[0].id] = {'Name': peep[0].name}
                 authInf[peep[0].id]['invXP'] = [0, 0, taskGrant * peep[1]]
             if taskAdd != -1:
-                emptMes += "\n{} earning {} ReSubXP for a total of: {}".format(
+                emptMes += "\n{} earning {} GDV XP for a total of {} XP".format(
                     nON(peep[0]), taskGrant * peep[1], authInf[peep[0].id]['invXP'][-1])
         if taskAdd == -1:
-            emptMes += "\n{} earning {} ReSubXP for a total of: {}\nEveryone else earns {} ReSubXP.".format(
+            emptMes += "\n{} earning {} GDV XP for a total of {} XP\nEveryone else earning {} GDV XP.".format(
                 nON(ctx.message.author), taskGrant, authInf[ctx.message.author.id]['invXP'][-1], taskGrant * taskShrt['Aid'])
 
         save(ctx.message.author.guild.id, authInf)
@@ -274,8 +271,8 @@ class Options(commands.Cog):
         debug("currEnh {} < currEnhP {}".format(
             currEnh, currEnhP), currEnh < currEnhP)
         if currEnh < currEnhP:
-            emptMes += "\n{} has unspent enhancement points.".format(
-                nON(ctx.message.author))
+            emptMes += "\nAlert, {} has {} unspent enhancement points.".format(
+                nON(ctx.message.author), currEnhP - currEnh)
 
         await ctx.send(emptMes)
 
@@ -545,13 +542,34 @@ class Options(commands.Cog):
         await cut(ctx, [ctx.message.author], toCut)
         return
 
+    @commands.command(hidden=HIDE)
+    @commands.has_any_role(MANAGER)
+    async def xpAdd(self, ctx, val: float, *, mem=''):
+        val = round(val, 2)
+        debug("val is", val)
+        memList = await memGrab(self, ctx, mem)
+        debug("memList is", memList)
+        peep = memList[0]
+
+        infGrab = load(peep.guild.id)
+        if not infGrab:
+            infGrab = {}
+        if peep.id not in infGrab.keys():
+            infGrab[peep.id] = {'Name': peep.name, 'invXP': [0, 0, 0]}
+        iniVal = infGrab[peep.id]['invXP'][-1]
+        sum = iniVal + val
+        if sum < 0.0:
+            sum = 0.0
+        infGrab[peep.id]['invXP'][-1] = sum
+        save(ctx.message.author.guild.id, infGrab)
+        await ctx.send("Host {}: {} -> {}".format(nON(peep), iniVal, sum))
+
     @ commands.command(hidden=HIDE, brief=enm.cmdInf['xpGrab']['brief'], description=enm.cmdInf['xpGrab']['description'])
     # @commands.has_any_role(MANAGER)
     @commands.cooldown(1, 1, commands.BucketType.default)
     async def xpGrab(self, ctx, *, mem=''):
         typeMem = await memGrab(self, ctx, mem)
-        if typeMem:
-            typeMem = [typeMem[0]]
+        typeMem = [typeMem[0]]
         tatForce = 0
         for role in ctx.author.roles:
             if role.name == MANAGER:
