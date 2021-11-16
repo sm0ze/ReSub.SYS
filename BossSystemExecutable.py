@@ -347,10 +347,15 @@ def restart_bot():
     return
 
 
-async def dupeMes(ctx, mes):
+async def dupeMes(channel, mes):
+    try:
+        channel = channel.channel
+    except:
+        pass
+    print(mes)
     await STRCHNL.send(mes)
-    if not STRCHNL == ctx.channel:
-        await ctx.send(mes)
+    if not STRCHNL == channel:
+        await channel.send(mes)
 
 # general import protection
 if __name__ == "__main__":
