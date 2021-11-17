@@ -61,6 +61,9 @@ NEWCALC = 1
 GEMDIFF = 0.5
 taskCD = 60 * 30
 
+if DEBUG:
+    taskCD = 0
+
 # TODO: implement this and similiar instead of multiple enhancement.dict.keys() calls
 # enhancement (type, rank) pairs for list command
 ENHLIST = [(x, y) for (x, y) in enm.powerTypes.items()]
@@ -209,8 +212,9 @@ class Options(commands.Cog):
         debug("xpList = ", xpList)
         debug("{}\nTask XP: {}\n10 XP in GDV: {}".format(
             taskType, lvlEqu(taskWorth[0], 1), lvlEqu(10)))
-        emptMes = "Alert, {}; a new {} GDV task has been assigned.".format(
-            nON(ctx.message.author), taskType[0])
+        emptMes = discord.Embed(
+            title="Alert, {}!".format(nON(ctx.message.author)),
+            description="A new {} GDV task has been assigned.".format(taskType[0]))
 
         debug("Possible Adjective: {}".format(taskShrt['Adjective']))
         selAdj = random.choice(taskShrt['Adjective'])
@@ -260,15 +264,21 @@ class Options(commands.Cog):
             emptMes += " Due to the task difficulty, assistance has been provided by {}".format(
                 addNames)"""
 
-        emptMes += " Please prevent the {} {} from {} {}.".format(
-            selAdj,
-            selPeep,
-            selAct,
-            selPlace)
+        emptMes.add_field(
+            inline=False,
+            name="{} Task".format(taskType[0]),
+            value="Please prevent the {} {} from {} {}.".format(
+                selAdj,
+                selPeep,
+                selAct,
+                selPlace))
 
-        emptMes += "\n\nCongratulations on completing your {} GDV task. You accomplished {} results in your endeavors, resulting in;\n".format(
-            taskType[0],
-            selRsltWrd)
+        emptMes.add_field(
+            inline=False,
+            name="Success!",
+            value="Congratulations on completing your {} GDV task. You accomplished {} results in your endeavors.".format(
+                taskType[0],
+                selRsltWrd))
 
         try:
             authInf = load(ctx.message.author.guild.id)
@@ -284,17 +294,17 @@ class Options(commands.Cog):
             else:
                 authInf[peep[0].id] = {'Name': peep[0].name}
                 authInf[peep[0].id]['invXP'] = [0, 0, taskGrant * peep[1]]
-            if taskAdd != -1:
-                emptMes += "\n{} earning {:,} GDV XP for a total of {:,} XP".format(
-                    nON(peep[0]),
-                    taskGrant * peep[1],
-                    authInf[peep[0].id]['invXP'][-1])
+
+            if peep[0].id == ctx.message.author.id or taskAdd != -1:
+                emptMes.add_field(
+                    name="{} Earns".format(nON(peep[0])),
+                    value="{:,} GDV XP\nTotal of {:,} XP".format(
+                        taskGrant * peep[1],
+                        authInf[peep[0].id]['invXP'][-1]))
         if taskAdd == -1:
-            emptMes += "\n{} earning {:,} GDV XP for a total of {:,} XP\nEveryone else earning {:,} GDV XP.".format(
-                nON(ctx.message.author),
-                taskGrant,
-                authInf[ctx.message.author.id]['invXP'][-1],
-                taskGrant * taskShrt['Aid'])
+            emptMes.add_field(
+                name="Everyone Else",
+                value="Earns {} GDV XP".format(taskGrant * taskShrt['Aid']))
 
         save(ctx.message.author.guild.id, authInf)
         stateL = await countOf(ctx.message.author)
@@ -307,12 +317,14 @@ class Options(commands.Cog):
         debug("currEnh {} < currEnhP {}".format(
             currEnh, currEnhP), currEnh < currEnhP)
         if currEnh < currEnhP:
-            emptMes += "\nAlert, {} has {} unspent enhancement point{}.".format(
+            val = "{} has {} unspent enhancement point{}.".format(
                 nON(ctx.message.author),
                 currEnhP - currEnh,
                 pluralInt(currEnhP - currEnh))
 
-        await ctx.send(emptMes)
+            emptMes.add_field(name="Unspent Alert", value=val)
+
+        await ctx.send(embed=emptMes)
 
         return
 
@@ -453,10 +465,7 @@ class Options(commands.Cog):
     # manager command to correct role position for roles that have been created by bot
     async def moveRoles(self, ctx):
         managed = await manageRoles(ctx)
-        if managed:
-            await ctx.send(managed)
-        else:
-            await ctx.send("No roles moved")
+        await ctx.send(embed=managed)
         return
 
     @commands.command(
@@ -480,10 +489,12 @@ class Options(commands.Cog):
             debug("group in level is: {}".format(group))
             pointTot = await countOf(group[0])
             await ctx.send(
-                "{} has {} enhancements active out of {} enhancements available.".format(
+                "{} has {} enhancement{} active out of {} enhancement{} available.".format(
                     nON(group[0]),
                     group[1],
-                    pointTot[0]))
+                    pluralInt(group[1]),
+                    pointTot[0],
+                    pluralInt(pointTot[0])))
         return
 
     @commands.command(
@@ -508,7 +519,10 @@ class Options(commands.Cog):
 
             mes.add_field(
                 name=group[0],
-                value="{} of {} rank(s)".format(shorthand.lower(), group[1]))
+                value="{} of {} rank{}".format(
+                    shorthand.lower(),
+                    group[1],
+                    pluralInt(group[1])))
 
         # return enhancement list to command caller
         debug("funcList - ", mes)
@@ -604,10 +618,12 @@ class Options(commands.Cog):
 
             blankMessage = discord.Embed(
                 title="{} Enhancement Leaderboard".format(enh),
-                description="{} is being used by {} hosts for a total of {} enhancement points spent.\n".format(
+                description="{} is being used by {} host{} for a total of {} enhancement point{} spent.\n".format(
                     enh,
                     len(peepDict.keys()),
-                    sum(peepDict.values())))
+                    pluralInt(len(peepDict.keys())),
+                    sum(peepDict.values()),
+                    pluralInt(sum(peepDict.values()))))
 
             unsortedDict = [(x, y) for x, y in peepDict.items()]
             pointList = sorted(unsortedDict, key=lambda x: x[1], reverse=True)
@@ -627,11 +643,15 @@ class Options(commands.Cog):
             # sort list of users with enhancements by number of enhancements, descending
             pointList = sorted(pointList, key=lambda x: x[1], reverse=True)
             debug(pointList)
-            desc = "There are {} hosts with a total of {} enhancement points spent.".format(
-                sum([len(x.members)
-                     for x in [get(y.roles, name=SUPEROLE)
-                               for y in self.bot.guilds]]),
-                sum([x[1] for x in pointList]))
+            totHosts = sum([len(x.members)
+                            for x in [get(y.roles, name=SUPEROLE)
+                            for y in self.bot.guilds]])
+            totPoints = sum([x[1] for x in pointList])
+            desc = "There is a total of {} host{} with a sum of {} enhancement point{} spent.".format(
+                totHosts,
+                pluralInt(totHosts),
+                totPoints,
+                pluralInt(totPoints))
 
             blankMessage = discord.Embed(
                 title="Host Leaderboard",
@@ -707,13 +727,19 @@ class Options(commands.Cog):
     async def xpGrab(self, ctx, *, mem=''):
         typeMem = await memGrab(self, ctx, mem)
         typeMem = [typeMem[0]]
+        pointList = spent(typeMem)
         tatForce = 0
+        i = 0
         for role in ctx.author.roles:
             if role.name == MANAGER:
                 tatForce = 1
         for peep in typeMem:
             mes = discord.Embed(title="{} Stats".format(nON(peep)))
             stuff = await count(peep, 1, 1)
+            group = pointList[i]
+            unspent = group[1] - stuff[0]
+
+            mes.set_thumbnail(url=peep.display_avatar)
 
             mes.add_field(
                 name="MEE6 xp",
@@ -731,7 +757,7 @@ class Options(commands.Cog):
                 name="GDV",
                 value="{}".format(round(stuff[1], 2)))
             mes.add_field(
-                name="Enhancement Points",
+                name="Enhancement Point{}".format(pluralInt(stuff[0])),
                 value="{}".format(stuff[0]))
 
             nextGDV = int(stuff[1]) + 1
@@ -751,7 +777,17 @@ class Options(commands.Cog):
                 inline=False,
                 name="XP to next Enhancement Point",
                 value="{:,}".format(nextEnhPneedXP))
+
+            mes.add_field(
+                inline=False,
+                name="Unspent Enhancement Point{}".format(pluralInt(unspent)),
+                value=unspent)
+
+            mes.set_footer(text="{}#{}".format(
+                peep.name, peep.discriminator), icon_url=peep.avatar)
+
             await ctx.send(embed=mes)
+            i += 1
         return
 
 
@@ -760,7 +796,7 @@ async def manageRoles(ctx):
     debug("ManageRoles Start")
 
     # spam message negation
-    movedRoles = 'Roles moved:\n'
+    movedRoles = discord.Embed(title="Moving Roles")
     toMove = {}
 
     # iterate through all guild roles
@@ -820,15 +856,19 @@ async def manageRoles(ctx):
         # TODO remove assumption
         debug("Role to be moved from {.position} to {}".format(
             role, roleRankUpper - 1))
-        movedRoles += "Moving role {} from position {} to position {}\n".format(
-            role.name, role.position, roleRankUpper)
+
+        movedRoles.add_field(
+            name=role.name,
+            value="{} -> {}".format(role.position, roleRankUpper))
+
         toMove[role] = roleRankUpper
     await ctx.message.guild.edit_role_positions(positions=toMove)
 
     # return moved roles as single message to function call
-    if movedRoles != 'Roles moved:\n':
-        return movedRoles
-    return ""
+    if not movedRoles.fields:
+        movedRoles.description = "No roles moved"
+    debug("ManageRoles End")
+    return movedRoles
 
 # function to get specified user's enhancement points
 

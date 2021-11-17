@@ -137,11 +137,7 @@ async def on_message(message):
     if message.author.id == bot.owner_id:
         if message.content.startswith('{}resume'.format(CMDPREFIX)):
             # wake up the bot if it is asleep
-            if asleep:
-                await dupeMes(
-                    message.channel,
-                    "Bot is now awake on {}".format(HOSTNAME))
-                asleep = False
+            await bot.process_commands(message)
             return
 
     if asleep:
@@ -204,8 +200,24 @@ async def uptime(ctx):
     mes = discord.Embed(title='Uptime')
     mes.add_field(name=uptimeLogin, value="Time since last login.")
     mes.add_field(name=uptimeStartup, value="Time since bot startup.")
+    mes.set_thumbnail(url=bot.user.display_avatar)
     await ctx.send(embed=mes)
     #"{} has been logged in for {}\nand powered up for {}".format(bot.user.name, uptimeLogin, uptimeStartup)
+
+
+@bot.command()
+@commands.is_owner()
+async def resume(ctx, host: str = HOSTNAME, up: int = 0):
+    global asleep
+    debug('cmd:', 'resume', 'ctx:', ctx, 'host:', host, 'up:', up)
+    if asleep and host == HOSTNAME:
+        await dupeMes(
+            ctx,
+            "Bot is now awake on {}".format(HOSTNAME))
+        asleep = False
+        if up:
+            await ctx.invoke(bot.get_command('update'))
+            await ctx.invoke(bot.get_command('restart'))
 
 
 @bot.command(
@@ -237,7 +249,10 @@ async def role(ctx, *, roleToAdd: str = enm.freeRoles[0]):
     brief=enm.cmdInf['restart']['brief'],
     description=enm.cmdInf['restart']['description'])
 @commands.has_any_role(MANAGER)
-async def restart(ctx):
+async def restart(ctx, host: str = HOSTNAME):
+    debug('cmd:', 'restart', 'ctx:', ctx, 'host:', host)
+    if host != HOSTNAME:
+        return
     text = "Restarting bot on {}...".format(HOSTNAME)
     await dupeMes(ctx, text)
     restart_bot()
@@ -248,7 +263,10 @@ async def restart(ctx):
     brief=enm.cmdInf['upload']['brief'],
     description=enm.cmdInf['upload']['description'])
 @commands.has_any_role(MANAGER)
-async def upload(ctx):
+async def upload(ctx, host: str = HOSTNAME):
+    debug('cmd:', 'upload', 'ctx:', ctx, 'host:', host)
+    if host != HOSTNAME:
+        return
     await ctx.send(
         "File {} from {}".format(SAVEFILE, HOSTNAME),
         file=discord.File(SAVEFILE))
@@ -259,7 +277,10 @@ async def upload(ctx):
     brief=enm.cmdInf['end']['brief'],
     description=enm.cmdInf['end']['description'])
 @commands.is_owner()
-async def end(ctx):
+async def end(ctx, host: str = HOSTNAME):
+    debug('cmd:', 'end', 'ctx:', ctx, 'host:', host)
+    if host != HOSTNAME:
+        return
     text = 'Bot on {} is terminating'.format(HOSTNAME)
     await dupeMes(ctx, text)
     await bot.close()
@@ -272,13 +293,15 @@ async def end(ctx):
     brief=enm.cmdInf['update']['brief'],
     description=enm.cmdInf['update']['description'])
 @commands.is_owner()
-async def update(ctx):
+async def update(ctx, host: str = HOSTNAME):
+    debug('cmd:', 'update', 'ctx:', ctx, 'host:', host)
+    if host != HOSTNAME:
+        return
     text1 = "Update starting on {}".format(HOSTNAME)
-    text2 = "Update complete on {}".format(HOSTNAME)
     await dupeMes(ctx, text1)
     git_dir = "/.git/ReSub.SYS"
     g = git.cmd.Git(git_dir)
-    g.pull()
+    text2 = "{}\n{}".format(HOSTNAME, g.pull())
     await dupeMes(ctx, text2)
 
 
@@ -288,7 +311,10 @@ async def update(ctx):
     brief=enm.cmdInf['pause']['brief'],
     description=enm.cmdInf['pause']['description'])
 @commands.is_owner()
-async def pause(ctx):
+async def pause(ctx, host: str = HOSTNAME):
+    debug('cmd:', 'pause', 'ctx:', ctx, 'host:', host)
+    if host != HOSTNAME:
+        return
     global asleep
     asleep = True
     await dupeMes(ctx, "Bot is now asleep on {}".format(HOSTNAME))
@@ -301,15 +327,16 @@ async def about(ctx):
     desc = "This initially started as a way to automatically assign roles for Geminel#1890's novel. At the time Admins were manually calculating enhancement points and adding roles."
     mes = discord.Embed(title="About {}".format(
         bot.user.display_name))
-    mes.set_author(name="sm0ze#3542",
+    mes.set_author(name="Creator: sm0ze#3542",
                    icon_url="https://avatars.githubusercontent.com/u/31851788")
     mes.add_field(inline=False, name="Why does this bot exist?", value=desc)
     mes.add_field(inline=False, name="What can the bot do?",
                   value="Now the bot is capable enough to allow users to gain bot specific experience, level up their GDV and gain system enhancements through the use of commands.")
     mes.add_field(inline=False, name="More Info",
-                  value="You can find the code at this url here:\nhttps://github.com/sm0ze/ReSub.SYS")
+                  value="You can find the code [here](https://github.com/sm0ze/ReSub.SYS)")
     mes.set_footer(text="{} is currently running on {}.".format(
         bot.user.display_name, HOSTNAME))
+    mes.set_thumbnail(url=bot.user.display_avatar)
     await ctx.send(embed=mes)
 
 
