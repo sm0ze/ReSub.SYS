@@ -552,7 +552,8 @@ class Options(commands.Cog):
         description=enm.cmdInf['top']['description'])
     # top 10 user leaderboard for number of used enhancements
     async def top(self, ctx, *, enh=""):
-        if enh.lower() == "resub":
+        xpKey = ["gdv xp", "gdv"]
+        if enh.lower() in xpKey:
             serverXP = load(ctx.message.author.guild.id)
             resubXPList = [
                 [ctx.message.guild.get_member(x), serverXP[x]['invXP'][-1]]
@@ -634,7 +635,7 @@ class Options(commands.Cog):
                     name="**{}** - {}".format(i, nON(group[0])),
                     value="\t{} enhancements".format(group[1]))
             else:
-                if not enh.lower() == "resub":
+                if not enh.lower() in xpKey:
                     blankMessage.add_field(
                         inline=False,
                         name="**{}** - {}".format(i, nON(group[0])),
