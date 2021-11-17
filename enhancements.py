@@ -136,12 +136,12 @@ def reqEnd(endList):
 
     # check for no prereqs
     if len(endList[1]) == 0:
-        reqStr = 'Which has no prerequisites.'
+        reqStr = 'Build has no prerequisites.'
 
     # otherwise add prereqs to message
     else:
         debug("funcReqEnd - " + "{}".format(endList[1]))
-        reqStr = 'Which requires at minimum:\n\n'
+        reqStr = ''
         for req in endList[1]:
             reqName = power[toType(req[1]) + str(req[0])]['Name']
             reqStr += '{}\n'.format(reqName)

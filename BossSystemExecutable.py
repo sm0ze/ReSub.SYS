@@ -39,7 +39,7 @@ debug("{} DEBUG TRUE".format(os.path.basename(__file__)))
 
 if TEST:
     print("{} TEST TRUE".format(os.path.basename(__file__)))
-#if TEST: print("".format())
+# if TEST: print("".format())
 
 # .env variables that are not shared with github and other users.
 # Use your own if testing this with your own bot
@@ -71,8 +71,11 @@ INTENTS = discord.Intents.all()
 # DefaultHelpCommand along with a no_category rename
 HELPCOMMAND = commands.DefaultHelpCommand(no_category='\nBasic Options')
 
-bot = commands.Bot(command_prefix=CMDPREFIX,
-                   case_insensitive=True, intents=INTENTS, help_command=HELPCOMMAND)
+bot = commands.Bot(
+    command_prefix=CMDPREFIX,
+    case_insensitive=True,
+    intents=INTENTS,
+    help_command=HELPCOMMAND)
 
 
 @bot.event
@@ -83,8 +86,10 @@ async def on_ready():
     global STRCHNL
     channelList = [x for y in bot.guilds for x in y.channels]
     debug(channelList)
-    debug([["{} == {}".format(x.id, STARTCHANNEL), int(x.id) == int(STARTCHANNEL)]
-          for x in channelList])
+    debug(
+        [["{} == {}".format(x.id, STARTCHANNEL),
+          int(x.id) == int(STARTCHANNEL)] for x in channelList])
+
     debug("STARTCHANNEL: ", STARTCHANNEL)
     STRCHNL = [x for x in channelList if int(x.id) == int(STARTCHANNEL)]
     if STRCHNL:
@@ -95,7 +100,8 @@ async def on_ready():
     global loginTime
     loginTime = time.time()
 
-    await STRCHNL.send('Bot has logged in as {} on {}'.format(bot.user, HOSTNAME))
+    await STRCHNL.send(
+        'Bot has logged in as {} on {}'.format(bot.user, HOSTNAME))
 
     # looped command to update bot's discord presence flavour text
     update_presence.start()
@@ -112,7 +118,6 @@ async def on_ready():
 
         for perm in botGuildPermissions:
             debug(perm)
-    return
 
 
 @bot.event
@@ -133,7 +138,9 @@ async def on_message(message):
         if message.content.startswith('{}resume'.format(CMDPREFIX)):
             # wake up the bot if it is asleep
             if asleep:
-                await dupeMes(message.channel, "Bot is now awake on {}".format(HOSTNAME))
+                await dupeMes(
+                    message.channel,
+                    "Bot is now awake on {}".format(HOSTNAME))
                 asleep = False
             return
 
@@ -168,29 +175,6 @@ async def on_message(message):
     await bot.process_commands(message)
 
 
-@bot.event
-# bot error handler. Messy global implementation instead of multiple locals
-async def on_command_error(ctx, error):
-    splitError = str(error).split()  # for messy handling without isinstance()
-    print(splitError)  # for debugging
-
-    if isinstance(error, commands.CommandNotFound):
-        em = discord.Embed(
-            title=f"Error!!!", description=f"Command not found.", color=ctx.author.color)
-        # await ctx.send(embed=em)
-
-    elif splitError[4] == 'KeyError:':
-        await ctx.send("{} is not a recognised option".format(splitError[-1]))
-
-    elif isinstance(error, commands.CommandOnCooldown):
-        cdTime = float(splitError[-1][:-1])
-        await ctx.send("You have no available tasks at this time. Please search again in {} minutes or {} seconds.".format(round(cdTime / 60, 2), cdTime))
-
-    else:  # just send the error to discord
-        await ctx.send("Error: " + str(error))
-    return
-
-
 @tasks.loop(seconds=150)
 # bot's discord rich presence updater
 async def update_presence():
@@ -202,22 +186,32 @@ async def update_presence():
 
     debug("\t\t" + str(nameSet))
 
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=nameSet))
-    return
+    await bot.change_presence(
+        activity=discord.Activity(
+            type=discord.ActivityType.watching,
+            name=nameSet))
 
 
-@bot.command(aliases=['u'], brief=enm.cmdInf['uptime']['brief'], description=enm.cmdInf['uptime']['description'])
+@bot.command(
+    aliases=['u'],
+    brief=enm.cmdInf['uptime']['brief'],
+    description=enm.cmdInf['uptime']['description'])
 async def uptime(ctx):
     uptimeLogin = str(datetime.timedelta(
         seconds=int(round(time.time() - loginTime))))
     uptimeStartup = str(datetime.timedelta(
         seconds=int(round(time.time() - STARTTIME))))
-    await ctx.send("{} has been logged in for {}\nand powered up for {}".format(bot.user.name, uptimeLogin, uptimeStartup))
+    mes = discord.Embed(title='Uptime')
+    mes.add_field(name=uptimeLogin, value="Time since last login.")
+    mes.add_field(name=uptimeStartup, value="Time since bot startup.")
+    await ctx.send(embed=mes)
+    #"{} has been logged in for {}\nand powered up for {}".format(bot.user.name, uptimeLogin, uptimeStartup)
 
-    return
 
-
-@bot.command(aliases=['r', 'roles'], brief=enm.cmdInf['role']['brief'], description=enm.cmdInf['role']['description'])
+@bot.command(
+    aliases=['r', 'roles'],
+    brief=enm.cmdInf['role']['brief'],
+    description=enm.cmdInf['role']['description'])
 # gives requested role to command caller if it is in enm.freeRoles
 async def role(ctx, *, roleToAdd: str = enm.freeRoles[0]):
     member = ctx.message.author
@@ -229,39 +223,54 @@ async def role(ctx, *, roleToAdd: str = enm.freeRoles[0]):
         await ctx.send("That is not a role you can add with this command!")
     elif roleAdd not in member.roles:
         await member.add_roles(roleAdd)
-        await ctx.send("{} is granted the role: '{}'!".format(nON(member), roleAdd))
+        await ctx.send(
+            "{} is granted the role: '{}'!".format(nON(member), roleAdd))
     else:
         await member.remove_roles(roleAdd)
-        await ctx.send("{} no longer has the role: '{}'!".format(nON(member), roleAdd))
-    return
+        await ctx.send(
+            "{} no longer has the role: '{}'!".format(nON(member), roleAdd))
 
 
-@bot.command(hidden=HIDE, aliases=['re', 'reboot'], brief=enm.cmdInf['restart']['brief'], description=enm.cmdInf['restart']['description'])
+@bot.command(
+    hidden=HIDE,
+    aliases=['re', 'reboot'],
+    brief=enm.cmdInf['restart']['brief'],
+    description=enm.cmdInf['restart']['description'])
 @commands.has_any_role(MANAGER)
 async def restart(ctx):
     text = "Restarting bot on {}...".format(HOSTNAME)
     await dupeMes(ctx, text)
     restart_bot()
-    return
 
 
-@bot.command(hidden=HIDE, brief=enm.cmdInf['upload']['brief'], description=enm.cmdInf['upload']['description'])
+@bot.command(
+    hidden=HIDE,
+    brief=enm.cmdInf['upload']['brief'],
+    description=enm.cmdInf['upload']['description'])
 @commands.has_any_role(MANAGER)
 async def upload(ctx):
-    await ctx.send("File {} from {}".format(SAVEFILE, HOSTNAME), file=discord.File(SAVEFILE))
+    await ctx.send(
+        "File {} from {}".format(SAVEFILE, HOSTNAME),
+        file=discord.File(SAVEFILE))
 
 
-@bot.command(hidden=HIDE, brief=enm.cmdInf['end']['brief'], description=enm.cmdInf['end']['description'])
+@bot.command(
+    hidden=HIDE,
+    brief=enm.cmdInf['end']['brief'],
+    description=enm.cmdInf['end']['description'])
 @commands.is_owner()
 async def end(ctx):
     text = 'Bot on {} is terminating'.format(HOSTNAME)
     await dupeMes(ctx, text)
     await bot.close()
     sys.exit()
-    return
 
 
-@bot.command(hidden=HIDE, aliases=['up'], brief=enm.cmdInf['update']['brief'], description=enm.cmdInf['update']['description'])
+@bot.command(
+    hidden=HIDE,
+    aliases=['up'],
+    brief=enm.cmdInf['update']['brief'],
+    description=enm.cmdInf['update']['description'])
 @commands.is_owner()
 async def update(ctx):
     text1 = "Update starting on {}".format(HOSTNAME)
@@ -271,24 +280,42 @@ async def update(ctx):
     g = git.cmd.Git(git_dir)
     g.pull()
     await dupeMes(ctx, text2)
-    return
 
 
-@bot.command(hidden=HIDE, aliases=['sleep'],  brief=enm.cmdInf['pause']['brief'], description=enm.cmdInf['pause']['description'])
+@bot.command(
+    hidden=HIDE,
+    aliases=['sleep'],
+    brief=enm.cmdInf['pause']['brief'],
+    description=enm.cmdInf['pause']['description'])
 @commands.is_owner()
 async def pause(ctx):
     global asleep
     asleep = True
     await dupeMes(ctx, "Bot is now asleep on {}".format(HOSTNAME))
-    return
 
 
-@bot.command(brief=enm.cmdInf['about']['brief'], description=enm.cmdInf['about']['description'])
+@bot.command(
+    brief=enm.cmdInf['about']['brief'],
+    description=enm.cmdInf['about']['description'])
 async def about(ctx):
-    await ctx.send("This is a bot coded by sm0ze#3542.\nThis initially started as a way to automatically assign roles for Geminel#1890's novel.\nNow the bot is capable enough to allow users to gain bot specific experience, level up their GDV and gain system enhancements. \n\nYou can find the code at this url here:\nhttps://github.com/sm0ze/ReSub.SYS \n\n It is currently running on {}.".format(HOSTNAME))
+    desc = "This initially started as a way to automatically assign roles for Geminel#1890's novel. At the time Admins were manually calculating enhancement points and adding roles."
+    mes = discord.Embed(title="About {}".format(
+        bot.user.display_name))
+    mes.set_author(name="sm0ze#3542",
+                   icon_url="https://avatars.githubusercontent.com/u/31851788")
+    mes.add_field(inline=False, name="Why does this bot exist?", value=desc)
+    mes.add_field(inline=False, name="What can the bot do?",
+                  value="Now the bot is capable enough to allow users to gain bot specific experience, level up their GDV and gain system enhancements through the use of commands.")
+    mes.add_field(inline=False, name="More Info",
+                  value="You can find the code at this url here:\nhttps://github.com/sm0ze/ReSub.SYS")
+    mes.set_footer(text="{} is currently running on {}.".format(
+        bot.user.display_name, HOSTNAME))
+    await ctx.send(embed=mes)
 
 
-@bot.command(brief=enm.cmdInf['run']['brief'], description=enm.cmdInf['run']['description'])
+@bot.command(
+    brief=enm.cmdInf['run']['brief'],
+    description=enm.cmdInf['run']['description'])
 async def run(ctx):
     await ctx.send("Bot is running on {}".format(HOSTNAME))
 
@@ -344,7 +371,6 @@ def nON(user):
 
 def restart_bot():
     os.execv(sys.executable, ['python'] + sys.argv)
-    return
 
 
 async def dupeMes(channel, mes):

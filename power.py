@@ -89,7 +89,7 @@ cmdInf = {
         'brief': '-quick blurb for info about the bot.',
         'description': "-quick blurb for info about the bot. Also has the hostname of the os the bot is running on for troubleshooting."},
     'add': {
-        'brief': '-Allows host to add enhancement(s) and their prereqs to themself.',
+        'brief': '-Allows host to add enhancements and their prereqs to themself.',
         'description': "-Use the shorthand enhancement codes separated by commas to add to host's build.\nExample: For a build with Rank 4 Regeneration and Rank 4 Mental Celerity the shorthand would be 'reg4, cel4'. The bot will attempt to add those 2 enhancements and their prerequisites to the host if they have enough enhancement points."},
     'build': {
         'brief': '-Total points required and their prerequisite enhancements.',

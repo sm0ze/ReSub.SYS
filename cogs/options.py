@@ -106,7 +106,9 @@ class Options(commands.Cog):
         if DEBUG and StrtChannel:
             await StrtChannel.send('Bot has finished xp update')
 
-    @commands.command(brief=enm.cmdInf['trim']['brief'], description=enm.cmdInf['trim']['description'])
+    @commands.command(
+        brief=enm.cmdInf['trim']['brief'],
+        description=enm.cmdInf['trim']['description'])
     # command to trim command caller of extra roles. OBSOLETE due to cut call after role add in add command
     async def trim(self, ctx, *, member=''):
         debug("funcTrim START")
@@ -118,7 +120,10 @@ class Options(commands.Cog):
         debug("funcTrim END")
         return
 
-    @commands.command(hidden=HIDE, brief=enm.cmdInf['trimAll']['brief'], description=enm.cmdInf['trimAll']['description'])
+    @commands.command(
+        hidden=HIDE,
+        brief=enm.cmdInf['trimAll']['brief'],
+        description=enm.cmdInf['trimAll']['description'])
     @commands.has_any_role(MANAGER)
     # manager command to role trim all users bot has access to
     async def trimAll(self, ctx):
@@ -132,7 +137,10 @@ class Options(commands.Cog):
         debug("funcTrimAll END")
         return
 
-    @commands.command(hidden=HIDE, brief=enm.cmdInf['roleInf']['brief'], description=enm.cmdInf['roleInf']['description'])
+    @commands.command(
+        hidden=HIDE,
+        brief=enm.cmdInf['roleInf']['brief'],
+        description=enm.cmdInf['roleInf']['description'])
     @commands.has_any_role(MANAGER)
     # manager command to check if guild has role and messages some information of the role
     async def roleInf(self, ctx, *, roleStr: str):
@@ -141,18 +149,26 @@ class Options(commands.Cog):
         debug("Role string ID is: {}".format(roleStrId[0].id))
         if roleStrId:
             roleStrId = roleStrId[0]
-            await ctx.send("{.name} has: \nposition - {.position}\ncolour - {.colour}".format(roleStrId, roleStrId, roleStrId))
+            await ctx.send(
+                "{.name} has: \nposition - {.position}\ncolour - {.colour}".format(roleStrId, roleStrId, roleStrId))
         return
 
-    @commands.command(brief=enm.cmdInf['convert']['brief'], description=enm.cmdInf['convert']['description'])
+    @commands.command(
+        brief=enm.cmdInf['convert']['brief'],
+        description=enm.cmdInf['convert']['description'])
     async def convert(self, ctx, inVar: float = 0, gdv=0):
         feedback = lvlEqu(inVar, gdv)
         if gdv:
-            await ctx.send("{} GDV is equivalent to {} XP".format(inVar, feedback))
+            await ctx.send(
+                "{} GDV is equivalent to {} XP".format(inVar, feedback))
         else:
-            await ctx.send("{} XP is equivalent to {} GDV".format(inVar, feedback))
+            await ctx.send(
+                "{} XP is equivalent to {} GDV".format(inVar, feedback))
 
-    @commands.command(aliases=['t'], brief=enm.cmdInf['task']['brief'], description=enm.cmdInf['task']['description'])
+    @commands.command(
+        aliases=['t'],
+        brief=enm.cmdInf['task']['brief'],
+        description=enm.cmdInf['task']['description'])
     @commands.cooldown(1, taskCD, type=commands.BucketType.user)
     async def task(self, ctx):
         """
@@ -221,8 +237,11 @@ class Options(commands.Cog):
             ((taskGrant - taskWorth[0]) / (2 * taskDiff)) + 0.5, 2)
         debug("selected result = ", selResult)
 
-        selRsltWrd = [x for x in enm.rsltDict.keys() if int(selResult * 100) in range(
-            int(100 * enm.rsltDict[x][0]), int(100 * enm.rsltDict[x][1]))]
+        selRsltWrd = [x for x in enm.rsltDict.keys()
+                      if int(selResult * 100) in
+                      range(
+                      int(100 * enm.rsltDict[x][0]),
+                      int(100 * enm.rsltDict[x][1]))]
         debug("selected resulting word = ", selRsltWrd)
         if selRsltWrd:
             selRsltWrd = selRsltWrd[0]
@@ -234,10 +253,14 @@ class Options(commands.Cog):
                 addNames)"""
 
         emptMes += " Please prevent the {} {} from {} {}.".format(
-            selAdj, selPeep, selAct, selPlace)
+            selAdj,
+            selPeep,
+            selAct,
+            selPlace)
 
         emptMes += "\n\nCongratulations on completing your {} GDV task. You accomplished {} results in your endeavors, resulting in;\n".format(
-            taskType[0], selRsltWrd)
+            taskType[0],
+            selRsltWrd)
 
         try:
             authInf = load(ctx.message.author.guild.id)
@@ -255,10 +278,15 @@ class Options(commands.Cog):
                 authInf[peep[0].id]['invXP'] = [0, 0, taskGrant * peep[1]]
             if taskAdd != -1:
                 emptMes += "\n{} earning {} GDV XP for a total of {} XP".format(
-                    nON(peep[0]), taskGrant * peep[1], authInf[peep[0].id]['invXP'][-1])
+                    nON(peep[0]),
+                    taskGrant * peep[1],
+                    authInf[peep[0].id]['invXP'][-1])
         if taskAdd == -1:
             emptMes += "\n{} earning {} GDV XP for a total of {} XP\nEveryone else earning {} GDV XP.".format(
-                nON(ctx.message.author), taskGrant, authInf[ctx.message.author.id]['invXP'][-1], taskGrant * taskShrt['Aid'])
+                nON(ctx.message.author),
+                taskGrant,
+                authInf[ctx.message.author.id]['invXP'][-1],
+                taskGrant * taskShrt['Aid'])
 
         save(ctx.message.author.guild.id, authInf)
         stateL = await countOf(ctx.message.author)
@@ -278,7 +306,26 @@ class Options(commands.Cog):
 
         return
 
-    @ commands.command(aliases=['a'], brief=enm.cmdInf['add']['brief'], description=enm.cmdInf['add']['description'])
+    @task.error
+    async def task_error(self, ctx: commands.Context, error):
+        if isinstance(error, commands.CommandOnCooldown):
+            cdTime = round(error.retry_after, 2)
+            mes = "You have no available tasks at this time. Please search again in {} minutes or {} seconds.".format(
+                round(cdTime / 60, 2),
+                cdTime)
+        else:
+            mes = str(error)
+        await ctx.send(
+            embed=discord.Embed(
+                title="No Tasks",
+                description=mes),
+            delete_after=5)
+        await ctx.message.delete(delay=5)
+
+    @commands.command(
+        aliases=['a'],
+        brief=enm.cmdInf['add']['brief'],
+        description=enm.cmdInf['add']['description'])
     # add role command available to all PERMROLES users
     async def add(self, ctx, *, typeRank=''):
 
@@ -291,7 +338,8 @@ class Options(commands.Cog):
         userHasBuild = userHas[2]
 
         if not typeRank:  # if author did not provide an enhancement to add, return
-            await ctx.send("Cannot add enhancements without an enhancement to add")
+            await ctx.send(
+                "Cannot add enhancements without an enhancement to add")
             return
         else:  # otherwise split the arglist into a readable shorthand enhancment list
             fixArg = typeRank.replace(' ', ',')
@@ -306,12 +354,23 @@ class Options(commands.Cog):
         userWantsCost = userWants[0]
         userWantsBuild = userWants[2]
         pointTot = await count(user, 1, 1)
-        debug("{} with point total {} has {} {} and wants {} {}".format(
-            user, pointTot[0], userHas[0], userHasBuild, userWantsCost, userWantsBuild))
+        debug(
+            "{} with point total {} has {} {} and wants {} {}".format(
+                user,
+                pointTot[0],
+                userHas[0],
+                userHasBuild,
+                userWantsCost,
+                userWantsBuild))
 
         # check to ensure user has enough enhancement points to get requested additions
         if pointTot[0] < userWants[0]:
-            await ctx.send("{} needs {} available enhancements for {} but only has {}".format(nON(user), userWantsCost, [enm.power[x]['Name'] for x in buildList], pointTot[0]))
+            await ctx.send(
+                "{} needs {} available enhancements for {} but only has {}".format(
+                    nON(user),
+                    userWantsCost,
+                    [enm.power[x]['Name'] for x in buildList],
+                    pointTot[0]))
             return
 
         # the guild role names grabbed from shorthand to add to user
@@ -326,7 +385,8 @@ class Options(commands.Cog):
 
         # check to ensure user has restricted roles already if required for build
         if cantAdd:
-            await ctx.send("Cannot add enhancements as {} does not have {}".format(nON(user), cantAdd))
+            await ctx.send(
+                "Cannot add enhancements as {} does not have {}".format(nON(user), cantAdd))
             return
 
         # guild role list with name and id attributes
@@ -367,16 +427,19 @@ class Options(commands.Cog):
             await ctx.send(sendMes)
         return
 
-    @ commands.command(hidden=True)
-    @ commands.has_any_role(MANAGER)
+    @commands.command(hidden=True)
+    @commands.has_any_role(MANAGER)
     # TODO implementation for manager specific help command
     async def hhelp(self, ctx):
         commands.DefaultHelpCommand(
             no_category='Basic Options', hidden=True)
         return
 
-    @ commands.command(hidden=HIDE, brief=enm.cmdInf['moveRoles']['brief'], description=enm.cmdInf['moveRoles']['description'])
-    @ commands.has_any_role(MANAGER)
+    @commands.command(
+        hidden=HIDE,
+        brief=enm.cmdInf['moveRoles']['brief'],
+        description=enm.cmdInf['moveRoles']['description'])
+    @commands.has_any_role(MANAGER)
     # manager command to correct role position for roles that have been created by bot
     async def moveRoles(self, ctx):
         managed = await manageRoles(ctx)
@@ -386,7 +449,10 @@ class Options(commands.Cog):
             await ctx.send("No roles moved")
         return
 
-    @ commands.command(aliases=['p'], brief=enm.cmdInf['points']['brief'], description=enm.cmdInf['points']['description'])
+    @commands.command(
+        aliases=['p'],
+        brief=enm.cmdInf['points']['brief'],
+        description=enm.cmdInf['points']['description'])
     # command to get author or specified user(s) enhancement total and available points
     async def points(self, ctx, *, member=''):
         users = await memGrab(self, ctx, member)
@@ -403,16 +469,23 @@ class Options(commands.Cog):
         for group in pointList:
             debug("group in level is: {}".format(group))
             pointTot = await countOf(group[0])
-            await ctx.send("{} has {} enhancements active out of {} enhancements available.".format(nON(group[0]), group[1], pointTot[0]))
+            await ctx.send(
+                "{} has {} enhancements active out of {} enhancements available.".format(
+                    nON(group[0]),
+                    group[1],
+                    pointTot[0]))
         return
 
-    @ commands.command(aliases=['l'], brief=enm.cmdInf['list']['brief'], description=enm.cmdInf['list']['description'])
+    @commands.command(
+        aliases=['l'],
+        brief=enm.cmdInf['list']['brief'],
+        description=enm.cmdInf['list']['description'])
     # help level command to list the available enhancements and the shorthand to use them in commands
     async def list(self, ctx):
-        await ctx.send("Enhancement list is:")
-
         # dynamic message to reduce bot messages sent
-        mes = ""
+        mes = discord.Embed(
+            title="Enhancements List",
+            description="Use the 3 letter shorthand along with the rank you are querying for commands.\nEx: str1 for the first rank of strength.")
 
         # add each enhancement and the total ranks available to the message to return
         for group in ENHLIST:
@@ -423,18 +496,20 @@ class Options(commands.Cog):
             else:
                 shorthand = group[0][0:3]
 
-            addMes = "{} ({}) of {} rank(s)\n".format(
-                group[0], shorthand.lower(), group[1])
-            debug(addMes)
-
-            mes += addMes
+            mes.add_field(
+                name=group[0],
+                value="{} of {} rank(s)".format(shorthand.lower(), group[1]))
 
         # return enhancement list to command caller
-        debug("funcList - " + str(mes))
-        await ctx.send("{}Starred enhancements require advanced roles".format(mes))
+        debug("funcList - ", mes)
+        mes.set_footer(text="Starred enhancements require advanced roles")
+        await ctx.send(embed=mes)
         return
 
-    @ commands.command(aliases=['b'], brief=enm.cmdInf['build']['brief'], description=enm.cmdInf['build']['description'])
+    @commands.command(
+        aliases=['b'],
+        brief=enm.cmdInf['build']['brief'],
+        description=enm.cmdInf['build']['description'])
     # build command to theory craft and check the prereqs for differnet enhancement ranks
     # can be used in conjunction with points command to determine if user can implement a build
     async def build(self, ctx, *, typeRank=''):
@@ -456,22 +531,41 @@ class Options(commands.Cog):
         buildTot = funcBuild(buildList)
 
         # return build to command caller
-        await ctx.send("This build requires {} enhancement(s) for:\n\n {} \n\n{}".format(buildTot[0], buildTot[1], enm.reqEnd([buildTot[0], buildTot[2]])))
-        return
+        mes = discord.Embed(
+            title="Enhancement Build",
+            description="This build requires {} enhancement point{}.".format(
+                buildTot[0],
+                pluralInt(buildTot[0])))
+        mes.add_field(
+            inline=False,
+            name="Build Enhancements",
+            value=buildTot[1])
+        mes.add_field(
+            inline=False,
+            name="Required Enhancements",
+            value=enm.reqEnd([buildTot[0], buildTot[2]]))
+        await ctx.send(embed=mes)
 
-    @ commands.command(aliases=['leaderboard'], brief=enm.cmdInf['top']['brief'], description=enm.cmdInf['top']['description'])
+    @commands.command(
+        aliases=['leaderboard'],
+        brief=enm.cmdInf['top']['brief'],
+        description=enm.cmdInf['top']['description'])
     # top 10 user leaderboard for number of used enhancements
     async def top(self, ctx, *, enh=""):
         if enh.lower() == "resub":
             serverXP = load(ctx.message.author.guild.id)
-            resubXPList = [[ctx.message.guild.get_member(x), serverXP[x]['invXP'][-1]]
-                           for x in serverXP.keys()]
+            resubXPList = [
+                [ctx.message.guild.get_member(x), serverXP[x]['invXP'][-1]]
+                for x in serverXP.keys()]
             pointList = sorted(resubXPList, key=lambda x: x[1], reverse=True)
-            blankMessage = ""
+
+            blankMessage = discord.Embed(title="GDV XP Leaderboard")
+
         elif enh:
             if enh not in enm.leader.keys():
                 if enh not in enm.leader.values():
-                    await ctx.send("No enhancement could be found for type: {}".format(enh))
+                    await ctx.send(
+                        "No enhancement could be found for type: {}".format(enh))
                     return
             else:
                 enh = enm.leader[enh]
@@ -485,15 +579,25 @@ class Options(commands.Cog):
                     if role.name in enhNameList.keys():
                         enhNameList[role.name] += 1
                         if peep not in peepDict.keys():
-                            peepDict[peep] = [enm.power[x]['Rank'] for x in enm.power.keys(
-                            ) if enm.power[x]['Name'] == role.name][0]
+                            peepDict[peep] = [enm.power[x]['Rank']
+                                              for x in enm.power.keys()
+                                              if enm.power[x]['Name'] ==
+                                              role.name][0]
                         else:
-                            rank = [enm.power[x]['Rank'] for x in enm.power.keys(
-                            ) if enm.power[x]['Name'] == role.name][0]
+                            rank = [enm.power[x]['Rank']
+                                    for x in enm.power.keys()
+                                    if enm.power[x]['Name'] ==
+                                    role.name][0]
                             if rank > peepDict[peep]:
                                 peepDict[peep] = rank
-            blankMessage = "{} is being used by {} hosts for a total of {} enhancement points spent.\n".format(
-                enh, len(peepDict.keys()), sum(peepDict.values()))
+
+            blankMessage = discord.Embed(
+                title="{} Enhancement Leaderboard",
+                description="{} is being used by {} hosts for a total of {} enhancement points spent.\n".format(
+                    enh,
+                    len(peepDict.keys()),
+                    sum(peepDict.values())))
+
             unsortedDict = [(x, y) for x, y in peepDict.items()]
             pointList = sorted(unsortedDict, key=lambda x: x[1], reverse=True)
         else:
@@ -512,38 +616,57 @@ class Options(commands.Cog):
             # sort list of users with enhancements by number of enhancements, descending
             pointList = sorted(pointList, key=lambda x: x[1], reverse=True)
             debug(pointList)
-            blankMessage = "There are {} hosts with a total of {} enhancement points spent.\n".format(
-                sum([len(x.members) for x in [get(y.roles, name=SUPEROLE) for y in self.bot.guilds]]), sum([x[1] for x in pointList]))
+            desc = "There are {} hosts with a total of {} enhancement points spent.".format(
+                sum([len(x.members)
+                     for x in [get(y.roles, name=SUPEROLE)
+                               for y in self.bot.guilds]]),
+                sum([x[1] for x in pointList]))
+
+            blankMessage = discord.Embed(
+                title="Host Leaderboard",
+                description=desc)
         # counter and blank message to track user number and return as a single message
         i = 1
         for group in pointList[:LEADLIMIT]:
             if not enh:
-                blankMessage += "**{}** - {} \n\t {} enhancements\n".format(
-                    i, nON(group[0]), group[1])
+                blankMessage.add_field(
+                    inline=False,
+                    name="**{}** - {}".format(i, nON(group[0])),
+                    value="\t{} enhancements".format(group[1]))
             else:
                 if not enh.lower() == "resub":
-                    blankMessage += "**{}** - {} \n\t Rank {} {}\n".format(
-                        i, nON(group[0]), group[1], enh)
+                    blankMessage.add_field(
+                        inline=False,
+                        name="**{}** - {}".format(i, nON(group[0])),
+                        value="\tRank {} {}".format(group[1], enh))
                 else:
-                    blankMessage += "**{}** - {} \n\t {} ReSub XP\n".format(
-                        i, nON(group[0]), group[1])
+                    blankMessage.add_field(
+                        inline=False,
+                        name="**{}** - {}".format(i, nON(group[0])),
+                        value="\t{} GDV XP".format(group[1]))
             i += 1
 
         # return leaderboard to command caller
-        await ctx.send(blankMessage)
+        await ctx.send(embed=blankMessage)
 
-    @ commands.command(aliases=['c', 'clear'], brief=enm.cmdInf['clean']['brief'], description=enm.cmdInf['clean']['description'])
+    @ commands.command(
+        aliases=['c', 'clear'],
+        brief=enm.cmdInf['clean']['brief'],
+        description=enm.cmdInf['clean']['description'])
     # remove unrestricted enhancements from command caller
     async def clean(self, ctx):
         # rank 0 enhancements are either restricted or the SUPEROLE, which should not be removed with this command
-        toCut = [x.name for x in ctx.message.author.roles if x.name in [
-            enm.power[y]['Name'] for y in enm.power.keys() if enm.power[y]['Rank'] > 0]]
+        toCut = [x.name
+                 for x in ctx.message.author.roles
+                 if x.name in [enm.power[y]['Name']
+                               for y in enm.power.keys()
+                               if enm.power[y]['Rank'] > 0]]
         debug(toCut)
         await cut(ctx, [ctx.message.author], toCut)
         return
 
-    @commands.command(hidden=HIDE)
-    @commands.has_any_role(MANAGER)
+    @ commands.command(hidden=HIDE)
+    @ commands.has_any_role(MANAGER)
     async def xpAdd(self, ctx, val: float, *, mem=''):
         val = round(val, 2)
         debug("val is", val)
@@ -564,9 +687,12 @@ class Options(commands.Cog):
         save(ctx.message.author.guild.id, infGrab)
         await ctx.send("Host {}: {} -> {}".format(nON(peep), iniVal, sum))
 
-    @ commands.command(hidden=HIDE, brief=enm.cmdInf['xpGrab']['brief'], description=enm.cmdInf['xpGrab']['description'])
+    @ commands.command(
+        hidden=HIDE,
+        brief=enm.cmdInf['xpGrab']['brief'],
+        description=enm.cmdInf['xpGrab']['description'])
     # @commands.has_any_role(MANAGER)
-    @commands.cooldown(1, 1, commands.BucketType.default)
+    @ commands.cooldown(1, 1, commands.BucketType.default)
     async def xpGrab(self, ctx, *, mem=''):
         typeMem = await memGrab(self, ctx, mem)
         typeMem = [typeMem[0]]
@@ -648,11 +774,15 @@ async def manageRoles(ctx):
             roleRankLower = LOWESTROLE
 
         else:
-            roleRankLower = [x.position for x in ctx.message.guild.roles if x.name ==
+            roleRankLower = [x.position
+                             for x in ctx.message.guild.roles
+                             if x.name ==
                              'Rank {} Intelligence (only for Systems)'.format(roleRank - 1)][0]
 
         # fetch upperbound intelligence rank position
-        roleRankUpper = [x.position for x in ctx.message.guild.roles if x.name ==
+        roleRankUpper = [x.position
+                         for x in ctx.message.guild.roles
+                         if x.name ==
                          'Rank {} Intelligence (only for Systems)'.format(roleRank)][0]
 
         roleDiff = roleRankUpper - roleRankLower
@@ -998,6 +1128,13 @@ def aOrAn(inp):
     debug("ret = ", ret)
     debug("End aOrAn")
     return ret
+
+
+def pluralInt(val: int):
+    rtnStr = ""
+    if not val == 1:
+        rtnStr = "s"
+    return rtnStr
 
 
 def save(key, value, cache_file=SAVEFILE):
