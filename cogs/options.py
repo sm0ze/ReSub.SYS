@@ -299,8 +299,10 @@ class Options(commands.Cog):
         debug("currEnh {} < currEnhP {}".format(
             currEnh, currEnhP), currEnh < currEnhP)
         if currEnh < currEnhP:
-            emptMes += "\nAlert, {} has {} unspent enhancement points.".format(
-                nON(ctx.message.author), currEnhP - currEnh)
+            emptMes += "\nAlert, {} has {} unspent enhancement point{}.".format(
+                nON(ctx.message.author),
+                currEnhP - currEnh,
+                pluralInt(currEnhP - currEnh))
 
         await ctx.send(emptMes)
 
