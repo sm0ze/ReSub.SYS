@@ -229,13 +229,19 @@ class Options(commands.Cog):
         debug("Selected Location: {}".format(selPlace))
 
         taskGrant = random.randrange(taskWorth[0], taskWorth[1] + 1)
+        if DEBUG:
+            #taskGrant = taskWorth[1]
+            pass
         debug("task Grant = ", taskGrant)
         taskDiff = taskWorth[1] - taskWorth[0]
         debug("task diff = ", taskDiff)
 
         selResult = round(
-            ((taskGrant - taskWorth[0]) / (2 * taskDiff)) + 0.5, 2)
+            ((taskGrant - taskWorth[0]) / (2 * taskDiff)) + 0.5, 3)
+
         debug("selected result = ", selResult)
+        debug("int(selResult * 100):", int(selResult * 100),
+              [[x, enm.rsltDict[x]] for x in enm.rsltDict.keys()])
 
         selRsltWrd = [x for x in enm.rsltDict.keys()
                       if int(selResult * 100) in
@@ -245,8 +251,10 @@ class Options(commands.Cog):
         debug("selected resulting word = ", selRsltWrd)
         if selRsltWrd:
             selRsltWrd = selRsltWrd[0]
+
         elif taskWorth[1] == taskGrant:
             selRsltWrd = "flawless"
+        debug("taskWorth[1] == taskGrant", taskWorth[1], taskGrant)
 
         """if addPeeps:
             emptMes += " Due to the task difficulty, assistance has been provided by {}".format(
@@ -595,7 +603,7 @@ class Options(commands.Cog):
                                 peepDict[peep] = rank
 
             blankMessage = discord.Embed(
-                title="{} Enhancement Leaderboard",
+                title="{} Enhancement Leaderboard".format(enh),
                 description="{} is being used by {} hosts for a total of {} enhancement points spent.\n".format(
                     enh,
                     len(peepDict.keys()),
@@ -652,7 +660,7 @@ class Options(commands.Cog):
         # return leaderboard to command caller
         await ctx.send(embed=blankMessage)
 
-    @ commands.command(
+    @commands.command(
         aliases=['c', 'clear'],
         brief=enm.cmdInf['clean']['brief'],
         description=enm.cmdInf['clean']['description'])
@@ -668,8 +676,8 @@ class Options(commands.Cog):
         await cut(ctx, [ctx.message.author], toCut)
         return
 
-    @ commands.command(hidden=HIDE)
-    @ commands.has_any_role(MANAGER)
+    @commands.command(hidden=HIDE)
+    @commands.has_any_role(MANAGER)
     async def xpAdd(self, ctx, val: float, *, mem=''):
         val = round(val, 2)
         debug("val is", val)
@@ -690,12 +698,12 @@ class Options(commands.Cog):
         save(ctx.message.author.guild.id, infGrab)
         await ctx.send("Host {}: {} -> {}".format(nON(peep), iniVal, sum))
 
-    @ commands.command(
+    @commands.command(
         hidden=HIDE,
         brief=enm.cmdInf['xpGrab']['brief'],
         description=enm.cmdInf['xpGrab']['description'])
     # @commands.has_any_role(MANAGER)
-    @ commands.cooldown(1, 1, commands.BucketType.default)
+    @commands.cooldown(1, 1, commands.BucketType.default)
     async def xpGrab(self, ctx, *, mem=''):
         typeMem = await memGrab(self, ctx, mem)
         typeMem = [typeMem[0]]
@@ -704,35 +712,46 @@ class Options(commands.Cog):
             if role.name == MANAGER:
                 tatForce = 1
         for peep in typeMem:
-            mes = ''
+            mes = discord.Embed(title="{} Stats".format(nON(peep)))
             stuff = await count(peep, 1, 1)
-            mes += "{}'s MEE6 xp is currently {:,}\n".format(
-                nON(peep), stuff[3][0])
-            mes += "{}'s TATSU xp is currently {:,}\n".format(
-                nON(peep), stuff[3][1])
-            mes += "{}'s ReSub xp is currently {:,}\n".format(
-                nON(peep), stuff[3][-1])
-            mes += "{}'s Total xp is currently {:,}\n".format(
-                nON(peep), stuff[2])
-            mes += "{}'s resub GDV is currently {}\n".format(
-                nON(peep), round(stuff[1], 2))
-            mes += "{}'s enhancement points are currently {}\n".format(
-                nON(peep), stuff[0])
+
+            mes.add_field(
+                name="MEE6 xp",
+                value="{:,}".format(stuff[3][0]))
+            mes.add_field(
+                name="TATSU xp",
+                value="{:,}".format(stuff[3][1]))
+            mes.add_field(
+                name="GDV xp",
+                value="{:,}".format(stuff[3][-1]))
+            mes.add_field(
+                name="Total xp",
+                value="{:,}".format(stuff[2]))
+            mes.add_field(
+                name="GDV",
+                value="{}".format(round(stuff[1], 2)))
+            mes.add_field(
+                name="Enhancement Points",
+                value="{}".format(stuff[0]))
 
             nextGDV = int(stuff[1]) + 1
             nextGDV_XP = lvlEqu(nextGDV, 1)
             nextGDVneedXP = nextGDV_XP - stuff[2]
 
-            mes += "{}'s required XP to next GDV is {:,}\n".format(
-                nON(peep), nextGDVneedXP)
+            mes.add_field(
+                inline=False,
+                name="XP to next GDV",
+                value="{:,}".format(nextGDVneedXP))
 
             nextEnhP = int(5 * (int(stuff[1] / 5) + 1))
             nextEnhP_XP = lvlEqu(nextEnhP, 1)
             nextEnhPneedXP = nextEnhP_XP - stuff[2]
 
-            mes += "{}'s required XP to next enhancement point is {:,}".format(
-                nON(peep), nextEnhPneedXP)
-            await ctx.send(mes)
+            mes.add_field(
+                inline=False,
+                name="XP to next Enhancement Point",
+                value="{:,}".format(nextEnhPneedXP))
+            await ctx.send(embed=mes)
         return
 
 
@@ -1168,3 +1187,8 @@ def load(key, cache_file=SAVEFILE):
 # function to setup cog
 def setup(bot):
     bot.add_cog(Options(bot))
+
+
+if TEST:
+    async def Testing():
+        pass
