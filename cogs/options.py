@@ -160,10 +160,10 @@ class Options(commands.Cog):
         feedback = lvlEqu(inVar, gdv)
         if gdv:
             await ctx.send(
-                "{} GDV is equivalent to {} XP".format(inVar, feedback))
+                "{} GDV is equivalent to {:,} XP".format(inVar, feedback))
         else:
             await ctx.send(
-                "{} XP is equivalent to {} GDV".format(inVar, feedback))
+                "{:,} XP is equivalent to {} GDV".format(inVar, feedback))
 
     @commands.command(
         aliases=['t'],
@@ -277,12 +277,12 @@ class Options(commands.Cog):
                 authInf[peep[0].id] = {'Name': peep[0].name}
                 authInf[peep[0].id]['invXP'] = [0, 0, taskGrant * peep[1]]
             if taskAdd != -1:
-                emptMes += "\n{} earning {} GDV XP for a total of {} XP".format(
+                emptMes += "\n{} earning {:,} GDV XP for a total of {:,} XP".format(
                     nON(peep[0]),
                     taskGrant * peep[1],
                     authInf[peep[0].id]['invXP'][-1])
         if taskAdd == -1:
-            emptMes += "\n{} earning {} GDV XP for a total of {} XP\nEveryone else earning {} GDV XP.".format(
+            emptMes += "\n{} earning {:,} GDV XP for a total of {:,} XP\nEveryone else earning {:,} GDV XP.".format(
                 nON(ctx.message.author),
                 taskGrant,
                 authInf[ctx.message.author.id]['invXP'][-1],
@@ -646,7 +646,7 @@ class Options(commands.Cog):
                     blankMessage.add_field(
                         inline=False,
                         name="**{}** - {}".format(i, nON(group[0])),
-                        value="\t{} GDV XP".format(group[1]))
+                        value="\t{:,} GDV XP".format(group[1]))
             i += 1
 
         # return leaderboard to command caller
@@ -706,13 +706,13 @@ class Options(commands.Cog):
         for peep in typeMem:
             mes = ''
             stuff = await count(peep, 1, 1)
-            mes += "{}'s MEE6 xp is currently {}\n".format(
+            mes += "{}'s MEE6 xp is currently {:,}\n".format(
                 nON(peep), stuff[3][0])
-            mes += "{}'s TATSU xp is currently {}\n".format(
+            mes += "{}'s TATSU xp is currently {:,}\n".format(
                 nON(peep), stuff[3][1])
-            mes += "{}'s ReSub xp is currently {}\n".format(
+            mes += "{}'s ReSub xp is currently {:,}\n".format(
                 nON(peep), stuff[3][-1])
-            mes += "{}'s Total xp is currently {}\n".format(
+            mes += "{}'s Total xp is currently {:,}\n".format(
                 nON(peep), stuff[2])
             mes += "{}'s resub GDV is currently {}\n".format(
                 nON(peep), round(stuff[1], 2))
@@ -723,14 +723,14 @@ class Options(commands.Cog):
             nextGDV_XP = lvlEqu(nextGDV, 1)
             nextGDVneedXP = nextGDV_XP - stuff[2]
 
-            mes += "{}'s required XP to next GDV is {}\n".format(
+            mes += "{}'s required XP to next GDV is {:,}\n".format(
                 nON(peep), nextGDVneedXP)
 
             nextEnhP = int(5 * (int(stuff[1] / 5) + 1))
             nextEnhP_XP = lvlEqu(nextEnhP, 1)
             nextEnhPneedXP = nextEnhP_XP - stuff[2]
 
-            mes += "{}'s required XP to next enhancement point is {}".format(
+            mes += "{}'s required XP to next enhancement point is {:,}".format(
                 nON(peep), nextEnhPneedXP)
             await ctx.send(mes)
         return
@@ -1114,10 +1114,10 @@ def lvlEqu(givVar: float = 0, inv=0):
     debug("Start lvlEqu")
     if inv:
         calVar = (20 * math.pow(givVar, 2)) / 1.25
-        debug("{} GDV is equivalent to {} XP".format(givVar, calVar))
+        debug("{} GDV is equivalent to {:,} XP".format(givVar, calVar))
     else:
         calVar = math.sqrt((1.25 * givVar) / 20)
-        debug("{} XP is equivalent to {} GDV".format(givVar, calVar))
+        debug("{:,} XP is equivalent to {} GDV".format(givVar, calVar))
     debug("End lvlEqu")
     return round(calVar, 2)
 
