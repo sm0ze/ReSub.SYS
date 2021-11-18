@@ -3,6 +3,7 @@
 import math
 import os
 import random
+import typing
 
 import discord
 import enhancements as enm
@@ -56,7 +57,7 @@ PERMROLES = ['Supe']  # guild role(s) for using these bot commands
 MANAGER = 'System'  # manager role name for guild
 LOWESTROLE = 2  # bot sorts roles by rank from position of int10 to LOWESTROLE
 HIDE = False
-LEADLIMIT = 10
+LEADLIMIT = 12
 NEWCALC = 1
 GEMDIFF = 0.5
 taskCD = 60 * 30
@@ -234,7 +235,7 @@ class Options(commands.Cog):
 
         taskGrant = random.randrange(taskWorth[0], taskWorth[1] + 1)
         if DEBUG:
-            #taskGrant = taskWorth[1]
+            # taskGrant = taskWorth[1]
             pass
         debug("task Grant = ", taskGrant)
         taskDiff = taskWorth[1] - taskWorth[0]
@@ -570,13 +571,54 @@ class Options(commands.Cog):
             value=enm.reqEnd([buildTot[0], buildTot[2]]))
         await ctx.send(embed=mes)
 
+    @commands.command()
+    @commands.has_any_role(MANAGER)
+    async def average(self, ctx):
+        mes = discord.Embed(
+            title="Average Enhancment Points")
+        debug(enm.leader.keys())
+        getSupe = [x for x in ctx.guild.roles if str(x.name) == SUPEROLE]
+        if not getSupe:
+            await ctx.send("No users of role: {}".format(SUPEROLE))
+        else:
+            getSupe = getSupe[0]
+        for val in enm.leader.values():
+            debug("value", val)
+            peepDict = topEnh(ctx, val)
+            debug("peepDict", peepDict)
+
+            sumPeep = sum(peepDict.values())
+            lenPeep = len(peepDict.keys())
+            avPeep = round(sumPeep / len(getSupe.members), 4)
+
+            mes.add_field(name="{}".format(val),
+                          value="{} host{} for a total of {} point{}.\n Serverwide average of {}.".format(
+                lenPeep,
+                pluralInt(lenPeep),
+                sumPeep,
+                pluralInt(sumPeep),
+                avPeep))
+        await ctx.send(embed=mes)
+
     @commands.command(
         aliases=['leaderboard'],
         brief=enm.cmdInf['top']['brief'],
         description=enm.cmdInf['top']['description'])
     # top 10 user leaderboard for number of used enhancements
-    async def top(self, ctx, *, enh=""):
+    async def top(self, ctx, lead: typing.Optional[int] = LEADLIMIT, page: typing.Optional[int] = 1, *, enh=""):
         xpKey = ["gdv xp", "gdv"]
+        if MANAGER in [str(x.name) for x in ctx.message.author.roles]:
+            leader = lead
+        else:
+            if lead < LEADLIMIT:
+                leader = lead
+            else:
+                leader = LEADLIMIT
+        if leader < 1:
+            leader = 1
+        strtLead = page * leader - leader
+        endLead = page * leader
+
         if enh.lower() in xpKey:
             serverXP = load(ctx.message.author.guild.id)
             resubXPList = [
@@ -594,36 +636,22 @@ class Options(commands.Cog):
                     return
             else:
                 enh = enm.leader[enh]
-            enhNameList = {enm.power[x]['Name']: 0 for x in enm.power.keys(
-            ) if enh == enm.power[x]['Type']}
-            peepDict = {}
-            for peep in ctx.message.author.guild.members:
-                if SUPEROLE not in [x.name for x in peep.roles]:
-                    continue
-                for role in peep.roles:
-                    if role.name in enhNameList.keys():
-                        enhNameList[role.name] += 1
-                        if peep not in peepDict.keys():
-                            peepDict[peep] = [enm.power[x]['Rank']
-                                              for x in enm.power.keys()
-                                              if enm.power[x]['Name'] ==
-                                              role.name][0]
-                        else:
-                            rank = [enm.power[x]['Rank']
-                                    for x in enm.power.keys()
-                                    if enm.power[x]['Name'] ==
-                                    role.name][0]
-                            if rank > peepDict[peep]:
-                                peepDict[peep] = rank
+            debug("HERE enh", enh)
+            peepDict = topEnh(ctx, enh)
+
+            sumPeep = sum(peepDict.values())
+            lenPeep = len(peepDict.keys())
+            avPeep = round(sumPeep / lenPeep, 2)
 
             blankMessage = discord.Embed(
                 title="{} Enhancement Leaderboard".format(enh),
-                description="{} is being used by {} host{} for a total of {} enhancement point{} spent.\n".format(
+                description="{} is being used by {} host{} for a total of {} enhancement point{} spent.\nFor an average of {}.".format(
                     enh,
-                    len(peepDict.keys()),
-                    pluralInt(len(peepDict.keys())),
-                    sum(peepDict.values()),
-                    pluralInt(sum(peepDict.values()))))
+                    lenPeep,
+                    pluralInt(lenPeep),
+                    sumPeep,
+                    pluralInt(sumPeep),
+                    avPeep))
 
             unsortedDict = [(x, y) for x, y in peepDict.items()]
             pointList = sorted(unsortedDict, key=lambda x: x[1], reverse=True)
@@ -657,22 +685,22 @@ class Options(commands.Cog):
                 title="Host Leaderboard",
                 description=desc)
         # counter and blank message to track user number and return as a single message
-        i = 1
-        for group in pointList[:LEADLIMIT]:
+        i = strtLead + 1
+        for group in pointList[strtLead:endLead]:
             if not enh:
                 blankMessage.add_field(
-                    inline=False,
+                    inline=True,
                     name="**{}** - {}".format(i, nON(group[0])),
                     value="\t{} enhancements".format(group[1]))
             else:
                 if not enh.lower() in xpKey:
                     blankMessage.add_field(
-                        inline=False,
+                        inline=True,
                         name="**{}** - {}".format(i, nON(group[0])),
                         value="\tRank {} {}".format(group[1], enh))
                 else:
                     blankMessage.add_field(
-                        inline=False,
+                        inline=True,
                         name="**{}** - {}".format(i, nON(group[0])),
                         value="\t{:,} GDV XP".format(group[1]))
             i += 1
@@ -680,7 +708,7 @@ class Options(commands.Cog):
         # return leaderboard to command caller
         await ctx.send(embed=blankMessage)
 
-    @commands.command(
+    @ commands.command(
         aliases=['c', 'clear'],
         brief=enm.cmdInf['clean']['brief'],
         description=enm.cmdInf['clean']['description'])
@@ -696,8 +724,8 @@ class Options(commands.Cog):
         await cut(ctx, [ctx.message.author], toCut)
         return
 
-    @commands.command(hidden=HIDE)
-    @commands.has_any_role(MANAGER)
+    @ commands.command(hidden=HIDE)
+    @ commands.has_any_role(MANAGER)
     async def xpAdd(self, ctx, val: float, *, mem=''):
         val = round(val, 2)
         debug("val is", val)
@@ -718,12 +746,12 @@ class Options(commands.Cog):
         save(ctx.message.author.guild.id, infGrab)
         await ctx.send("Host {}: {} -> {}".format(nON(peep), iniVal, sum))
 
-    @commands.command(
+    @ commands.command(
         hidden=HIDE,
         brief=enm.cmdInf['xpGrab']['brief'],
         description=enm.cmdInf['xpGrab']['description'])
     # @commands.has_any_role(MANAGER)
-    @commands.cooldown(1, 1, commands.BucketType.default)
+    @ commands.cooldown(1, 1, commands.BucketType.default)
     async def xpGrab(self, ctx, *, mem=''):
         typeMem = await memGrab(self, ctx, mem)
         typeMem = [typeMem[0]]
@@ -1197,6 +1225,32 @@ def pluralInt(val: int):
     if not val == 1:
         rtnStr = "s"
     return rtnStr
+
+
+def topEnh(ctx, enh):
+
+    enhNameList = {enm.power[x]['Name']: 0 for x in enm.power.keys(
+    ) if enh == enm.power[x]['Type']}
+    peepDict = {}
+    for peep in ctx.message.author.guild.members:
+        if SUPEROLE not in [x.name for x in peep.roles]:
+            continue
+        for role in peep.roles:
+            if role.name in enhNameList.keys():
+                enhNameList[role.name] += 1
+                if peep not in peepDict.keys():
+                    peepDict[peep] = [enm.power[x]['Rank']
+                                      for x in enm.power.keys()
+                                      if enm.power[x]['Name'] ==
+                                      role.name][0]
+                else:
+                    rank = [enm.power[x]['Rank']
+                            for x in enm.power.keys()
+                            if enm.power[x]['Name'] ==
+                            role.name][0]
+                    if rank > peepDict[peep]:
+                        peepDict[peep] = rank
+    return peepDict
 
 
 def save(key, value, cache_file=SAVEFILE):

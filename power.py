@@ -62,16 +62,16 @@ remList = ['( ╥﹏╥) ノシ', '(ᗒᗣᗕ)՞', 'ʕ ಡ ﹏ ಡ ʔ', '●︿�
 
 
 # list of roles that give user extra enhancement points, +1 for each match
-patList = ['Supe', 'Precognition', 'Precognition+', 'Precognition++',
+patList = ['Supe', 'Precoggnition', 'Precoggnition+', 'Precoggnition++',
            'Boss System', 'System', 'Major Task Tier', 'Authors', 'Ping Unto Me My Daily Quack']
 
 # dictionary of the different types of enhancements and the total number of
 # ranks available for each. * modifier for enhancements with extra restrictions
 powerTypes = {'Strength': 10, 'Speed': 10, 'Endurance': 10, 'Memory': 10, 'Mental Celerity': 10, 'Mental Clarity': 10, 'Regeneration': 10, 'Pain Tolerance': 10,
-              'Invisibility': 10, 'Vision': 10, 'Aural Faculty': 10, 'Olfactory Sense': 10, 'Gustatory Ability': 10, 'Tactile Reception': 10, 'Proprioception': 10, 'Precognition*': 10, '4th Wall Breaker*': 10, 'Intelligence*': 10}
+              'Invisibility': 10, 'Vision': 10, 'Aural Faculty': 10, 'Olfactory Sense': 10, 'Gustatory Ability': 10, 'Tactile Reception': 10, 'Proprioception': 10, 'Omniscience*': 10, '4th Wall Breaker*': 10, 'Intelligence*': 10}
 
 leader = {'str': 'Strength', 'spe': 'Speed', 'end': 'Endurance', 'mem': 'Memory', 'cel': 'Mental Celerity', 'cla': 'Mental Clarity', 'reg': 'Regeneration', 'pai': 'Pain Tolerance', 'inv': 'Invisibility', 'vis': 'Vision',
-          'aur': 'Aural Faculty', 'olf': 'Olfactory Sense', 'gus': 'Gustatory Ability', 'tac': 'Tactile Reception', 'pro': 'Proprioception', 'pre': 'Precognition', '4th': '4th Wall Breaker', 'int': 'Intelligence', 'sys': 'System', 'aut': 'Authors'}
+          'aur': 'Aural Faculty', 'olf': 'Olfactory Sense', 'gus': 'Gustatory Ability', 'tac': 'Tactile Reception', 'pro': 'Proprioception', 'omn': 'Omniscience', '4th': '4th Wall Breaker', 'int': 'Intelligence', 'sys': 'System', 'aut': 'Authors'}
 
 # the different hexcodes for the colour of each role by rank
 rankColour = {1: 0xffffff, 2: 0xcfceeb, 3: 0xaeaddf, 4: 0x8c8bd8, 5: 0x6c6bc7,
@@ -183,7 +183,7 @@ power = {
     'tac1': {'Name': 'Rank 1 Tactile Reception', 'Type': 'Tactile Reception', 'Rank': 1, 'Prereq': []},
     'pro1': {'Name': 'Rank 1 Proprioception', 'Type': 'Proprioception', 'Rank': 1, 'Prereq': []},
 
-    'pre1': {'Name': 'Rank 1 Precognition', 'Type': 'Precognition', 'Rank': 1, 'Prereq': ['aut0']},
+    'omn1': {'Name': 'Rank 1 Omniscience', 'Type': 'Omniscience', 'Rank': 1, 'Prereq': ['aut0']},
     'int1': {'Name': 'Rank 1 Intelligence (only for Systems)', 'Type': 'Intelligence', 'Rank': 1, 'Prereq': ['sys0']},
     '4th1': {'Name': 'Rank 1 4th Wall Breaker', 'Type': '4th Wall Breaker', 'Rank': 1, 'Prereq': ['aut0']},
 
@@ -204,7 +204,7 @@ power = {
     'tac2': {'Name': 'Rank 2 Tactile Reception', 'Type': 'Tactile Reception', 'Rank': 2, 'Prereq': ['tac1']},
     'pro2': {'Name': 'Rank 2 Proprioception', 'Type': 'Proprioception', 'Rank': 2, 'Prereq': ['pro1']},
 
-    'pre2': {'Name': 'Rank 2 Precognition', 'Type': 'Precognition', 'Rank': 2, 'Prereq': ['pre1']},
+    'omn2': {'Name': 'Rank 2 Omniscience', 'Type': 'Omniscience', 'Rank': 2, 'Prereq': ['omn1']},
     'int2': {'Name': 'Rank 2 Intelligence (only for Systems)', 'Type': 'Intelligence', 'Rank': 2, 'Prereq': ['int1']},
     '4th2': {'Name': 'Rank 2 4th Wall Breaker', 'Type': '4th Wall Breaker', 'Rank': 2, 'Prereq': ['4th1']},
 
@@ -224,7 +224,7 @@ power = {
     'tac3': {'Name': 'Rank 3 Tactile Reception', 'Type': 'Tactile Reception', 'Rank': 3, 'Prereq': ['tac2']},
     'pro3': {'Name': 'Rank 3 Proprioception', 'Type': 'Proprioception', 'Rank': 3, 'Prereq': ['pro2']},
 
-    'pre3': {'Name': 'Rank 3 Precognition', 'Type': 'Precognition', 'Rank': 3, 'Prereq': ['pre2']},
+    'omn3': {'Name': 'Rank 3 Omniscience', 'Type': 'Omniscience', 'Rank': 3, 'Prereq': ['omn2']},
     'int3': {'Name': 'Rank 3 Intelligence (only for Systems)', 'Type': 'Intelligence', 'Rank': 3, 'Prereq': ['int2']},
     '4th3': {'Name': 'Rank 3 4th Wall Breaker', 'Type': '4th Wall Breaker', 'Rank': 3, 'Prereq': ['4th2']},
 
@@ -244,7 +244,7 @@ power = {
     'tac4': {'Name': 'Rank 4 Tactile Reception', 'Type': 'Tactile Reception', 'Rank': 4, 'Prereq': ['tac3', 'cla1', 'cel1']},
     'pro4': {'Name': 'Rank 4 Proprioception', 'Type': 'Proprioception', 'Rank': 4, 'Prereq': ['pro3', 'cla1', 'cel1']},
 
-    'pre4': {'Name': 'Rank 4 Precognition', 'Type': 'Precognition', 'Rank': 4, 'Prereq': ['pre3', 'vis1', 'aur1', 'pro1']},
+    'omn4': {'Name': 'Rank 4 Omniscience', 'Type': 'Omniscience', 'Rank': 4, 'Prereq': ['omn3', 'vis1', 'aur1', 'pro1']},
     'int4': {'Name': 'Rank 4 Intelligence (only for Systems)', 'Type': 'Intelligence', 'Rank': 4, 'Prereq': ['int3', 'cel1', 'cla1']},
     '4th4': {'Name': 'Rank 4 4th Wall Breaker', 'Type': '4th Wall Breaker', 'Rank': 4, 'Prereq': ['4th3', 'end1', 'spe1']},
 
@@ -264,7 +264,7 @@ power = {
     'tac5': {'Name': 'Rank 5 Tactile Reception', 'Type': 'Tactile Reception', 'Rank': 5, 'Prereq': ['tac4']},
     'pro5': {'Name': 'Rank 5 Proprioception', 'Type': 'Proprioception', 'Rank': 5, 'Prereq': ['pro4']},
 
-    'pre5': {'Name': 'Rank 5 Precognition', 'Type': 'Precognition', 'Rank': 5, 'Prereq': ['pre4']},
+    'omn5': {'Name': 'Rank 5 Omniscience', 'Type': 'Omniscience', 'Rank': 5, 'Prereq': ['omn4']},
     'int5': {'Name': 'Rank 5 Intelligence (only for Systems)', 'Type': 'Intelligence', 'Rank': 5, 'Prereq': ['int4']},
     '4th5': {'Name': 'Rank 5 4th Wall Breaker', 'Type': '4th Wall Breaker', 'Rank': 5, 'Prereq': ['4th4']},
 
@@ -284,7 +284,7 @@ power = {
     'tac6': {'Name': 'Rank 6 Tactile Reception', 'Type': 'Tactile Reception', 'Rank': 6, 'Prereq': ['tac5']},
     'pro6': {'Name': 'Rank 6 Proprioception', 'Type': 'Proprioception', 'Rank': 6, 'Prereq': ['pro5']},
 
-    'pre6': {'Name': 'Rank 6 Precognition', 'Type': 'Precognition', 'Rank': 6, 'Prereq': ['pre5']},
+    'omn6': {'Name': 'Rank 6 Omniscience', 'Type': 'Omniscience', 'Rank': 6, 'Prereq': ['omn5']},
     'int6': {'Name': 'Rank 6 Intelligence (only for Systems)', 'Type': 'Intelligence', 'Rank': 6, 'Prereq': ['int5']},
     '4th6': {'Name': 'Rank 6 4th Wall Breaker', 'Type': '4th Wall Breaker', 'Rank': 6, 'Prereq': ['4th5']},
 
@@ -304,7 +304,7 @@ power = {
     'tac7': {'Name': 'Rank 7 Tactile Reception', 'Type': 'Tactile Reception', 'Rank': 7, 'Prereq': ['tac6', 'pro1', 'cla3', 'cel3']},
     'pro7': {'Name': 'Rank 7 Proprioception', 'Type': 'Proprioception', 'Rank': 7, 'Prereq': ['pro6', 'mem3', 'cla3', 'cel3']},
 
-    'pre7': {'Name': 'Rank 7 Precognition', 'Type': 'Precognition', 'Rank': 7, 'Prereq': ['pre6', 'vis3', 'aur3', 'pro3']},
+    'omn7': {'Name': 'Rank 7 Omniscience', 'Type': 'Omniscience', 'Rank': 7, 'Prereq': ['omn6', 'vis3', 'aur3', 'pro3']},
     'int7': {'Name': 'Rank 7 Intelligence (only for Systems)', 'Type': 'Intelligence', 'Rank': 7, 'Prereq': ['int6', 'mem1', 'cel3', 'cla3']},
     '4th7': {'Name': 'Rank 7 4th Wall Breaker', 'Type': '4th Wall Breaker', 'Rank': 7, 'Prereq': ['4th6', 'end3', 'spe3', 'str1', 'reg1']},
 
@@ -324,7 +324,7 @@ power = {
     'tac8': {'Name': 'Rank 8 Tactile Reception', 'Type': 'Tactile Reception', 'Rank': 8, 'Prereq': ['tac7']},
     'pro8': {'Name': 'Rank 8 Proprioception', 'Type': 'Proprioception', 'Rank': 8, 'Prereq': ['pro7']},
 
-    'pre8': {'Name': 'Rank 8 Precognition', 'Type': 'Precognition', 'Rank': 8, 'Prereq': ['pre7']},
+    'omn8': {'Name': 'Rank 8 Omniscience', 'Type': 'Omniscience', 'Rank': 8, 'Prereq': ['omn7']},
     'int8': {'Name': 'Rank 8 Intelligence (only for Systems)', 'Type': 'Intelligence', 'Rank': 8, 'Prereq': ['int7']},
     '4th8': {'Name': 'Rank 8 4th Wall Breaker', 'Type': '4th Wall Breaker', 'Rank': 8, 'Prereq': ['4th7']},
 
@@ -344,7 +344,7 @@ power = {
     'tac9': {'Name': 'Rank 9 Tactile Reception', 'Type': 'Tactile Reception', 'Rank': 9, 'Prereq': ['tac8']},
     'pro9': {'Name': 'Rank 9 Proprioception', 'Type': 'Proprioception', 'Rank': 9, 'Prereq': ['pro8']},
 
-    'pre9': {'Name': 'Rank 9 Precognition', 'Type': 'Precognition', 'Rank': 9, 'Prereq': ['pre8']},
+    'omn9': {'Name': 'Rank 9 Omniscience', 'Type': 'Omniscience', 'Rank': 9, 'Prereq': ['omn8']},
     'int9': {'Name': 'Rank 9 Intelligence (only for Systems)', 'Type': 'Intelligence', 'Rank': 9, 'Prereq': ['int8']},
     '4th9': {'Name': 'Rank 9 4th Wall Breaker', 'Type': '4th Wall Breaker', 'Rank': 9, 'Prereq': ['4th8']},
 
@@ -364,7 +364,7 @@ power = {
     'tac10': {'Name': 'Rank 10 Tactile Reception', 'Type': 'Tactile Reception', 'Rank': 10, 'Prereq': ['tac9', 'pai3', 'cla6', 'cel6', 'pro3']},
     'pro10': {'Name': 'Rank 10 Proprioception', 'Type': 'Proprioception', 'Rank': 10, 'Prereq': ['pro9', 'mem6', 'cla6', 'cel6']},
 
-    'pre10': {'Name': 'Rank 10 Precognition', 'Type': 'Precognition', 'Rank': 10, 'Prereq': ['pre9', 'vis3', 'aur3', 'pro3', 'olf3', 'gus3', 'tac3']},
+    'omn10': {'Name': 'Rank 10 Omniscience', 'Type': 'Omniscience', 'Rank': 10, 'Prereq': ['omn9', 'vis3', 'aur3', 'pro3', 'olf3', 'gus3', 'tac3']},
     'int10': {'Name': 'Rank 10 Intelligence (only for Systems)', 'Type': 'Intelligence', 'Rank': 10, 'Prereq': ['int9', 'mem3', 'cel6', 'cla6']},
     '4th10': {'Name': 'Rank 10 4th Wall Breaker', 'Type': '4th Wall Breaker', 'Rank': 10, 'Prereq': ['4th9', 'end6', 'spe6', 'str3', 'reg3']}
 }
