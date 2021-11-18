@@ -606,7 +606,7 @@ class Options(commands.Cog):
         description=enm.cmdInf['top']['description'])
     # top 10 user leaderboard for number of used enhancements
     async def top(self, ctx, lead: typing.Optional[int] = LEADLIMIT, page: typing.Optional[int] = 1, *, enh=""):
-        xpKey = ["gdv xp", "gdv"]
+        xpKey = ["xp", "gdv"]
         if MANAGER in [str(x.name) for x in ctx.message.author.roles]:
             leader = lead
         else:
@@ -621,12 +621,16 @@ class Options(commands.Cog):
 
         if enh.lower() in xpKey:
             serverXP = load(ctx.message.author.guild.id)
-            resubXPList = [
-                [ctx.message.guild.get_member(x), serverXP[x]['invXP'][-1]]
-                for x in serverXP.keys()]
+            if enh == xpKey[0]:
+                resubXPList = [[ctx.message.guild.get_member(
+                    x), serverXP[x]['invXP'][-1]] for x in serverXP.keys()]
+            else:
+                resubXPList = [[ctx.message.guild.get_member(
+                    x), serverXP[x]['gdv']] for x in serverXP.keys()]
             pointList = sorted(resubXPList, key=lambda x: x[1], reverse=True)
 
-            blankMessage = discord.Embed(title="GDV XP Leaderboard")
+            blankMessage = discord.Embed(
+                title="{} Leaderboard".format(enh.upper()))
 
         elif enh:
             if enh not in enm.leader.keys():
@@ -673,7 +677,7 @@ class Options(commands.Cog):
             debug(pointList)
             totHosts = sum([len(x.members)
                             for x in [get(y.roles, name=SUPEROLE)
-                            for y in self.bot.guilds]])
+                                      for y in self.bot.guilds]])
             totPoints = sum([x[1] for x in pointList])
             desc = "There is a total of {} host{} with a sum of {} enhancement point{} spent.".format(
                 totHosts,
@@ -702,7 +706,7 @@ class Options(commands.Cog):
                     blankMessage.add_field(
                         inline=True,
                         name="**{}** - {}".format(i, nON(group[0])),
-                        value="\t{:,} GDV XP".format(group[1]))
+                        value="\t{:,} {}".format(group[1], enh.upper()))
             i += 1
 
         # return leaderboard to command caller
