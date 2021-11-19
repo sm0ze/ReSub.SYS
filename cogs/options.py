@@ -7,7 +7,7 @@ import typing
 
 import discord
 import tatsu
-from BossSystemExecutable import askToken, nON, servList
+from BossSystemExecutable import HOSTNAME, askToken, nON, servList
 from discord.ext import commands, tasks
 from discord.ext.commands import MemberConverter
 from discord.utils import get
@@ -79,7 +79,9 @@ ENHLIST = [(x, y) for (x, y) in powerTypes.items()]
 
 
 class Options(commands.Cog):
-    def __init__(self, bot):
+    def __init__(
+        self, bot: typing.Union[commands.bot.Bot, commands.bot.AutoShardedBot]
+    ):
         self.bot = bot
         self.grabLoop.start()
         self._connection = bot._connection
@@ -131,7 +133,7 @@ class Options(commands.Cog):
     )
     # command to trim command caller of extra roles. OBSOLETE due to cut call
     # after role add in add command
-    async def trim(self, ctx, *, member=""):
+    async def trim(self, ctx: commands.Context, *, member=""):
         debug("funcTrim START")
 
         memberList = await memGrab(self, ctx, "")  # member)
@@ -166,7 +168,7 @@ class Options(commands.Cog):
     @commands.has_any_role(MANAGER)
     # manager command to check if guild has role and messages
     # some information of the role
-    async def roleInf(self, ctx, *, roleStr: str):
+    async def roleInf(self, ctx: commands.Context, *, roleStr: str):
         supeGuildRoles = await orderRole(self, ctx)
         roleStrId = [x for x in supeGuildRoles if roleStr == x.name]
         debug("Role string ID is: {}".format(roleStrId[0].id))
@@ -184,7 +186,7 @@ class Options(commands.Cog):
         brief=cmdInf["convert"]["brief"],
         description=cmdInf["convert"]["description"],
     )
-    async def convert(self, ctx, inVar: float = 0, gdv=0):
+    async def convert(self, ctx: commands.Context, inVar: float = 0, gdv=0):
         feedback = lvlEqu(inVar, gdv)
         if gdv:
             await ctx.send(
@@ -201,7 +203,7 @@ class Options(commands.Cog):
         description=cmdInf["task"]["description"],
     )
     @commands.cooldown(1, taskCD, type=commands.BucketType.user)
-    async def task(self, ctx):
+    async def task(self, ctx: commands.Context):
         """
         It can be 60% minor, you only,
         25% moderate +1 random supe gets half xp,
@@ -372,6 +374,11 @@ class Options(commands.Cog):
 
             emptMes.add_field(name="Unspent Alert", value=val)
 
+        emptMes.set_thumbnail(url=ctx.message.author.display_avatar)
+
+        emptMes.set_footer(
+            text=HOSTNAME, icon_url=self.bot.user.display_avatar
+        )
         await ctx.send(embed=emptMes)
 
         return
@@ -398,7 +405,7 @@ class Options(commands.Cog):
         description=cmdInf["add"]["description"],
     )
     # add role command available to all PERMROLES users
-    async def add(self, ctx, *, typeRank=""):
+    async def add(self, ctx: commands.Context, *, typeRank=""):
 
         # fetch message author and their current enhancement roles
         # as well as the build for those roles
@@ -522,7 +529,7 @@ class Options(commands.Cog):
     @commands.command(hidden=True)
     @commands.has_any_role(MANAGER)
     # TODO implementation for manager specific help command
-    async def hhelp(self, ctx):
+    async def hhelp(self, ctx: commands.Context):
         commands.DefaultHelpCommand(no_category="Basic Options", hidden=True)
         return
 
@@ -534,7 +541,7 @@ class Options(commands.Cog):
     @commands.has_any_role(MANAGER)
     # manager command to correct role position for roles that
     # have been created by bot
-    async def moveRoles(self, ctx):
+    async def moveRoles(self, ctx: commands.Context):
         managed = await manageRoles(ctx)
         await ctx.send(embed=managed)
         return
@@ -546,7 +553,7 @@ class Options(commands.Cog):
     )
     # command to get author or specified user(s) enhancement total
     # and available points
-    async def points(self, ctx, *, member=""):
+    async def points(self, ctx: commands.Context, *, member=""):
         users = await memGrab(self, ctx, member)
         # restrict user list to those with SUPEROLE
         supeUsers = isSuper(self, users)
@@ -624,7 +631,7 @@ class Options(commands.Cog):
     # build command to theory craft and check the prereqs for differnet
     # enhancement ranks can be used in conjunction with points command to
     # determine if user can implement a build
-    async def build(self, ctx, *, typeRank=""):
+    async def build(self, ctx: commands.Context, *, typeRank=""):
         debug("Build command start")
         debug(typeRank)
 
@@ -691,6 +698,7 @@ class Options(commands.Cog):
                     avPeep,
                 ),
             )
+        mes.set_footer(text=HOSTNAME, icon_url=self.bot.user.display_avatar)
         await ctx.send(embed=mes)
 
     @commands.command(
@@ -836,6 +844,9 @@ class Options(commands.Cog):
                     )
             i += 1
 
+        blankMessage.set_footer(
+            text=HOSTNAME, icon_url=self.bot.user.display_avatar
+        )
         # return leaderboard to command caller
         await ctx.send(embed=blankMessage)
 
@@ -860,7 +871,7 @@ class Options(commands.Cog):
 
     @commands.command(hidden=HIDE)
     @commands.has_any_role(MANAGER)
-    async def xpAdd(self, ctx, val: float, *, mem=""):
+    async def xpAdd(self, ctx: commands.Context, val: float, *, mem=""):
         val = round(val, 2)
         debug("val is", val)
         memList = await memGrab(self, ctx, mem)
@@ -887,7 +898,7 @@ class Options(commands.Cog):
     )
     # @commands.has_any_role(MANAGER)
     @commands.cooldown(1, 1, commands.BucketType.default)
-    async def xpGrab(self, ctx, *, mem=""):
+    async def xpGrab(self, ctx: commands.Context, *, mem=""):
         typeMem = await memGrab(self, ctx, mem)
         typeMem = [typeMem[0]]
         pointList = spent(typeMem)
@@ -941,7 +952,9 @@ class Options(commands.Cog):
             )
 
             mes.set_footer(
-                text="{}#{}".format(peep.name, peep.discriminator),
+                text="{}#{} - {}".format(
+                    peep.name, peep.discriminator, HOSTNAME
+                ),
                 icon_url=peep.avatar,
             )
 
@@ -1294,7 +1307,7 @@ def spent(memList):
 
 
 # function to fetch all users requested by command caller
-async def memGrab(self, ctx, memList=""):
+async def memGrab(self, ctx: commands.Context, memList=""):
     debug("Start memGrab")
     debug(
         "memList: {}\nand mentions: {}".format(memList, ctx.message.mentions)
