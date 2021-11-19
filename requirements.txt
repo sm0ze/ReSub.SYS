@@ -5,4 +5,3 @@ tatsu.py==1.0.4
 sqlitedict==1.7.0
 GitPython==3.1.24
 python-dotenv==0.19.2
-tatsu==5.6.1

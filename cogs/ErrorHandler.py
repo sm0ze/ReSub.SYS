@@ -25,18 +25,19 @@ class ErrorHandler(commands.Cog):
 
     @commands.Cog.listener()
     async def on_command_error(
-            self,
-            ctx: commands.Context,
-            error: commands.CommandError):
+        self, ctx: commands.Context, error: commands.CommandError
+    ):
         """A global error handler cog."""
-        localHandlers = ['task']
+        localHandlers = ["task"]
 
         # for messy handling without isinstance()
         splitError = str(error).split()
         command = ctx.command
 
-        debug("{} in {}".format(command, localHandlers),
-              str(command) in localHandlers)
+        debug(
+            "{} in {}".format(command, localHandlers),
+            str(command) in localHandlers,
+        )
         if str(command) in localHandlers:
             return
 
@@ -45,28 +46,28 @@ class ErrorHandler(commands.Cog):
             mes = discord.Embed(
                 title="Error!!!",
                 description="Command not found.",
-                color=ctx.author.color)
+                color=ctx.author.color,
+            )
 
-        elif splitError[4] == 'KeyError:':
+        elif splitError[4] == "KeyError:":
             mes = discord.Embed(
                 title=splitError[4],
                 description="{} is not a recognised option".format(
-                    splitError[-1]))
+                    splitError[-1]
+                ),
+            )
         elif isinstance(error, commands.CommandOnCooldown):
             cdTime = round(error.retry_after, 2)
             mes = discord.Embed(
                 title="Error!!!",
-                description="Command on cooldown for {} minutes or {} seconds".format(
-                    round(cdTime / 60, 2),
-                    cdTime))
+                description=(
+                    "Command on cooldown for" "{} minutes or {} seconds"
+                ).format(round(cdTime / 60, 2), cdTime),
+            )
 
         else:  # just send the error to discord
-            mes = discord.Embed(
-                title="Error!!!",
-                description=error)
-        await ctx.send(
-            embed=mes,
-            delete_after=5)
+            mes = discord.Embed(title="Error!!!", description=error)
+        await ctx.send(embed=mes, delete_after=5)
         await ctx.message.delete(delay=5)
         print(mes.to_dict())
 

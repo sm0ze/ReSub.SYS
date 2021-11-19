@@ -1,3 +1,5 @@
 .env
 *.sqlite3
 /discord.py
+/.vscode
+
