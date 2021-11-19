@@ -2,7 +2,7 @@
 
 import os
 
-from SysInf.power import power, leader
+from power import power, leader
 
 DEBUG = 0
 TEST = 0
@@ -30,7 +30,7 @@ def eleCountUniStr(varList):
     for ele in varList:
         debug("FuncEleCountUniStr - " + "element is: " + str(ele))
         if isinstance(ele, list):
-            if not ele == []:
+            if ele:
                 debug("FuncEleCountUniStr - " + "RECURSE HERE")
 
                 rec = eleCountUniStr(ele)
@@ -64,7 +64,7 @@ def eleCountUniStr(varList):
 
 
 # calculate number of prerequisites +1 to get cost of enhancement
-def cost(inName, inDict=power):
+def cost(inName: str, inDict: dict = power):
     required = []
 
     debug(
@@ -184,7 +184,7 @@ def reqEnd(endList):
     return reqStr
 
 
-def toType(role):
+def toType(role: str):
     debug(role)
     thing = [x for x in leader.keys() if role == leader[x]][0]
     debug(thing)

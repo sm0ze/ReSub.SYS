@@ -15,7 +15,7 @@ from discord.ext import commands, tasks
 from discord.utils import get
 from dotenv import load_dotenv
 
-from SysInf.power import cmdInf, freeRoles, powerTypes
+from power import cmdInf, freeRoles, powerTypes
 
 DEBUG = 0
 TEST = 0
@@ -29,7 +29,7 @@ def debug(*args):
 
 # function to grab a discord bot token
 # from user if one is not found in the .env
-def askToken(var):
+def askToken(var: str) -> str:
     tempToken = input("Enter your {}: ".format(var))
     with open(".env", "a+") as f:
         f.write("{}={}\n".format(var, tempToken))
@@ -63,6 +63,8 @@ MANAGER = "System"  # manager role name for guild
 CMDPREFIX = "~"
 STARTTIME = time.time()
 HIDE = False
+
+cogList = ["options.py", "ErrorHandler.py"]
 
 global asleep
 asleep = False
@@ -136,7 +138,7 @@ async def on_thread_update(before, after):
 
 
 @bot.event
-async def on_message(message):
+async def on_message(message: discord.Message):
     global asleep
 
     if message.author.bot:
@@ -227,7 +229,7 @@ async def update_presence():
     brief=cmdInf["uptime"]["brief"],
     description=cmdInf["uptime"]["description"],
 )
-async def uptime(ctx):
+async def uptime(ctx: commands.Context):
     uptimeLogin = str(
         datetime.timedelta(seconds=int(round(time.time() - loginTime)))
     )
@@ -245,7 +247,9 @@ async def uptime(ctx):
 
 @bot.command()
 @commands.is_owner()
-async def resume(ctx, up: typing.Optional[int] = 0, host: str = HOSTNAME):
+async def resume(
+    ctx: commands.Context, up: typing.Optional[int] = 0, host: str = HOSTNAME
+):
     global asleep
     debug("cmd:", "resume", "ctx:", ctx, "host:", host, "up:", up)
     if host != HOSTNAME:
@@ -264,7 +268,7 @@ async def resume(ctx, up: typing.Optional[int] = 0, host: str = HOSTNAME):
     description=cmdInf["role"]["description"],
 )
 # gives requested role to command caller if it is in freeRoles
-async def role(ctx, *, roleToAdd: str = freeRoles[0]):
+async def role(ctx: commands.Context, *, roleToAdd: str = freeRoles[0]):
     member = ctx.message.author
     debug(roleToAdd)
     roleAdd = get(member.guild.roles, name=roleToAdd)
@@ -291,7 +295,7 @@ async def role(ctx, *, roleToAdd: str = freeRoles[0]):
     description=cmdInf["restart"]["description"],
 )
 @commands.has_any_role(MANAGER)
-async def restart(ctx, host: str = HOSTNAME):
+async def restart(ctx: commands.Context, host: str = HOSTNAME):
     debug("cmd:", "restart", "ctx:", ctx, "host:", host)
     if host != HOSTNAME:
         return
@@ -306,7 +310,7 @@ async def restart(ctx, host: str = HOSTNAME):
     description=cmdInf["upload"]["description"],
 )
 @commands.has_any_role(MANAGER)
-async def upload(ctx, host: str = HOSTNAME):
+async def upload(ctx: commands.Context, host: str = HOSTNAME):
     debug("cmd:", "upload", "ctx:", ctx, "host:", host)
     if host != HOSTNAME:
         return
@@ -322,7 +326,7 @@ async def upload(ctx, host: str = HOSTNAME):
     description=cmdInf["end"]["description"],
 )
 @commands.is_owner()
-async def end(ctx, host: str = HOSTNAME):
+async def end(ctx: commands.Context, host: str = HOSTNAME):
     debug("cmd:", "end", "ctx:", ctx, "host:", host)
     if host != HOSTNAME:
         return
@@ -339,7 +343,7 @@ async def end(ctx, host: str = HOSTNAME):
     description=cmdInf["update"]["description"],
 )
 @commands.is_owner()
-async def update(ctx, host: str = HOSTNAME):
+async def update(ctx: commands.Context, host: str = HOSTNAME):
     debug("cmd:", "update", "ctx:", ctx, "host:", host)
     if host != HOSTNAME:
         return
@@ -358,7 +362,7 @@ async def update(ctx, host: str = HOSTNAME):
     description=cmdInf["pause"]["description"],
 )
 @commands.is_owner()
-async def pause(ctx, host: str = HOSTNAME):
+async def pause(ctx: commands.Context, host: str = HOSTNAME):
     debug("cmd:", "pause", "ctx:", ctx, "host:", host)
     if host != HOSTNAME:
         return
@@ -371,7 +375,7 @@ async def pause(ctx, host: str = HOSTNAME):
     brief=cmdInf["about"]["brief"],
     description=cmdInf["about"]["description"],
 )
-async def about(ctx):
+async def about(ctx: commands.Context):
     desc = (
         "This initially started as a way to automatically assign roles "
         "for Geminel#1890's novel. At the time Admins were manually "
@@ -412,8 +416,28 @@ async def about(ctx):
     brief=cmdInf["run"]["brief"],
     description=cmdInf["run"]["description"],
 )
-async def run(ctx):
+async def run(ctx: commands.Context):
     await ctx.send("Bot is running on {}".format(HOSTNAME))
+
+
+@bot.command()
+@commands.has_any_role(MANAGER)
+async def testAll(ctx: commands.Context, host: str = HOSTNAME):
+    debug("cmd:", "debug", "ctx:", ctx, "host:", host)
+    if host != HOSTNAME:
+        return
+    host = ""
+    for cmd in bot.commands:
+        await ctx.send("Testing command **{}**.".format(cmd.name))
+        param = cmd.clean_params
+        await ctx.send("clean params: {}".format(param))
+        if "host" in param.keys():
+            continue
+        if cmd.name in ["hhelp", "help"]:
+            continue
+        if cmd.can_run:
+            await cmd.__call__(ctx)
+    await ctx.send("Testing Done")
 
 
 """
@@ -449,40 +473,21 @@ async def start(self, ctx):
     """
 
 
-# function to grab the full member list the bot has access to
-def servList(bots):
-    guilds = bots.guilds
-    debug("guilds is: {}".format(guilds))
-
-    # ensure the member list is unique (a set)
-    members_set = set()
-    for guild in guilds:
-        debug("Guild in guilds = {}".format(guild))
-        for member in guild.members:
-            debug("\tMember in {} is {}".format(guild, member))
-            members_set.add(member)
-    debug("members_set is: {}".format(members_set))
-    return members_set
-
-
 # dirty little function to avoid 'if user.nick else user.name'
-def nON(user):
+def nON(user: discord.Member) -> str:
     if user.nick:
         return user.nick
     else:
         return user.name
 
 
-def restart_bot():
+def restart_bot() -> None:
     os.execv(sys.executable, ["python"] + sys.argv)
 
 
 async def dupeMes(channel, mes):
-    try:
+    if isinstance(channel, commands.Context):
         channel = channel.channel
-    except Exception as e:
-        print(e)
-        pass
     print(mes)
     await STRCHNL.send(mes)
     if not STRCHNL == channel:
@@ -493,9 +498,9 @@ async def dupeMes(channel, mes):
 if __name__ == "__main__":
 
     # discord.py cog importing
-    for filename in os.listdir("./cogs"):
+    for filename in cogList:
         if filename.endswith(".py"):
-            bot.load_extension(f"cogs.{filename[:-3]}")
+            bot.load_extension(f"{filename[:-3]}")
 
         # general exception for excluding __pycache__
         # while accounting for generation of other filetypes
