@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 from mee6_py_api import API
 from sqlitedict import SqliteDict
 
+import dotenv
 from BossSystemExecutable import HOSTNAME, askToken, nON
 import enhancements as enm
 from power import (
@@ -48,6 +49,8 @@ if TEST:
 # .env variables that are not shared with github and other users.
 # Use your own if testing this with your own bot
 load_dotenv()
+dotenv_file = dotenv.find_dotenv()
+dotenv.load_dotenv(dotenv_file)
 TATSU = os.getenv("TATSU_TOKEN")
 SAVEFILE = os.getenv("SAVEFILE")
 STARTCHANNEL = os.getenv("STARTCHANNEL")
@@ -67,7 +70,11 @@ LOWESTROLE = 2  # bot sorts roles by rank from position of int10 to LOWESTROLE
 HIDE = False
 LEADLIMIT = 12
 NEWCALC = 1
-GEMDIFF = 0.5
+
+global GEMDIFF
+GEMDIFF = os.getenv("GEMDIFF")
+if not GEMDIFF:
+    GEMDIFF = 0.5
 taskCD = 60 * 30
 
 if DEBUG:
@@ -934,7 +941,7 @@ class Options(commands.Cog):
             mes.add_field(
                 inline=False,
                 name="XP to next GDV",
-                value="{:,}".format(nextGDVneedXP),
+                value="{:,}".format(round(nextGDVneedXP, 3)),
             )
 
             nextEnhP = int(5 * (int(stuff[1] / 5) + 1))
@@ -944,7 +951,7 @@ class Options(commands.Cog):
             mes.add_field(
                 inline=False,
                 name="XP to next Enhancement Point",
-                value="{:,}".format(nextEnhPneedXP),
+                value="{:,}".format(round(nextEnhPneedXP, 3)),
             )
 
             mes.add_field(
@@ -962,6 +969,37 @@ class Options(commands.Cog):
 
             await ctx.send(embed=mes)
             i += 1
+
+    @commands.command(
+        brief="-A command for Geminel to change thier xp total handicap.",
+        description=(
+            "-A command for Geminel to change thier xp total handicap."
+        ),
+    )
+    async def diffGem(self, ctx: commands.Context, var: float = 0.5):
+        if ctx.message.author.id in [213090220147605506, 277041901776142337]:
+            mes = discord.Embed(title="You have no power here.")
+            mes.set_image(
+                url=(
+                    "https://www.greatmanagers.com.au/wp-content/"
+                    "uploads/2018/03/talktohand_trans.png"
+                )
+            )
+            await ctx.send(embed=mes)
+            return
+        global GEMDIFF
+        if var < 0.0:
+            var = 0.0
+        if var > 1.0:
+            var = 1.0
+        GEMDIFF = var
+        os.environ["GEMDIFF"] = str(var)
+        dotenv.set_key(dotenv_file, "GEMDIFF", os.environ["GEMDIFF"])
+        await ctx.send(
+            "Gem diff is now {} times total XP or {}%".format(
+                GEMDIFF, 100 * GEMDIFF
+            )
+        )
 
 
 # function to move roles to correct rank positions
@@ -1067,6 +1105,7 @@ async def count(
     peep: discord.Member, typ: int = NEWCALC, tatFrc: int = 0
 ) -> tuple[int, float, float, list[int, int, float]]:
     debug("Start count")
+    global GEMDIFF
     tat = tatsu.wrapper
     """if not typ:
         # fetch MEE6 level
@@ -1137,7 +1176,8 @@ async def count(
     else:
         totXP = float(0)
     if nON(peep) == "Geminel":
-        totXP = totXP * GEMDIFF
+        totXP = round(totXP * float(GEMDIFF), 3)
+
     debug("totXP = ", totXP)
 
     gdv = lvlEqu(totXP)
