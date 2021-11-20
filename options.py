@@ -977,7 +977,10 @@ class Options(commands.Cog):
         ),
     )
     async def diffGem(self, ctx: commands.Context, var: float = 0.5):
-        if ctx.message.author.id in [213090220147605506, 277041901776142337]:
+        if int(ctx.message.author.id) not in [
+            213090220147605506,
+            277041901776142337,
+        ]:
             mes = discord.Embed(title="You have no power here.")
             mes.set_image(
                 url=(
