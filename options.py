@@ -726,16 +726,16 @@ class Options(commands.Cog):
 
         xpKey = ["xp", "gdv"]
         if MANAGER in [str(x.name) for x in ctx.message.author.roles]:
-            leader = lead
+            leade = lead
         else:
             if lead < LEADLIMIT:
-                leader = lead
+                leade = lead
             else:
-                leader = LEADLIMIT
-        if leader < 1:
-            leader = 1
-        strtLead = page * leader - leader
-        endLead = page * leader
+                leade = LEADLIMIT
+        if leade < 1:
+            leade = 1
+        strtLead = page * leade - leade
+        endLead = page * leade
 
         if enh.lower() in xpKey:
             serverXP = load(ctx.message.author.guild.id)
