@@ -87,11 +87,11 @@ class player:
             co = self._4th
         else:
             co = self._str
-        return self._spe * 2 + co * 4
+        return self._spe * 1 + co * 4
 
     def calcPD(self) -> int:
         # Physical Defense - End 4 Spd 2 (60)
-        return self._end * 4 + self._spe * 2
+        return self._end * 4 + self._spe * 1
 
     def calcMA(self) -> int:
         # Mental Attack - Mem/Int 4 Cel 2 (60)
@@ -99,11 +99,11 @@ class player:
             co = self._int
         else:
             co = self._mem
-        return self._cel * 2 + co * 4
+        return self._cel * 1 + co * 4
 
     def calcMD(self) -> int:
         # Mental Defense - Cla 4 Cel 2 (60)
-        return self._cla * 4 + self._cel * 2
+        return self._cla * 4 + self._cel * 1
 
     def calcAC(self) -> int:
         # Accuracy - Vis/Omn 4 Aur/Olf 3 Gus/Tac 1 Pro 2 (100)
