@@ -1,20 +1,7 @@
-import os
-
 import discord
 from discord.ext import commands
 
-DEBUG = 0
-TEST = 0
-
-
-def debug(*args):
-    if DEBUG:
-        print(*args)
-
-
-debug("{} DEBUG TRUE".format(os.path.basename(__file__)))
-if TEST:
-    print("{} TEST TRUE".format(os.path.basename(__file__)))
+from BossSystemExecutable import debug
 
 
 class ErrorHandler(commands.Cog):
@@ -31,7 +18,6 @@ class ErrorHandler(commands.Cog):
         localHandlers = ["task"]
 
         # for messy handling without isinstance()
-        splitError = str(error).split()
         command = ctx.command
 
         debug(
@@ -49,11 +35,11 @@ class ErrorHandler(commands.Cog):
                 color=ctx.author.color,
             )
 
-        elif splitError[4] == "KeyError:":
+        elif isinstance(error, KeyError):
             mes = discord.Embed(
-                title=splitError[4],
+                title="KeyError",
                 description="{} is not a recognised option".format(
-                    splitError[-1]
+                    KeyError.args
                 ),
             )
         elif isinstance(error, commands.CommandOnCooldown):
@@ -68,7 +54,7 @@ class ErrorHandler(commands.Cog):
         else:  # just send the error to discord
             mes = discord.Embed(title="Error!!!", description=error)
         await ctx.send(embed=mes, delete_after=5)
-        await ctx.message.delete(delay=5)
+        await ctx.message.delete(delay=4)
         print(mes.to_dict())
 
 

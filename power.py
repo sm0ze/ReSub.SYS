@@ -1,25 +1,14 @@
 # power.py
 # this file is a dictionary and other lengthy constant variables dump
 
-import os
-
 import pandas as pd
 
 DEBUG = 0
-TEST = 0
 
 
 def debug(*args):
     if DEBUG:
         print(*args)
-
-
-debug("{} DEBUG TRUE".format(os.path.basename(__file__)))
-
-
-if TEST:
-    print("{} TEST TRUE".format(os.path.basename(__file__)))
-# if TEST: print("".format())
 
 
 taskVar = {

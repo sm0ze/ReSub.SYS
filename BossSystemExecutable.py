@@ -36,12 +36,9 @@ def askToken(var: str) -> str:
     return tempToken
 
 
-debug("{} DEBUG TRUE".format(os.path.basename(__file__)))
-
-
+debug("DEBUG TRUE")
 if TEST:
-    print("{} TEST TRUE".format(os.path.basename(__file__)))
-# if TEST: print("".format())
+    print("TEST TRUE")
 
 # .env variables that are not shared with github and other users.
 # Use your own if testing this with your own bot

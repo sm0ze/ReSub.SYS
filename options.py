@@ -6,6 +6,7 @@ import random
 import typing
 
 import discord
+import dotenv
 import tatsu
 from discord.ext import commands, tasks
 from discord.ext.commands import MemberConverter
@@ -13,10 +14,10 @@ from discord.utils import get
 from dotenv import load_dotenv
 from mee6_py_api import API
 from sqlitedict import SqliteDict
+from battle import battler, player
 
-import dotenv
-from BossSystemExecutable import HOSTNAME, askToken, nON
 import enhancements as enm
+from BossSystemExecutable import DEBUG, HOSTNAME, TEST, askToken, debug, nON
 from power import (
     cmdInf,
     leader,
@@ -29,22 +30,6 @@ from power import (
     rsltDict,
     taskVar,
 )
-
-DEBUG = 0
-TEST = 0
-
-
-def debug(*args):
-    if DEBUG:
-        print(*args)
-
-
-debug("{} DEBUG TRUE".format(os.path.basename(__file__)))
-
-
-if TEST:
-    print("{} TEST TRUE".format(os.path.basename(__file__)))
-# if TEST: print("".format())
 
 # .env variables that are not shared with github and other users.
 # Use your own if testing this with your own bot
@@ -63,6 +48,8 @@ if not STARTCHANNEL:
     STARTCHANNEL = askToken("STARTCHANNEL")
 
 
+COMON = False
+
 SUPEROLE = "Supe"
 PERMROLES = ["Supe"]  # guild role(s) for using these bot commands
 MANAGER = "System"  # manager role name for guild
@@ -70,6 +57,8 @@ LOWESTROLE = 2  # bot sorts roles by rank from position of int10 to LOWESTROLE
 HIDE = False
 LEADLIMIT = 12
 NEWCALC = 1
+
+statMes = "HP - {0}\nPA - {1}\nPD - {2}\nMA - {3}\nMD - {4}\nReg - {5}\nAc - {6}\nEv - {7}\nAct - {8}"
 
 global GEMDIFF
 GEMDIFF = os.getenv("GEMDIFF")
@@ -136,6 +125,7 @@ class Options(commands.Cog):
             await StrtChannel.send("Bot has finished xp update")
 
     @commands.command(
+        enabled=COMON,
         brief=cmdInf["trim"]["brief"],
         description=cmdInf["trim"]["description"],
     )
@@ -169,6 +159,7 @@ class Options(commands.Cog):
         return"""
 
     @commands.command(
+        enabled=COMON,
         hidden=HIDE,
         brief=cmdInf["roleInf"]["brief"],
         description=cmdInf["roleInf"]["description"],
@@ -191,6 +182,7 @@ class Options(commands.Cog):
         return
 
     @commands.command(
+        enabled=COMON,
         brief=cmdInf["convert"]["brief"],
         description=cmdInf["convert"]["description"],
     )
@@ -208,6 +200,7 @@ class Options(commands.Cog):
             )
 
     @commands.command(
+        enabled=COMON,
         aliases=["t"],
         brief=cmdInf["task"]["brief"],
         description=cmdInf["task"]["description"],
@@ -368,7 +361,7 @@ class Options(commands.Cog):
                 nON(ctx.message.author), currEnhP
             )
         )
-        stateG = spent([ctx.message.author])
+        stateG = enm.spent([ctx.message.author])
         currEnh = int(stateG[0][1])
         debug("and enhancments of number = ", currEnh)
         debug(
@@ -390,7 +383,7 @@ class Options(commands.Cog):
             text=HOSTNAME, icon_url=self.bot.user.display_avatar
         )
         await ctx.send(embed=emptMes)
-
+        await ctx.message.delete(delay=1)
         return
 
     @task.error
@@ -410,6 +403,7 @@ class Options(commands.Cog):
         await ctx.message.delete(delay=5)
 
     @commands.command(
+        enabled=COMON,
         aliases=["a"],
         brief=cmdInf["add"]["brief"],
         description=cmdInf["add"]["description"],
@@ -420,9 +414,9 @@ class Options(commands.Cog):
         # fetch message author and their current enhancement roles
         # as well as the build for those roles
         user = ctx.message.author
-        userSpent = spent([user])
+        userSpent = enm.spent([user])
         userEnhancements = userSpent[0][2]
-        userHas = funcBuild(userEnhancements)
+        userHas = enm.funcBuild(userEnhancements)
         userHasBuild = userHas[2]
 
         # if author did not provide an enhancement to add, return
@@ -441,7 +435,7 @@ class Options(commands.Cog):
         # add requested enhancements to current user build
         # then grab the information for this new user build
         [userEnhancements.append(x) for x in buildList]
-        userWants = funcBuild(userEnhancements)
+        userWants = enm.funcBuild(userEnhancements)
         userWantsCost = userWants[0]
         userWantsBuild = userWants[2]
         pointTot = await count(user, 1, 1)
@@ -544,6 +538,7 @@ class Options(commands.Cog):
         return
 
     @commands.command(
+        enabled=COMON,
         hidden=HIDE,
         brief=cmdInf["moveRoles"]["brief"],
         description=cmdInf["moveRoles"]["description"],
@@ -557,6 +552,7 @@ class Options(commands.Cog):
         return
 
     @commands.command(
+        enabled=COMON,
         aliases=["p"],
         brief=cmdInf["points"]["brief"],
         description=cmdInf["points"]["description"],
@@ -572,7 +568,7 @@ class Options(commands.Cog):
             return
 
         # fetch points of each SUPEROLE user
-        pointList = spent(supeUsers)
+        pointList = enm.spent(supeUsers)
 
         # return result
         for group in pointList:
@@ -592,6 +588,7 @@ class Options(commands.Cog):
             )
 
     @commands.command(
+        enabled=COMON,
         aliases=["l"],
         brief=cmdInf["list"]["brief"],
         description=cmdInf["list"]["description"],
@@ -632,6 +629,7 @@ class Options(commands.Cog):
         await ctx.send(embed=mes)
 
     @commands.command(
+        enabled=COMON,
         aliases=["b"],
         brief=cmdInf["build"]["brief"],
         description=cmdInf["build"]["description"],
@@ -651,11 +649,11 @@ class Options(commands.Cog):
             buildList = [x.strip() for x in fixArg.split(",") if x.strip()]
             debug(buildList)
         else:
-            buildList = spent([ctx.message.author])[0][2]
+            buildList = enm.spent([ctx.message.author])[0][2]
         debug("buildList = {}".format(buildList))
 
         # fetch cost and requisite list for build
-        buildTot = funcBuild(buildList)
+        buildTot = enm.funcBuild(buildList)
 
         # return build to command caller
         mes = discord.Embed(
@@ -674,7 +672,9 @@ class Options(commands.Cog):
         )
         await ctx.send(embed=mes)
 
-    @commands.command()
+    @commands.command(
+        enabled=COMON,
+    )
     @commands.has_any_role(MANAGER)
     async def average(self, ctx: commands.Context):
         mes = discord.Embed(title="Average Enhancment Points")
@@ -710,6 +710,7 @@ class Options(commands.Cog):
         await ctx.send(embed=mes)
 
     @commands.command(
+        enabled=COMON,
         aliases=["leaderboard"],
         brief=cmdInf["top"]["brief"],
         description=cmdInf["top"]["description"],
@@ -801,7 +802,7 @@ class Options(commands.Cog):
             debug("Supe list is: {}".format(supeList))
 
             # fetch points of each SUPEROLE user
-            pointList = spent(supeList)
+            pointList = enm.spent(supeList)
             debug(pointList)
 
             # sort list of users with enhancements by
@@ -859,6 +860,7 @@ class Options(commands.Cog):
         await ctx.send(embed=blankMessage)
 
     @commands.command(
+        enabled=COMON,
         aliases=["c", "clear"],
         brief=cmdInf["clean"]["brief"],
         description=cmdInf["clean"]["description"],
@@ -876,7 +878,7 @@ class Options(commands.Cog):
         debug(toCut)
         await cut(ctx, [ctx.message.author], toCut)
 
-    @commands.command(hidden=HIDE)
+    @commands.command(enabled=COMON, hidden=HIDE)
     @commands.has_any_role(MANAGER)
     async def xpAdd(
         self, ctx: commands.Context, val: float = 0, *, mem: str = ""
@@ -901,6 +903,7 @@ class Options(commands.Cog):
         await ctx.send("Host {}: {} -> {}".format(nON(peep), iniVal, sum))
 
     @commands.command(
+        enabled=COMON,
         hidden=HIDE,
         brief=cmdInf["xpGrab"]["brief"],
         description=cmdInf["xpGrab"]["description"],
@@ -910,7 +913,7 @@ class Options(commands.Cog):
     async def xpGrab(self, ctx: commands.Context, *, mem: str = ""):
         typeMem = await memGrab(self, ctx, mem)
         typeMem = [typeMem[0]]
-        pointList = spent(typeMem)
+        pointList = enm.spent(typeMem)
         # tatForce = 0
         i = 0
         # for role in ctx.author.roles:
@@ -971,6 +974,7 @@ class Options(commands.Cog):
             i += 1
 
     @commands.command(
+        enabled=COMON,
         brief="-A command for Geminel to change thier xp total handicap.",
         description=(
             "-A command for Geminel to change thier xp total handicap."
@@ -1002,6 +1006,52 @@ class Options(commands.Cog):
             "Gem diff is now {} times total XP or {}%".format(
                 GEMDIFF, 100 * GEMDIFF
             )
+        )
+
+    @commands.command(enabled=True)
+    async def stats(self, ctx: commands.Context, peep: discord.Member = False):
+        if not peep:
+            peep = ctx.author
+        p = player(peep)
+        pStats = p.bStat()
+        mes = discord.Embed(
+            title="{} Stats".format(p.n),
+            description=statMes.format(*pStats),
+        )
+        mes.set_thumbnail(url=p.p.display_avatar)
+        mes.set_footer(
+            text="{}#{} - {}".format(p.p.name, p.p.discriminator, HOSTNAME),
+            icon_url=p.p.avatar,
+        )
+
+        await ctx.send(embed=mes)
+
+    @commands.command(enabled=True, aliases=["d"])
+    async def duel(
+        self, ctx: commands.Context, opponent: discord.Member = False
+    ):
+        if not opponent:
+            opponent = get(ctx.guild.members, id=self.bot.user.id)
+        bat = battler(ctx.author, opponent)
+        mes = discord.Embed(
+            title="{} Vs. {}".format(bat.n1, bat.n2),
+        )
+
+        stats1 = bat.p1.bStat()
+        stats2 = bat.p2.bStat()
+        p1Stats = statMes.format(*stats1)
+        p2Stats = statMes.format(*stats2)
+        mes.add_field(
+            name="{}".format(bat.n1),
+            value="{}".format(p1Stats),
+        )
+        mes.add_field(
+            name="{}".format(bat.n2),
+            value="{}".format(p2Stats),
+        )
+        await ctx.send(
+            "THIS IS NOT YET IMPLEMENTED, just testing :)",
+            embed=mes,
         )
 
 
@@ -1261,99 +1311,6 @@ def isSuper(
     return supeGuildList
 
 
-# from shorthand enhancement list return cost of build,
-# role names and prerequisite roles
-def funcBuild(
-    buildList: list[str],
-) -> tuple[int, list[str], list]:
-    debug("Start funcBuild")
-    reqList = []
-    nameList = []
-    debug("Build command buildList = {}".format(buildList))
-
-    # iterate through shorthand enhancements
-    for item in buildList:
-        debug("Build command item = {}".format(item))
-        # fetch enhancement prereqs and cost
-        temCost = enm.cost(item)
-        debug("Build command prereq cost = {}".format(temCost))
-
-        # add this enhancement's prereqs to list
-        reqList.append(temCost[2])
-
-        # fetch full name for enhancement from shorthand
-        tempName = power[item]["Name"]
-
-        # add enhancement full name to lists
-        reqList.append(tempName)
-        nameList.append(tempName)
-    debug("Build command reqList is: {}".format(reqList))
-
-    # restrict nested prereq list to a set of prereqs
-    temp = enm.eleCountUniStr(reqList)
-    debug("temp = {}".format(temp))
-
-    # fetch highest ranked prereqs of each type in list
-    reqList = enm.trim([x for x in temp[1]])
-    debug("reqList = {}".format(reqList))
-
-    # sum cost of build from prereqs
-    costTot = 0
-    for group in reqList:
-        debug(group)
-        costTot += group[0]
-    debug(costTot, nameList, reqList)
-
-    # return cost of build, role names and prerequisite roles
-    debug("End funcBuild")
-    return costTot, nameList, reqList
-
-
-# function to grab number of enhancement points
-# spent by each user in given list
-def spent(
-    memList: list[discord.Member],
-) -> list[list[discord.Member, int, list[str]]]:
-    debug("Start spent")
-    retList = []
-    debug("memList is: {}".format(memList))
-
-    # iterate thorugh given list of users
-    for peep in memList:
-        supeRoles = []
-        debug("current user is: {}".format(peep))
-        debug("current user role list: {}".format(peep.roles))
-
-        # messy implementation to grab shorthand for all unrestricted bot
-        # managed roles in user role list
-        for roles in peep.roles:
-            if roles.name in [
-                power[x]["Name"] for x in power.keys() if power[x]["Rank"] > 0
-            ]:
-                supeRoles.append(
-                    [
-                        x
-                        for x in power.keys()
-                        if power[x]["Name"] == roles.name
-                    ][0]
-                )
-        debug("Supe roles: {}".format(supeRoles))
-
-        # fetch point cost (including prereqs) of enhancements
-        if supeRoles:
-            pointCount = funcBuild(supeRoles)[0]
-        else:
-            pointCount = funcBuild([])[0]
-
-        # add (user, total build cost, enhancmeent role names)
-        # to list to return
-        retList.append([peep, pointCount, supeRoles])
-
-    debug("retlist is: {}".format(retList))
-    debug("End spent")
-    return retList
-
-
 # function to fetch all users requested by command caller
 async def memGrab(
     self, ctx: commands.Context, memList: str = ""
@@ -1394,11 +1351,11 @@ def toCut(member: discord.Member) -> list[str]:
     debug("Start toCut")
 
     # fetch unrestricted managed roles member has
-    supeRoles = spent([member])
+    supeRoles = enm.spent([member])
     debug("supeRoles = {}".format(supeRoles[0][2]))
 
     # fetch build of member
-    supeBuild = funcBuild(supeRoles[0][2])
+    supeBuild = enm.funcBuild(supeRoles[0][2])
     debug("supeBuild = {}".format(supeBuild[1]))
 
     # fetch trimmed build of user

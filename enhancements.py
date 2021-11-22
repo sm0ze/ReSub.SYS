@@ -1,24 +1,8 @@
 # enhancements.py
-
-import os
-
+import discord
 from power import power, leader
 
-DEBUG = 0
-TEST = 0
-
-
-def debug(*args):
-    if DEBUG:
-        print(*args)
-
-
-debug("{} DEBUG TRUE".format(os.path.basename(__file__)))
-
-
-if TEST:
-    print("{} TEST TRUE".format(os.path.basename(__file__)))
-# if TEST: print("".format())
+from BossSystemExecutable import debug
 
 
 # count number of unique strings in nested list
@@ -189,3 +173,96 @@ def toType(role: str):
     thing = [x for x in leader.keys() if role == leader[x]][0]
     debug(thing)
     return thing
+
+
+# from shorthand enhancement list return cost of build,
+# role names and prerequisite roles
+def funcBuild(
+    buildList: list[str],
+) -> tuple[int, list[str], list]:
+    debug("Start funcBuild")
+    reqList = []
+    nameList = []
+    debug("Build command buildList = {}".format(buildList))
+
+    # iterate through shorthand enhancements
+    for item in buildList:
+        debug("Build command item = {}".format(item))
+        # fetch enhancement prereqs and cost
+        temCost = cost(item)
+        debug("Build command prereq cost = {}".format(temCost))
+
+        # add this enhancement's prereqs to list
+        reqList.append(temCost[2])
+
+        # fetch full name for enhancement from shorthand
+        tempName = power[item]["Name"]
+
+        # add enhancement full name to lists
+        reqList.append(tempName)
+        nameList.append(tempName)
+    debug("Build command reqList is: {}".format(reqList))
+
+    # restrict nested prereq list to a set of prereqs
+    temp = eleCountUniStr(reqList)
+    debug("temp = {}".format(temp))
+
+    # fetch highest ranked prereqs of each type in list
+    reqList = trim([x for x in temp[1]])
+    debug("reqList = {}".format(reqList))
+
+    # sum cost of build from prereqs
+    costTot = 0
+    for group in reqList:
+        debug(group)
+        costTot += group[0]
+    debug(costTot, nameList, reqList)
+
+    # return cost of build, role names and prerequisite roles
+    debug("End funcBuild")
+    return costTot, nameList, reqList
+
+
+# function to grab number of enhancement points
+# spent by each user in given list
+def spent(
+    memList: list[discord.Member],
+) -> list[list[discord.Member, int, list[str]]]:
+    debug("Start spent")
+    retList = []
+    debug("memList is: {}".format(memList))
+
+    # iterate thorugh given list of users
+    for peep in memList:
+        supeRoles = []
+        debug("current user is: {}".format(peep))
+        debug("current user role list: {}".format(peep.roles))
+
+        # messy implementation to grab shorthand for all unrestricted bot
+        # managed roles in user role list
+        for roles in peep.roles:
+            if roles.name in [
+                power[x]["Name"] for x in power.keys() if power[x]["Rank"] > 0
+            ]:
+                supeRoles.append(
+                    [
+                        x
+                        for x in power.keys()
+                        if power[x]["Name"] == roles.name
+                    ][0]
+                )
+        debug("Supe roles: {}".format(supeRoles))
+
+        # fetch point cost (including prereqs) of enhancements
+        if supeRoles:
+            pointCount = funcBuild(supeRoles)[0]
+        else:
+            pointCount = funcBuild([])[0]
+
+        # add (user, total build cost, enhancmeent role names)
+        # to list to return
+        retList.append([peep, pointCount, supeRoles])
+
+    debug("retlist is: {}".format(retList))
+    debug("End spent")
+    return retList
