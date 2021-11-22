@@ -780,13 +780,13 @@ power = {
         "Name": "Rank 4 Omniscience",
         "Type": "Omniscience",
         "Rank": 4,
-        "Prereq": ["omn3", "vis1", "aur1", "pro1"],
+        "Prereq": ["omn3", "aur1", "pro1"],
     },
     "int4": {
         "Name": "Rank 4 Intelligence (only for Systems)",
         "Type": "Intelligence",
         "Rank": 4,
-        "Prereq": ["int3", "cel1", "cla1"],
+        "Prereq": ["cel1", "cla1"],
     },
     "4th4": {
         "Name": "Rank 4 4th Wall Breaker",
@@ -1104,13 +1104,13 @@ power = {
         "Name": "Rank 7 Omniscience",
         "Type": "Omniscience",
         "Rank": 7,
-        "Prereq": ["omn6", "vis3", "aur3", "pro3"],
+        "Prereq": ["omn6", "aur3", "pro3"],
     },
     "int7": {
         "Name": "Rank 7 Intelligence (only for Systems)",
         "Type": "Intelligence",
         "Rank": 7,
-        "Prereq": ["int6", "mem1", "cel3", "cla3"],
+        "Prereq": ["int6", "cel3", "cla3"],
     },
     "4th7": {
         "Name": "Rank 7 4th Wall Breaker",
@@ -1428,13 +1428,13 @@ power = {
         "Name": "Rank 10 Omniscience",
         "Type": "Omniscience",
         "Rank": 10,
-        "Prereq": ["omn9", "vis3", "aur3", "pro3", "olf3", "gus3", "tac3"],
+        "Prereq": ["omn9", "aur3", "pro3", "olf3", "gus3", "tac3"],
     },
     "int10": {
         "Name": "Rank 10 Intelligence (only for Systems)",
         "Type": "Intelligence",
         "Rank": 10,
-        "Prereq": ["int9", "mem3", "cel6", "cla6"],
+        "Prereq": ["int9", "cel6", "cla6"],
     },
     "4th10": {
         "Name": "Rank 10 4th Wall Breaker",
