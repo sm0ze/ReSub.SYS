@@ -48,7 +48,7 @@ if not STARTCHANNEL:
     STARTCHANNEL = askToken("STARTCHANNEL")
 
 
-COMON = False
+COMON = True
 
 SUPEROLE = "Supe"
 PERMROLES = ["Supe"]  # guild role(s) for using these bot commands
@@ -1008,7 +1008,7 @@ class Options(commands.Cog):
             )
         )
 
-    @commands.command(enabled=True)
+    @commands.command(enabled=COMON)
     async def stats(self, ctx: commands.Context, peep: discord.Member = False):
         if not peep:
             peep = ctx.author
@@ -1026,7 +1026,7 @@ class Options(commands.Cog):
 
         await ctx.send(embed=mes)
 
-    @commands.command(enabled=True, aliases=["d"])
+    @commands.command(enabled=COMON, aliases=["d"])
     async def duel(
         self, ctx: commands.Context, opponent: discord.Member = False
     ):
