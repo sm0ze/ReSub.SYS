@@ -1523,6 +1523,8 @@ for statsheet in statsheetNom:
                 "Rank": i,
                 "Prereq": [],
             }
+            if power[str(shrt) + str(i)]["Type"] == "Intelligence":
+                power[str(shrt) + str(i)]["Name"] += " (only for Systems)"
             if i > 1:
                 power[str(shrt) + str(i)]["Prereq"].append(
                     str(shrt) + str(i - 1)
