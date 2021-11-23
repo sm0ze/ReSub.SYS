@@ -11,6 +11,9 @@ def debug(*args):
         print(*args)
 
 
+statsheetNom = [
+    ["Requirements", "1JIJjDzFjtuIU2k0jk1aHdMr2oErD_ySoFm7-iFEBOV0"]
+]
 taskVar = {
     "taskOpt": [
         ["Minor", "Moderate", "Major", "Imperative"],
@@ -363,7 +366,7 @@ cmdInf = {
 
 # blank entry
 # '': {'Name': '', 'Rank': , 'Prereq': []},
-power = {
+"""power = {
     "sup0": {"Name": "Supe", "Type": "Supe", "Rank": 0, "Prereq": []},
     "sys0": {"Name": "System", "Type": "System", "Rank": 0, "Prereq": []},
     "aut0": {"Name": "Authors", "Type": "Authors", "Rank": 0, "Prereq": []},
@@ -1442,6 +1445,12 @@ power = {
         "Rank": 10,
         "Prereq": ["4th9", "end6", "spe6", "str3", "reg3"],
     },
+}"""
+
+power = {
+    "sup0": {"Name": "Supe", "Type": "Supe", "Rank": 0, "Prereq": []},
+    "sys0": {"Name": "System", "Type": "System", "Rank": 0, "Prereq": []},
+    "aut0": {"Name": "Authors", "Type": "Authors", "Rank": 0, "Prereq": []},
 }
 
 
@@ -1480,3 +1489,62 @@ for sheetL in sheet_names:
         debug("Current list of {} is: ".format(i), currList)
         posTask[sheet][i] = currList
 debug(posTask)
+
+for statsheet in statsheetNom:
+    statUrlID = statsheet[1]
+    statsheetName = statsheet[0]
+    debug("sheet name is: ", statsheetName)
+    debug("url token is: ", statUrlID)
+    statUrl = (
+        "https://docs.google.com/spreadsheets/d/{}/gviz/tq?tqx="
+        "out:csv&sheet={}"
+    ).format(statUrlID, statsheetName)
+
+    debug("At URL: ", statUrl)
+    try:
+        frame = None
+        frame = pd.read_csv(statUrl)
+    except Exception as e:
+        print(e)
+        continue
+
+    for tup in frame.itertuples():
+        # debug("index", index)
+        # debug("row", row)
+        debug("tuple", tup)
+        shrt = [x[0] for x in leader.items() if x[1] == tup.Role]
+        if shrt:
+            shrt = shrt[0]
+        debug("shrt", shrt)
+        for i in range(1, 11):
+            power[str(shrt) + str(i)] = {
+                "Name": "Rank {} {}".format(i, tup.Role),
+                "Type": "{}".format(tup.Role),
+                "Rank": i,
+                "Prereq": [],
+            }
+            if i > 1:
+                power[str(shrt) + str(i)]["Prereq"].append(
+                    str(shrt) + str(i - 1)
+                )
+        for ite in tup._fields:
+            debug("ite", ite, getattr(tup, ite))
+            if str(getattr(tup, ite)) == str("nan"):
+                continue
+            if str(ite).lower().startswith("three"):
+                power[str(shrt) + str(4)]["Prereq"].append(
+                    str(getattr(tup, ite)).lower()
+                )
+            elif str(ite).lower().startswith("six"):
+                power[str(shrt) + str(7)]["Prereq"].append(
+                    str(getattr(tup, ite)).lower()
+                )
+            elif str(ite).lower().startswith("nine"):
+                power[str(shrt) + str(10)]["Prereq"].append(
+                    str(getattr(tup, ite)).lower()
+                )
+    power["omn1"]["Prereq"].append("aut0")
+    power["int1"]["Prereq"].append("sys0")
+    power["4th1"]["Prereq"].append("aut0")
+    for sett in power.items():
+        debug(sett)

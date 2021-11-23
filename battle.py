@@ -79,7 +79,7 @@ class player:
 
     def calcHP(self) -> int:
         # Health - Pai 5 (50) (+10/turn)
-        return 5 * self._pai
+        return 5 * self._pai + self._reg
 
     def calcPA(self) -> int:
         # Physical Attack - Str/4th 4 Spd 2 (60)
