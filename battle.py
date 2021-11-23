@@ -13,6 +13,7 @@ MA = 1
 MD = 0
 AC = 95
 EV = 5
+ACT = 10
 
 
 class player:
@@ -35,7 +36,7 @@ class player:
         self.md = MD + self.calcMD()
         self.ac = AC + self.calcAC()
         self.ev = EV + self.calcEV()
-        self.act = self._spe + self._cel
+        self.act = ACT + self._spe + self._cel
 
     def iniCalc(self):
         statDict = {}
