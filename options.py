@@ -1008,7 +1008,9 @@ class Options(commands.Cog):
             "-A command for Geminel to change thier xp total handicap."
         ),
     )
-    async def diffGem(self, ctx: commands.Context, var: float = 0.5):
+    async def diffGem(
+        self, ctx: commands.Context, var: float = float(GEMDIFF)
+    ):
         if int(ctx.message.author.id) not in [
             213090220147605506,
             277041901776142337,
