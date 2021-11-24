@@ -148,10 +148,10 @@ class Options(commands.Cog):
     )
     @commands.has_any_role(MANAGER)
     # manager command to role trim all users bot has access to
-    async def trimAll(self, ctx:commands.Context):
+    async def trimAll(self, ctx: commands.Context):
         debug("funcTrimAll START")
 
-        memberList = isSuper(self, servList(self.bot))
+        memberList = isSuper(self, self.bot.users)
         debug("\tmemberlist to cut = {}".format([x.name for x in memberList]))
 
         await cut(ctx, memberList)
@@ -637,9 +637,18 @@ class Options(commands.Cog):
     # build command to theory craft and check the prereqs for differnet
     # enhancement ranks can be used in conjunction with points command to
     # determine if user can implement a build
-    async def build(self, ctx: commands.Context, *, typeRank: str = ""):
+    async def build(
+        self,
+        ctx: commands.Context,
+        mem: typing.Optional[discord.Member],
+        *,
+        typeRank: str = ""
+    ):
         debug("Build command start")
         debug(typeRank)
+
+        if not mem:
+            mem = ctx.author
 
         # check for args, else use user's current build
         # split args into iterable shorthand list
@@ -649,7 +658,7 @@ class Options(commands.Cog):
             buildList = [x.strip() for x in fixArg.split(",") if x.strip()]
             debug(buildList)
         else:
-            buildList = enm.spent([ctx.message.author])[0][2]
+            buildList = enm.spent([mem])[0][2]
         debug("buildList = {}".format(buildList))
 
         # fetch cost and requisite list for build
@@ -678,6 +687,8 @@ class Options(commands.Cog):
     @commands.has_any_role(MANAGER)
     async def average(self, ctx: commands.Context):
         mes = discord.Embed(title="Average Enhancment Points")
+        totSumPeeps = 0
+        totLenPeeps = 0
         debug(leader.keys())
         getSupe = [x for x in ctx.guild.roles if str(x.name) == SUPEROLE]
         if not getSupe:
@@ -693,6 +704,8 @@ class Options(commands.Cog):
             lenPeep = len(peepDict.keys())
             avPeep = round(sumPeep / len(getSupe.members), 4)
 
+            totSumPeeps += sumPeep
+
             mes.add_field(
                 name="{}".format(val),
                 value=(
@@ -706,6 +719,21 @@ class Options(commands.Cog):
                     avPeep,
                 ),
             )
+        totLenPeeps = len(getSupe.members)
+        totAvPeep = round(totSumPeeps / totLenPeeps, 2)
+        mes.add_field(
+            name=SUPEROLE,
+            value=(
+                "There is a total of {} host{} with a sum of {} "
+                "enhancement point{} spent.\n Serverwide average of {}."
+            ).format(
+                totLenPeeps,
+                pluralInt(totLenPeeps),
+                totSumPeeps,
+                pluralInt(totSumPeeps),
+                totAvPeep,
+            ),
+        )
         mes.set_footer(text=HOSTNAME, icon_url=self.bot.user.display_avatar)
         await ctx.send(embed=mes)
 
