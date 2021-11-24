@@ -58,7 +58,7 @@ HIDE = False
 LEADLIMIT = 12
 NEWCALC = 1
 
-statMes = "HP - {0}\nPA - {1}\nPD - {2}\nMA - {3}\nMD - {4}\nReg - {5}\nAc - {6}\nEv - {7}\nAct - {8}"
+statMes = "HP - {0}\nPA - {1}\nPD - {2}\nMA - {3}\nMD - {4}\nRec - {5}\nAc - {6}\nEv - {7}\nAct - {8}"
 
 global GEMDIFF
 GEMDIFF = os.getenv("GEMDIFF")

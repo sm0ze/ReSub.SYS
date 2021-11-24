@@ -29,14 +29,14 @@ class player:
 
         self.hp = HP + self.calcHP()
         self.st = ST
-        self.reg = self._reg
+        self.rec = self.calcREC()
         self.pa = PA + self.calcPA()
         self.pd = PD + self.calcPD()
         self.ma = MA + self.calcMA()
         self.md = MD + self.calcMD()
         self.ac = AC + self.calcAC()
         self.ev = EV + self.calcEV()
-        self.act = ACT + self._spe + self._cel
+        self.act = ACT + self.calcACT()
 
     def iniCalc(self):
         statDict = {}
@@ -81,6 +81,9 @@ class player:
     def calcHP(self) -> int:
         # Health - Pai 5 (50) (+10/turn)
         return 5 * self._pai + self._reg
+
+    def calcREC(self) -> int:
+        return 2 * self._reg
 
     def calcPA(self) -> int:
         # Physical Attack - Str/4th 4 Spd 2 (60)
@@ -128,6 +131,9 @@ class player:
             + 1 * (self._aur + self._olf)
         )
 
+    def calcACT(self) -> int:
+        return self._spe + self._cel
+
     def bStat(self):
         return (
             self.hp,
@@ -135,7 +141,7 @@ class player:
             self.pd,
             self.ma,
             self.md,
-            self.reg,
+            self.rec,
             self.ac,
             self.ev,
             self.act,
