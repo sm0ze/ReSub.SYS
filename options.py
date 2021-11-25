@@ -58,7 +58,7 @@ HIDE = False
 LEADLIMIT = 12
 NEWCALC = 1
 
-statMes = "HP - {0}\nPA - {1}\nPD - {2}\nMA - {3}\nMD - {4}\nRec - {5}\nAc - {6}\nEv - {7}\nAct - {8}"
+statMes = "HP - {0}/{9}\nSta - {10} +{11}\nPA - {1}\nPD - {2}\nMA - {3}\nMD - {4}\nRec - {5}\nAcc - {6}\nEva - {7}\nSwi - {8}"
 
 global GEMDIFF
 GEMDIFF = os.getenv("GEMDIFF")
@@ -1038,7 +1038,7 @@ class Options(commands.Cog):
             )
         )
 
-    @commands.command(enabled=COMON)
+    @commands.command(enabled=COMON, aliases=["s"])
     async def stats(self, ctx: commands.Context, peep: discord.Member = False):
         if not peep:
             peep = ctx.author
@@ -1079,10 +1079,54 @@ class Options(commands.Cog):
             name="{}".format(bat.n2),
             value="{}".format(p2Stats),
         )
-        await ctx.send(
-            "THIS IS NOT YET IMPLEMENTED, just testing :)",
-            embed=mes,
+        # await ctx.send(
+        #    embed=mes,
+        # )
+        winner = None
+        mes.add_field(
+            inline=False, name="{} Move".format(bat.n1), value="Does Nothing."
         )
+        mes.add_field(
+            inline=False, name="{} Move".format(bat.n2), value="Does Nothing."
+        )
+        while not winner:
+            Who2Move = bat.nextRound()
+            moves = bat.move(Who2Move)
+            stats1 = bat.p1.bStat()
+            stats2 = bat.p2.bStat()
+            p1Stats = statMes.format(*stats1)
+            p2Stats = statMes.format(*stats2)
+            mes.set_field_at(
+                0,
+                name="{}".format(bat.n1),
+                value="{}".format(p1Stats),
+            )
+            mes.set_field_at(
+                1,
+                name="{}".format(bat.n2),
+                value="{}".format(p2Stats),
+            )
+            mes.set_field_at(
+                2,
+                inline=False,
+                name="{} Move".format(bat.n1),
+                value="{}".format(moves[0]),
+            )
+            mes.set_field_at(
+                3,
+                inline=False,
+                name="{} Move".format(bat.n2),
+                value="{}".format(moves[1]),
+            )
+            winner = moves[2]
+            await ctx.send(embed=mes)
+
+        mes.clear_fields()
+        mes.add_field(
+            name="Winner is {}".format(winner),
+            value="Prize to be implemented.",
+        )
+        await ctx.send(embed=mes)
 
 
 # function to move roles to correct rank positions

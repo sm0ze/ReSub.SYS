@@ -1,12 +1,21 @@
 # battle.py
 import discord
-
-from BossSystemExecutable import nON, debug
+import random
+from BossSystemExecutable import nON
 from enhancements import funcBuild, spent
 from power import power, leader
 
+DEBUG = 0
+
+
+def debug(*args):
+    if DEBUG:
+        print(*args)
+
+
 HP = 10
 ST = 5
+STAR = 1
 PA = 1
 PD = 0
 MA = 1
@@ -27,16 +36,26 @@ class player:
 
         self.iniCalc()
 
-        self.hp = HP + self.calcHP()
-        self.st = ST
+        self.hp = float(HP + self.calcHP())
+        self.totHP = float(HP + self.calcHP())
+
         self.rec = self.calcREC()
+
+        self.sta = ST
+        self.star = STAR + self.calcSTAR()
+
         self.pa = PA + self.calcPA()
         self.pd = PD + self.calcPD()
+
         self.ma = MA + self.calcMA()
         self.md = MD + self.calcMD()
-        self.ac = AC + self.calcAC()
-        self.ev = EV + self.calcEV()
-        self.act = ACT + self.calcACT()
+
+        self.acc = AC + self.calcAC()
+        self.eva = EV + self.calcEV()
+
+        self.swi = ACT + self.calcACT()
+
+        self.actNow = 0
 
     def iniCalc(self) -> None:
         statDict = {}
@@ -87,8 +106,12 @@ class player:
 
     def calcREC(self) -> int:
         ret = 2 * self._reg
-        if self._reg == 10:
-            ret += int(self._reg * 0.5)
+        return ret
+
+    def calcSTAR(self) -> int:
+        ret = 0
+        if self.reg == 10:
+            ret += int(1)
         return ret
 
     def calcPA(self) -> int:
@@ -195,9 +218,12 @@ class player:
             self.ma,
             self.md,
             self.rec,
-            self.ac,
-            self.ev,
-            self.act,
+            self.acc,
+            self.eva,
+            self.swi,
+            self.totHP,
+            self.sta,
+            self.star,
         )
 
 
@@ -209,3 +235,148 @@ class battler:
         self.p2 = player(member2)
         self.n1 = nON(member1)
         self.n2 = nON(member2)
+
+    def nextRound(self):
+        p1Act = self.p1.actNow
+        p2Act = self.p2.actNow
+        Who2Move = [None, None]
+        while p1Act < 50 and p2Act < 50:
+            p1Act += self.p1.act
+            p2Act += self.p2.act
+            debug("p1Act:", p1Act, "p2Act:", p2Act)
+
+        if p1Act >= 50:
+            p1Act -= 50
+            Who2Move[0] = self.p1
+        if p2Act >= 50:
+            p2Act -= 50
+            Who2Move[1] = self.p2
+
+        self.p1.actNow = p1Act
+        self.p2.actNow = p2Act
+
+        return Who2Move
+
+    def move(
+        self,
+        Who2Move: list[player],
+        p1Move: str = "None",
+        p2Move: str = "None",
+    ):
+        debug("Who2Move", Who2Move)
+        moves = ["Does Nothing.", "Does Nothing.", None]
+        if self.p1 in Who2Move and self.p2 in Who2Move:
+            if self.p1.actNow == self.p2.actNow:
+                first = random.choice(Who2Move)
+            elif self.p1.actNow > self.p2.actNow:
+                first = self.p1
+            else:
+                first = self.p2
+
+            if first == self.p1:
+                moves[0] = self.attack(self.p1, self.p2, p1Move)
+                if self.p2.hp > 0:
+                    moves[1] = self.attack(self.p2, self.p1, p2Move)
+            else:
+                moves[1] = self.attack(self.p2, self.p1, p2Move)
+                if self.p1.hp > 0:
+                    moves[0] = self.attack(self.p1, self.p2, p1Move)
+        else:
+            for peep in Who2Move:
+                if not peep:
+                    continue
+                if peep == self.p1:
+                    moves[0] = self.attack(self.p1, self.p2, p1Move)
+                else:
+                    moves[1] = self.attack(self.p2, self.p1, p2Move)
+
+        if self.p1.hp <= 0 or self.p2.hp <= 0:
+            debug("p1 Hp:", self.p1.hp, "p2 Hp:", self.p2.hp)
+            if self.p1.hp == self.p2.hp:
+                moves[2] = "Noone"
+            elif self.p1.hp > self.p2.hp:
+                moves[2] = self.n1
+            else:
+                moves[2] = self.n2
+
+        return moves
+
+    def attack(self, attacker: player, defender: player, attMove: str):
+        mes = ""
+
+        if attMove == "None":
+            if attacker.pa - defender.pd > attacker.ma - defender.md:
+                attMove = "PhysA"
+            else:
+                attMove = "MentA"
+
+        if attacker.totHP > attacker.hp:
+            strtHp = attacker.hp
+            attacker.hp += attacker.rec
+            if attacker.hp > attacker.totHP:
+                attacker.hp = attacker.totHP
+            heal = attacker.hp - strtHp
+            mes += "{} heals for {}.\n".format(attacker.n, heal)
+
+        attChance = attacker.ac - defender.ev
+        critChance = 0
+        superChance = 0
+        if attChance > 100:
+            critChance = attChance - 100
+            attChance = 100
+        if attChance < 0:
+            attChance = 0
+        missChance = 100 - attChance
+        debug("attChance", attChance, "missChance", missChance)
+        hit = random.choices(
+            ["Hit", "Missed"],
+            [attChance, missChance],
+        )
+        if "Missed" in hit:
+            multi = float(0)
+        else:
+
+            if critChance > 100:
+                superChance = critChance - 100
+                critChance = 100
+            normChance = 100 - critChance
+            debug("normChance", normChance, "critChance", critChance)
+            hit = random.choices(
+                ["Normal", "Critical"], [normChance, critChance]
+            )
+            if "Normal" in hit:
+                multi = float(1)
+            else:
+                notSuper = 100 - superChance
+                debug("superChance", superChance, "notSuper", notSuper)
+                hit = random.choices(
+                    ["Critical", "Super"], [notSuper, superChance]
+                )
+                if "Critical" in hit:
+                    multi = float(1.5)
+                else:
+                    multi = float(2)
+        mes += "{}'s attack is a {} attack.\n".format(attacker.n, hit[0])
+
+        if attMove == "PhysA":
+            attDmg = multi * (attacker.pa - defender.pd)
+            if attDmg < int(0):
+                attDmg = int(0)
+            defender.hp = defender.hp - attDmg
+            mes += "{} physically attacks {} for {} damage.".format(
+                attacker.n, defender.n, attDmg
+            )
+            debug("physical attack is a:", hit, "for", attDmg)
+        if attMove == "MentA":
+            attDmg = multi * (attacker.ma - defender.md)
+            if attDmg < int(0):
+                attDmg = int(0)
+            defender.hp = defender.hp - attDmg
+            mes += "{} mentally attacks {} for {} damage.".format(
+                attacker.n,
+                defender.n,
+                attDmg,
+            )
+            debug("mental attack is a:", hit, "for", attDmg)
+
+        return mes
