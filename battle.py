@@ -110,7 +110,7 @@ class player:
 
     def calcSTAR(self) -> int:
         ret = 0
-        if self.reg == 10:
+        if self._reg == 10:
             ret += int(1)
         return ret
 
