@@ -22,7 +22,7 @@ MA = 1
 MD = 0
 AC = 95
 EV = 5
-ACT = 10
+SWI = 10
 
 
 class player:
@@ -53,9 +53,9 @@ class player:
         self.acc = AC + self.calcAC()
         self.eva = EV + self.calcEV()
 
-        self.swi = ACT + self.calcACT()
+        self.swi = SWI + self.calcSWI()
 
-        self.actNow = 0
+        self.swiNow = 0
 
     def iniCalc(self) -> None:
         statDict = {}
@@ -202,7 +202,7 @@ class player:
             ret += int(self._pro * 0.4)
         return ret
 
-    def calcACT(self) -> int:
+    def calcSWI(self) -> int:
         ret = self._spe + self._cel
         if self._spe == 10:
             ret += int(self._spe * 0.2)
@@ -237,23 +237,23 @@ class battler:
         self.n2 = nON(member2)
 
     def nextRound(self):
-        p1Act = self.p1.actNow
-        p2Act = self.p2.actNow
+        p1Swi = self.p1.swiNow
+        p2Swi = self.p2.swiNow
         Who2Move = [None, None]
-        while p1Act < 50 and p2Act < 50:
-            p1Act += self.p1.act
-            p2Act += self.p2.act
-            debug("p1Act:", p1Act, "p2Act:", p2Act)
+        while p1Swi < 50 and p2Swi < 50:
+            p1Swi += self.p1.swi
+            p2Swi += self.p2.swi
+            debug("p1Swi:", p1Swi, "p2Swi:", p2Swi)
 
-        if p1Act >= 50:
-            p1Act -= 50
+        if p1Swi >= 50:
+            p1Swi -= 50
             Who2Move[0] = self.p1
-        if p2Act >= 50:
-            p2Act -= 50
+        if p2Swi >= 50:
+            p2Swi -= 50
             Who2Move[1] = self.p2
 
-        self.p1.actNow = p1Act
-        self.p2.actNow = p2Act
+        self.p1.swiNow = p1Swi
+        self.p2.swiNow = p2Swi
 
         return Who2Move
 
@@ -266,9 +266,9 @@ class battler:
         debug("Who2Move", Who2Move)
         moves = ["Does Nothing.", "Does Nothing.", None]
         if self.p1 in Who2Move and self.p2 in Who2Move:
-            if self.p1.actNow == self.p2.actNow:
+            if self.p1.swiNow == self.p2.swiNow:
                 first = random.choice(Who2Move)
-            elif self.p1.actNow > self.p2.actNow:
+            elif self.p1.swiNow > self.p2.swiNow:
                 first = self.p1
             else:
                 first = self.p2
