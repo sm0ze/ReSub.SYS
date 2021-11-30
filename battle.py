@@ -232,9 +232,13 @@ class battler:
         self, member1: discord.Member, member2: discord.Member
     ) -> None:
         self.p1 = player(member1)
-        self.p2 = player(member2)
         self.n1 = nON(member1)
+
+        self.p2 = player(member2)
         self.n2 = nON(member2)
+
+        self.p1Adp = self.adp(self.p1, self.p2)
+        self.p2Adp = self.adp(self.p2, self.p1)
 
     def nextRound(self):
         p1Swi = self.p1.swiNow
@@ -382,3 +386,12 @@ class battler:
             debug("mental attack is a:", hit, "for", attDmg)
 
         return mes
+
+    def adp(self, at1: player, at2: player):
+        phys = at1.pa - at2.pd
+        ment = at1.ma - at2.md
+        if phys < 0:
+            phys = 0
+        if ment < 0:
+            ment = 0
+        return phys, ment

@@ -61,6 +61,7 @@ NEWCALC = 1
 DL_ARC_DUR = 60
 
 statMes = "HP: {0}/{9}\nSta: {10} +{11}\nPA: {1}\nPD: {2}\nMA: {3}\nMD: {4}\nRec: {5}\nAcc: {6}\nEva: {7}\nSwi: {8}"
+adpMes = "\n\nAdapted PA: {0}\n Adapted MA: {1}"
 
 global GEMDIFF
 GEMDIFF = os.getenv("GEMDIFF")
@@ -1075,13 +1076,19 @@ class Options(commands.Cog):
         stats2 = bat.p2.bStat()
         p1Stats = statMes.format(*stats1)
         p2Stats = statMes.format(*stats2)
+
+        p1AdpSt = bat.p1Adp
+        p2AdpSt = bat.p2Adp
+        p1Adp = adpMes.format(*p1AdpSt)
+        p2Adp = adpMes.format(*p2AdpSt)
+
         mes.add_field(
             name="{}".format(bat.n1),
-            value="{}".format(p1Stats),
+            value="{}{}".format(p1Stats, p1Adp),
         )
         mes.add_field(
             name="{}".format(bat.n2),
-            value="{}".format(p2Stats),
+            value="{}{}".format(p2Stats, p2Adp),
         )
 
         sentMes = await ctx.send(
