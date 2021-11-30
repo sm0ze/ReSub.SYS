@@ -1137,6 +1137,9 @@ class Options(commands.Cog):
             winner = moves[2]
             await thrd.send(embed=mes)
             i += 1
+            if i > 25:
+                winner = "exhaustion"
+                i = "too many"
 
         mes.clear_fields()
         mes.add_field(
