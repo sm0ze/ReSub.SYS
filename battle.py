@@ -20,8 +20,8 @@ PA = 1
 PD = 0
 MA = 1
 MD = 0
-AC = 95
-EV = 5
+ACC = 95
+EVA = 5
 SWI = 10
 
 
@@ -50,8 +50,8 @@ class player:
         self.ma = MA + self.calcMA()
         self.md = MD + self.calcMD()
 
-        self.acc = AC + self.calcAC()
-        self.eva = EV + self.calcEV()
+        self.acc = ACC + self.calcACC()
+        self.eva = EVA + self.calcEVA()
 
         self.swi = SWI + self.calcSWI()
 
@@ -154,7 +154,7 @@ class player:
             ret += int(self._cla * 0.5)
         return ret
 
-    def calcAC(self) -> int:
+    def calcACC(self) -> int:
         # Accuracy - Vis/Omn 4 Aur/Olf 3 Gus/Tac 1 Pro 2 (100)
         if self._omn > self._vis:
             co = self._omn
@@ -180,7 +180,7 @@ class player:
             ret += int(self._pro * 0.4)
         return ret
 
-    def calcEV(self) -> int:
+    def calcEVA(self) -> int:
         # Evasion - Inv 4 Aur/Olf 1 Gus/Tac 3 Pro 2 (100)
         ret = (
             4 * self._inv
@@ -274,11 +274,13 @@ class battler:
                 first = self.p2
 
             if first == self.p1:
-                moves[0] = self.attack(self.p1, self.p2, p1Move)
+                moves[0] = "{} attacks first!\n".format(self.p1.n)
+                moves[0] += self.attack(self.p1, self.p2, p1Move)
                 if self.p2.hp > 0:
                     moves[1] = self.attack(self.p2, self.p1, p2Move)
             else:
-                moves[1] = self.attack(self.p2, self.p1, p2Move)
+                moves[1] = "{} attacks first!\n".format(self.p2.n)
+                moves[1] += self.attack(self.p2, self.p1, p2Move)
                 if self.p1.hp > 0:
                     moves[0] = self.attack(self.p1, self.p2, p1Move)
         else:
@@ -318,7 +320,7 @@ class battler:
             heal = attacker.hp - strtHp
             mes += "{} heals for {}.\n".format(attacker.n, heal)
 
-        attChance = attacker.ac - defender.ev
+        attChance = attacker.acc - defender.eva
         critChance = 0
         superChance = 0
         if attChance > 100:

@@ -15,7 +15,7 @@ class ErrorHandler(commands.Cog):
         self, ctx: commands.Context, error: commands.CommandError
     ):
         """A global error handler cog."""
-        localHandlers = ["task"]
+        localHandlers = ["task", "duel"]
 
         # for messy handling without isinstance()
         command = ctx.command

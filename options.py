@@ -18,6 +18,7 @@ from battle import battler, player
 
 import enhancements as enm
 from BossSystemExecutable import DEBUG, HOSTNAME, TEST, askToken, debug, nON
+from exceptions import notSupeDuel
 from power import (
     cmdInf,
     leader,
@@ -57,8 +58,9 @@ LOWESTROLE = 2  # bot sorts roles by rank from position of int10 to LOWESTROLE
 HIDE = False
 LEADLIMIT = 12
 NEWCALC = 1
+DL_ARC_DUR = 60
 
-statMes = "HP - {0}/{9}\nSta - {10} +{11}\nPA - {1}\nPD - {2}\nMA - {3}\nMD - {4}\nRec - {5}\nAcc - {6}\nEva - {7}\nSwi - {8}"
+statMes = "HP: {0}/{9}\nSta: {10} +{11}\nPA: {1}\nPD: {2}\nMA: {3}\nMD: {4}\nRec: {5}\nAcc: {6}\nEva: {7}\nSwi: {8}"
 
 global GEMDIFF
 GEMDIFF = os.getenv("GEMDIFF")
@@ -1062,6 +1064,8 @@ class Options(commands.Cog):
     ):
         if not opponent:
             opponent = get(ctx.guild.members, id=self.bot.user.id)
+        elif str(SUPEROLE) not in [x.name for x in opponent.roles]:
+            raise notSupeDuel("Not a supe.")
         bat = battler(ctx.author, opponent)
         mes = discord.Embed(
             title="{} Vs. {}".format(bat.n1, bat.n2),
@@ -1079,9 +1083,20 @@ class Options(commands.Cog):
             name="{}".format(bat.n2),
             value="{}".format(p2Stats),
         )
-        # await ctx.send(
-        #    embed=mes,
-        # )
+
+        sentMes = await ctx.send(
+            embed=mes,
+        )
+        thrd = await ctx.channel.create_thread(
+            name=mes.title,
+            message=sentMes,
+            auto_archive_duration=DL_ARC_DUR,
+            reason=mes.title,
+        )
+
+        await thrd.add_user(ctx.author)
+        await thrd.add_user(opponent)
+
         winner = None
         mes.add_field(
             inline=False, name="{} Move".format(bat.n1), value="Does Nothing."
@@ -1089,6 +1104,7 @@ class Options(commands.Cog):
         mes.add_field(
             inline=False, name="{} Move".format(bat.n2), value="Does Nothing."
         )
+        i = 0
         while not winner:
             Who2Move = bat.nextRound()
             moves = bat.move(Who2Move)
@@ -1119,14 +1135,37 @@ class Options(commands.Cog):
                 value="{}".format(moves[1]),
             )
             winner = moves[2]
-            await ctx.send(embed=mes)
+            await thrd.send(embed=mes)
+            i += 1
 
         mes.clear_fields()
         mes.add_field(
-            name="Winner is {}".format(winner),
+            name="Winner is {} after {} moves.".format(winner, i),
             value="Prize to be implemented.",
         )
+        await thrd.send(embed=mes)
+        await thrd.edit(archived=1)
         await ctx.send(embed=mes)
+
+    @duel.error
+    async def duel_error(self, ctx: commands.Context, error):
+        print("error Type:", type(error))
+        if isinstance(error, commands.CommandInvokeError):
+            print("error Cause:", type(error.__cause__))
+            if isinstance(error.__cause__, notSupeDuel):
+                mes = "You can't fight a civilian!"
+                tle = "Civilian"
+            else:
+                tle = "Error!!"
+                mes = str(error)
+        else:
+            tle = "Error!!"
+            mes = str(error)
+        await ctx.send(
+            embed=discord.Embed(title=tle, description=mes),
+            delete_after=5,
+        )
+        await ctx.message.delete(delay=5)
 
 
 # function to move roles to correct rank positions
