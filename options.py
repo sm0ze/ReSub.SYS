@@ -60,7 +60,7 @@ LEADLIMIT = 12
 NEWCALC = 1
 DL_ARC_DUR = 60
 
-statMes = "HP: {0}/{9}\nSta: {10} +{11}\nPA: {1}\nPD: {2}\nMA: {3}\nMD: {4}\nRec: {5}\nAcc: {6}\nEva: {7}\nSwi: {8}"
+statMes = "HP: {0}/{9}\nSta: {10}/{12} +{11}\nPA: {1}\nPD: {2}\nMA: {3}\nMD: {4}\nRec: {5}\nAcc: {6}\nEva: {7}\nSwi: {8}"
 adpMes = "\n\nAdapted PA: {0}\n Adapted MA: {1}"
 
 global GEMDIFF
@@ -1144,7 +1144,7 @@ class Options(commands.Cog):
             winner = moves[2]
             await thrd.send(embed=mes)
             i += 1
-            if i > 25:
+            if not winner and i > 25:
                 winner = "exhaustion"
                 i = "too many"
 
