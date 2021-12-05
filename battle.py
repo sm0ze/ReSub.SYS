@@ -4,6 +4,7 @@ import random
 from BossSystemExecutable import nON
 from enhancements import funcBuild, spent
 from power import power, leader
+import pandas as pd
 
 DEBUG = 0
 
@@ -26,6 +27,28 @@ ACC = 95
 EVA = 5
 SWI = 10
 
+statsToken = "1JIJjDzFjtuIU2k0jk1aHdMr2oErD_ySoFm7-iFEBOV0"
+
+statsName = "BotStats"
+bonusName = "BotBonus"
+
+replaceName = "BotReplace"
+urlStats = (
+    "https://docs.google.com/spreadsheets/d/{}/gviz/tq?tqx=" "out:csv&sheet={}"
+).format(statsToken, statsName)
+urlBonus = (
+    "https://docs.google.com/spreadsheets/d/{}/gviz/tq?tqx=" "out:csv&sheet={}"
+).format(statsToken, bonusName)
+urlReplace = (
+    "https://docs.google.com/spreadsheets/d/{}/gviz/tq?tqx=" "out:csv&sheet={}"
+).format(statsToken, replaceName)
+
+
+statCalcDict = {}
+bonusDict = {}
+
+urlList = [[urlStats, statCalcDict], [urlBonus, bonusDict]]
+
 
 class player:
     def __init__(self, member: discord.Member) -> None:
@@ -39,25 +62,27 @@ class player:
 
         self.iniCalc()
 
-        self.hp = float(HP + self.calcHP())
-        self.totHP = float(HP + self.calcHP())
+        addHP = float(HP + self.calcStat("HP"))
 
-        self.rec = REC + self.calcREC()
+        self.hp = addHP
+        self.totHP = addHP
+
+        self.rec = REC + self.calcStat("Rec")
 
         self.sta = STA
         self.totSta = STATOT
-        self.staR = STAR + self.calcSTAR()
+        self.staR = STAR + self.calcStat("StaR")
 
-        self.pa = PA + self.calcPA()
-        self.pd = PD + self.calcPD()
+        self.pa = PA + self.calcStat("PA")
+        self.pd = PD + self.calcStat("PD")
 
-        self.ma = MA + self.calcMA()
-        self.md = MD + self.calcMD()
+        self.ma = MA + self.calcStat("MA")
+        self.md = MD + self.calcStat("MD")
 
-        self.acc = ACC + self.calcACC()
-        self.eva = EVA + self.calcEVA()
+        self.acc = ACC + self.calcStat("Acc")
+        self.eva = EVA + self.calcStat("Eva")
 
-        self.swi = SWI + self.calcSWI()
+        self.swi = SWI + self.calcStat("Swi")
 
         self.swiNow = 0
 
@@ -101,117 +126,10 @@ class player:
         self._4th = int(statDict["4th"])
         self._int = int(statDict["int"])
 
-    def calcHP(self) -> int:
-        # Health - Pai 5 (50) (+10/turn)
-        ret = 5 * self._pai + self._reg
-        if self._pai == 10:
-            ret += self._pai
-        return ret
-
-    def calcREC(self) -> int:
-        ret = 2 * self._reg
-        return ret
-
-    def calcSTAR(self) -> int:
-        ret = 0
-        if self._reg == 10:
-            ret += int(1)
-        return ret
-
-    def calcPA(self) -> int:
-        # Physical Attack - Str/4th 4 Spd 2 (60)
-        if self._4th > self._str:
-            co = self._4th
-        else:
-            co = self._str
-        ret = self._spe * 1 + co * 4
-        if self._spe == 10:
-            ret += int(self._spe * 0.1)
-        if co == 10:
-            ret += 5
-        return ret
-
-    def calcPD(self) -> int:
-        # Physical Defense - End 4 Spd 2 (60)
-        ret = self._end * 4 + self._spe * 1
-        if self._end == 10:
-            ret += int(self._end * 0.5)
-        return ret
-
-    def calcMA(self) -> int:
-        # Mental Attack - Mem/Int 4 Cel 2 (60)
-        if self._int > self._mem:
-            co = self._int
-        else:
-            co = self._mem
-        ret = self._cel * 1 + co * 4
-        if self._cel == 10:
-            ret += int(self._cel * 0.1)
-        if co == 10:
-            ret += 5
-        return ret
-
-    def calcMD(self) -> int:
-        # Mental Defense - Cla 4 Cel 2 (60)
-        ret = self._cla * 4 + self._cel * 1
-        if self._cla == 10:
-            ret += int(self._cla * 0.5)
-        return ret
-
-    def calcACC(self) -> int:
-        # Accuracy - Vis/Omn 4 Aur/Olf 3 Gus/Tac 1 Pro 2 (100)
-        if self._omn > self._vis:
-            co = self._omn
-        else:
-            co = self._vis
-        ret = (
-            4 * co
-            + 3 * (self._aur + self._olf)
-            + 2 * self._pro
-            + 1 * (self._gus + self._tac)
-        )
-        if co == 10:
-            ret += 8
-        if self._aur == 10:
-            ret += int(self._aur * 0.5)
-        if self._olf == 10:
-            ret += int(self._olf * 0.5)
-        if self._gus == 10:
-            ret += int(self._gus * 0.3)
-        if self._tac == 10:
-            ret += int(self._tac * 0.3)
-        if self._pro == 10:
-            ret += int(self._pro * 0.4)
-        return ret
-
-    def calcEVA(self) -> int:
-        # Evasion - Inv 4 Aur/Olf 1 Gus/Tac 3 Pro 2 (100)
-        ret = (
-            4 * self._inv
-            + 3 * (self._tac + self._gus)
-            + 2 * self._pro
-            + 1 * (self._aur + self._olf)
-        )
-        if self._inv == 10:
-            ret += int(self._inv * 0.8)
-        if self._aur == 10:
-            ret += int(self._aur * 0.3)
-        if self._olf == 10:
-            ret += int(self._olf * 0.3)
-        if self._gus == 10:
-            ret += int(self._gus * 0.5)
-        if self._tac == 10:
-            ret += int(self._tac * 0.5)
-        if self._pro == 10:
-            ret += int(self._pro * 0.4)
-        return ret
-
-    def calcSWI(self) -> int:
-        ret = self._spe + self._cel
-        if self._spe == 10:
-            ret += int(self._spe * 0.2)
-        if self._cel == 10:
-            ret += int(self._cel * 0.2)
+    def calcStat(self, statType) -> int:
+        ret = int(0)
+        ret += addCalc(self, statType)
+        ret += addBonus(self, statType)
         return ret
 
     def bStat(self):
@@ -489,3 +407,87 @@ def attackCalc(
         multi += 1
     ret = multi * attckDmg - defense
     return ret
+
+
+def addCalc(self, statType) -> int:
+    ret = int(0)
+    ignore = []
+    for stat in statCalcDict.keys():
+        if stat in replaceDict.keys():
+            soft = statCalcDict[stat][statType]
+            hard = statCalcDict[replaceDict[stat]][statType]
+            if soft > hard:
+                ignore.append(hard)
+            else:
+                continue
+        if stat in ignore:
+            continue
+        addStat = statCalcDict[stat][statType]
+        if addStat:
+            statAm = getattr(self, "_{}".format(stat))
+            ret += statAm * addStat
+            debug(
+                "Adding rank {} {} * {} = {} to {}.".format(
+                    statAm,
+                    stat,
+                    addStat,
+                    statAm * addStat,
+                    statType,
+                )
+            )
+    return ret
+
+
+def addBonus(self, bonusType) -> int:
+    ret = int(0)
+    for stat in bonusDict.keys():
+        addBonus = bonusDict[stat][bonusType]
+        if addBonus:
+            bonusStat = getattr(self, "_{}".format(stat))
+            if bonusStat == 10:
+                ret += addBonus
+                debug(
+                    "Adding a bonus of {} to {} for having 10 in {}".format(
+                        addBonus,
+                        bonusType,
+                        bonusStat,
+                    )
+                )
+    return ret
+
+
+for url, dic in urlList:
+    try:
+        frame = None
+        frame = pd.read_csv(url)
+    except Exception as e:
+        print(e)
+    for tup in frame.itertuples():
+        debug("tuple", tup)
+        shrt = [x[0] for x in leader.items() if x[1] == tup.Role]
+        if shrt:
+            shrt = shrt[0]
+            dic[shrt] = {}
+            for name, value in tup._asdict().items():
+                debug("name", name, "value", value)
+                dic[shrt][name] = value
+        debug("shrt", shrt)
+    debug("dic", dic)
+
+replaceDict = {}
+try:
+    frame = None
+    frame = pd.read_csv(urlReplace)
+except Exception as e:
+    print(e)
+for tup in frame.itertuples():
+    debug(tup)
+    shrt = [x[0] for x in leader.items() if x[1] == tup.Role]
+    if shrt:
+        shrt = shrt[0]
+        shrt2 = [x[0] for x in leader.items() if x[1] == tup.ReplaceWith]
+        if shrt2:
+            shrt2 = shrt2[0]
+            debug("replace '{}' with '{}'".format(shrt, shrt2))
+            replaceDict[shrt] = shrt2
+debug("replaceDict", replaceDict)

@@ -912,7 +912,11 @@ class Options(commands.Cog):
     @commands.command(enabled=COMON, hidden=HIDE)
     @commands.has_any_role(MANAGER)
     async def xpAdd(
-        self, ctx: commands.Context, val: float = 0, *, mem: str = ""
+        self,
+        ctx: commands.Context,
+        val: typing.Union[float, int] = 0.0,
+        *,
+        mem: str = ""
     ):
         val = round(val, 2)
         debug("val is", val)
@@ -936,6 +940,7 @@ class Options(commands.Cog):
     @commands.command(
         enabled=COMON,
         hidden=HIDE,
+        aliases=["x"],
         brief=cmdInf["xpGrab"]["brief"],
         description=cmdInf["xpGrab"]["description"],
     )

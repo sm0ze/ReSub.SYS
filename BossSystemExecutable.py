@@ -437,6 +437,26 @@ async def testAll(ctx: commands.Context, host: str = HOSTNAME):
     await ctx.send("Testing Done")
 
 
+@bot.command()
+@commands.is_owner()
+async def toggle(ctx: commands.Context, mes="t", host=HOSTNAME):
+    if host != HOSTNAME:
+        return
+
+    getComm = bot.get_command(mes)
+    if ctx.command == getComm:
+        await dupeMes(ctx, "Cannot disable this command.")
+    elif getComm:
+        getComm.enabled = not getComm.enabled
+        ternary = "enabled" if getComm.enabled else "disabled"
+        await dupeMes(
+            ctx,
+            "Command '{}' {} on {}.".format(getComm.name, ternary, host),
+        )
+    else:
+        await dupeMes(ctx, "Command '{}' was not found.".format(mes))
+
+
 """
 @client.event
 async def on_message(self, message):
