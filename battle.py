@@ -130,6 +130,7 @@ class player:
         ret = int(0)
         ret += addCalc(self, statType)
         ret += addBonus(self, statType)
+        debug("Adding to", statType, ret)
         return ret
 
     def bStat(self):
@@ -413,18 +414,29 @@ def addCalc(self, statType) -> int:
     ret = int(0)
     ignore = []
     for stat in statCalcDict.keys():
+        statAm = getattr(self, "_{}".format(stat))
+        if not statAm:
+            continue
         if stat in replaceDict.keys():
-            soft = statCalcDict[stat][statType]
-            hard = statCalcDict[replaceDict[stat]][statType]
+            soft = getattr(self, "_{}".format(stat))
+            hard = getattr(self, "_{}".format(replaceDict[stat]))
+            debug(
+                "soft {} rank".format(stat),
+                soft,
+                "hard {} rank".format(replaceDict[stat]),
+                hard,
+            )
             if soft > hard:
-                ignore.append(hard)
-            else:
-                continue
-        if stat in ignore:
+                debug("Adding {} to ignore List".format(replaceDict[stat]))
+                ignore.append(replaceDict[stat])
+    debug("ignore", ignore)
+
+    for stat in statCalcDict.keys():
+        statAm = getattr(self, "_{}".format(stat))
+        if not statAm or stat in ignore:
             continue
         addStat = statCalcDict[stat][statType]
         if addStat:
-            statAm = getattr(self, "_{}".format(stat))
             ret += statAm * addStat
             debug(
                 "Adding rank {} {} * {} = {} to {}.".format(
