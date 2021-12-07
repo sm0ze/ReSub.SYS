@@ -29,19 +29,21 @@ ACC = 95
 EVA = 5
 SWI = 10
 
-statMes = """HP: {0}/{9}
-Sta: {10}/{12} +{11}
-PA: {1}
-PD: {2}
-MA: {3}
-MD: {4}
-Rec: {5}
-Acc: {6}
-Eva: {7}
-Swi: {8}"""
+SWITOT = 50
+
+statMes = """HP:\t{0:0.2g}/{9:0.2g} (**{13}%**) + {5}
+Sta: **{10}**/{12} +{11}
+P: {1}A/{2:0.2g}D
+M: {3}A/{4:0.2g}D
+Acc/Eva: {6}/{7}
+Swi: {14}/{15} +{8}"""
 
 
-adpMes = "\n\nAdapted PA: {0}\n Adapted MA: {1}\nAdapted Hit Chance: {2}"
+adpMes = """
+
+**Adapted Stats**
+Hit%: PA/MA
+{2}%: {0:0.2g}/{1:0.2g}"""
 
 statsToken = "1JIJjDzFjtuIU2k0jk1aHdMr2oErD_ySoFm7-iFEBOV0"
 
@@ -92,10 +94,10 @@ class player:
         self.staR = STAR + self.calcStat("StaR")
 
         self.pa = PA + self.calcStat("PA")
-        self.pd = PD + self.calcStat("PD")
+        self.pd = float(PD + self.calcStat("PD"))
 
         self.ma = MA + self.calcStat("MA")
-        self.md = MD + self.calcStat("MD")
+        self.md = float(MD + self.calcStat("MD"))
 
         self.acc = ACC + self.calcStat("Acc")
         self.eva = EVA + self.calcStat("Eva")
@@ -105,7 +107,10 @@ class player:
         self.swiNow = 0
         self.defending = ""
         self.tired = 0
-        self.missTurn = False
+        self.missTurn = int(0)
+
+        self.weak = False
+        self.weakTyp = ""
 
     def iniCalc(self) -> None:
         statDict = {}
@@ -169,8 +174,14 @@ class player:
             self.sta,
             self.staR,
             self.totSta,
+            self.hpPer(),
+            self.swiNow,
+            SWITOT,
         )
         return ret
+
+    def hpPer(self):
+        return round((self.hp / self.totHP) * 100)
 
     def statMessage(self):
         stats = self.bStat()
@@ -188,9 +199,9 @@ class player:
             defAlr = True
 
         if self.defending == "Physical":
-            self.pd = int(val * self.pd)
+            self.pd = float(val * self.pd)
         if self.defending == "Mental":
-            self.md = int(val * self.md)
+            self.md = float(val * self.md)
 
         if defAlr:
             self.defending = ""
@@ -245,6 +256,20 @@ class player:
                 await self.p.send("Timeout")
                 active = False
 
+    def beWeak(self, boo: bool, typ: str = "pd"):
+        self.weak = boo
+        mes = ""
+        if self.weak:
+            self.weakTyp = typ
+            setattr(self, typ, getattr(self, typ) / 2)
+            mes += "{} has {}% HP and is therfore now weak to {}.\n".format(
+                self.n, self.hpPer(), typ
+            )
+        else:
+            setattr(self, self.weakTyp, getattr(self, self.weakTyp) * 2)
+            mes += "{} is no longer weak to {}.\n".format(self.n, typ)
+        return mes
+
 
 class battler:
     def __init__(
@@ -256,15 +281,21 @@ class battler:
         self.p2 = player(member2, bot)
         self.n2 = nON(member2)
 
-        self.p1Adp = self.adpStatMessage(self.p1, self.p2)
-        self.p2Adp = self.adpStatMessage(self.p2, self.p1)
-
-    async def echoMes(self, mes, thrd):
-        if self.p1.play:
-            await self.p1.p.send(embed=mes)
-        if self.p2.play:
-            await self.p2.p.send(embed=mes)
-        await thrd.send(embed=mes)
+    async def echoMes(self, mes, thrd, toThrd: bool = True):
+        if isinstance(mes, discord.Embed):
+            if self.p1.play:
+                await self.p1.p.send(embed=mes)
+            if self.p2.play:
+                await self.p2.p.send(embed=mes)
+            if toThrd:
+                await thrd.send(embed=mes)
+        elif isinstance(mes, str):
+            if self.p1.play:
+                await self.p1.p.send(mes)
+            if self.p2.play:
+                await self.p2.p.send(mes)
+            if toThrd:
+                await thrd.send(mes)
 
     async def findPlayers(self):
         if not self.p1.p.bot:
@@ -276,16 +307,16 @@ class battler:
         p1Swi = self.p1.swiNow
         p2Swi = self.p2.swiNow
         Who2Move = [None, None]
-        while p1Swi < 50 and p2Swi < 50:
+        while p1Swi < SWITOT and p2Swi < SWITOT:
             p1Swi += self.p1.swi
             p2Swi += self.p2.swi
             debug("p1Swi:", p1Swi, "p2Swi:", p2Swi)
 
-        if p1Swi >= 50:
-            p1Swi -= 50
+        if p1Swi >= SWITOT:
+            p1Swi -= SWITOT
             Who2Move[0] = self.p1
-        if p2Swi >= 50:
-            p2Swi -= 50
+        if p2Swi >= SWITOT:
+            p2Swi -= SWITOT
             Who2Move[1] = self.p2
 
         self.p1.swiNow = p1Swi
@@ -310,12 +341,12 @@ class battler:
                 first = self.p2
 
             if first == self.p1:
-                moves[0] = "{} attacks first!\n".format(self.p1.n)
+                moves[0] = "{} moves first!\n".format(self.p1.n)
                 moves[0] += self.turn(self.p1, self.p2, p1Move)
                 if self.p2.hp > 0 and self.p1.hp > 0:
                     moves[1] = self.turn(self.p2, self.p1, p2Move)
             else:
-                moves[1] = "{} attacks first!\n".format(self.p2.n)
+                moves[1] = "{} moves first!\n".format(self.p2.n)
                 moves[1] += self.turn(self.p2, self.p1, p2Move)
                 if self.p2.hp > 0 and self.p1.hp > 0:
                     moves[0] = self.turn(self.p1, self.p2, p1Move)
@@ -324,9 +355,11 @@ class battler:
                 if not peep:
                     continue
                 if peep == self.p1:
-                    moves[0] = self.turn(self.p1, self.p2, p1Move)
+                    moves[0] = "{} moves!\n".format(self.p1.n)
+                    moves[0] += self.turn(self.p1, self.p2, p1Move)
                 else:
-                    moves[1] = self.turn(self.p2, self.p1, p2Move)
+                    moves[1] = "{} moves!\n".format(self.p2.n)
+                    moves[1] += self.turn(self.p2, self.p1, p2Move)
 
         if self.p1.hp <= 0 or self.p2.hp <= 0:
             debug("p1 Hp:", self.p1.hp, "p2 Hp:", self.p2.hp)
@@ -343,6 +376,8 @@ class battler:
         mes = ""
         if peep.missTurn:
             mes += "{} misses this turn due to exhaustion!\n".format(peep.n)
+        elif peep.weak:
+            mes += peep.beWeak(False)
         if peep.defending:
             mes += peep.defend()
 
@@ -366,7 +401,7 @@ class battler:
                 peep.sta += staRec
 
         if not peep.sta:
-            peep.missTurn = True
+            peep.missTurn = int(2)
             peep.tired += 1
             mes += (
                 "{} has exhausted themself ({}) and will miss a turn.\n"
@@ -381,10 +416,10 @@ class battler:
             if attPeep.hp < 0:
                 peep.hp = attPeep.hp - 1
             else:
-                peep.hp = 0
+                peep.hp = float(0)
 
         if peep.missTurn:
-            peep.missTurn = False
+            peep.missTurn -= 1
         return mes
 
     def moveSelf(self, peep: player, notPeep: player):
@@ -421,7 +456,7 @@ class battler:
             peep.recHP(peep.rec)
             heal = peep.hp - strtHp
             if heal:
-                mes += "{} heals for {}.\n".format(peep.n, heal)
+                mes += "{} heals for {:0.2g}.\n".format(peep.n, heal)
         peep.t += 1
         return mes
 
@@ -451,6 +486,11 @@ class battler:
                 attMove = "Physical"
             else:
                 attMove = "Mental"
+
+        if desperate and attacker.hpPer() > 50:
+            mes += attacker.beWeak(
+                True, "pd" if attMove == "Physical" else "md"
+            )
 
         attChance = attacker.acc - defender.eva
         critChance = 0
@@ -517,9 +557,9 @@ class battler:
                 desperate,
             )
             if attDmg < int(0):
-                attDmg = int(0)
+                attDmg = float(0)
             defender.hp = defender.hp - attDmg
-            mes += "{} physically attacks {} for {} damage.\n".format(
+            mes += "{} physically attacks {} for {:0.2g} damage.\n".format(
                 attacker.n, defender.n, attDmg
             )
             debug("physical attack is a:", hit, "for", attDmg)
@@ -531,9 +571,9 @@ class battler:
                 desperate,
             )
             if attDmg < int(0):
-                attDmg = int(0)
+                attDmg = float(0)
             defender.hp = defender.hp - attDmg
-            mes += "{} mentally attacks {} for {} damage.\n".format(
+            mes += "{} mentally attacks {} for {:0.2g} damage.\n".format(
                 attacker.n,
                 defender.n,
                 attDmg,
@@ -546,12 +586,6 @@ class battler:
         phys = at1.pa - at2.pd
         ment = at1.ma - at2.md
         hitChance = at1.acc - at2.eva
-        if phys < 0:
-            phys = 0
-        if ment < 0:
-            ment = 0
-        if hitChance < 0:
-            hitChance = 0
 
         ret = (phys, ment, hitChance)
         return ret
@@ -560,13 +594,16 @@ class battler:
         adaptedStats = self.adp(at1, at2)
         return adpMes.format(*adaptedStats)
 
+    def isPlay(self, peep: player):
+        return "Playing" if peep.play else "A Bot"
+
 
 def attackCalc(
     multi: int = 0,
     attckDmg: int = 0,
-    defense: int = 0,
+    defense: float = 0,
     desperate: bool = 0,
-) -> int:
+) -> float:
     if multi and desperate:
         multi += 1
     ret = multi * attckDmg - defense

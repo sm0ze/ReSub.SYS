@@ -1,8 +1,9 @@
 import discord
 from discord.ext import commands
 
-from BossSystemExecutable import ERRORTHREAD, debug
+from BossSystemExecutable import ERRORTHREAD
 from enhancements import dupeError, getSendLoc
+from exceptions import notSupeDuel
 
 
 class ErrorHandler(commands.Cog):
@@ -21,25 +22,15 @@ class ErrorHandler(commands.Cog):
         self, ctx: commands.Context, error: commands.CommandError
     ):
         """A global error handler cog."""
-        localHandlers = ["task", "duel"]
 
         # for messy handling without isinstance()
         command = ctx.command
-
-        debug(
-            "{} in {}".format(command, localHandlers),
-            str(command) in localHandlers,
-        )
-        if str(command) in localHandlers:
-            return
+        mes = None
 
         if isinstance(error, commands.CommandNotFound):
             return
-            mes = discord.Embed(
-                title="Error!!!",
-                description="Command not found.",
-                color=ctx.author.color,
-            )
+        elif isinstance(error, commands.DisabledCommand):
+            return
 
         elif isinstance(error, KeyError):
             mes = discord.Embed(
@@ -50,14 +41,28 @@ class ErrorHandler(commands.Cog):
             )
         elif isinstance(error, commands.CommandOnCooldown):
             cdTime = round(error.retry_after, 2)
-            mes = discord.Embed(
-                title="Error!!!",
-                description=(
-                    "Command on cooldown for" "{} minutes or {} seconds"
-                ).format(round(cdTime / 60, 2), cdTime),
-            )
+            if command == "task":
+                mes = discord.Embed(
+                    title="No Tasks",
+                    description=(
+                        "You have no available tasks at this time. "
+                        "Please search again in {} minutes or {} seconds."
+                    ).format(round(cdTime / 60, 2), cdTime),
+                )
+            else:
+                mes = discord.Embed(
+                    title="Error!!!",
+                    description=(
+                        "Command on cooldown for" "{} minutes or {} seconds"
+                    ).format(round(cdTime / 60, 2), cdTime),
+                )
+        elif isinstance(error, commands.CommandInvokeError):
+            if isinstance(error.__cause__, notSupeDuel):
+                mes = discord.Embed(
+                    title="Civilian", description="You can't fight a civilian!"
+                )
 
-        else:  # just send the error to discord
+        if not mes:
             mes = discord.Embed(title="Error!!!", description=error)
         await ctx.send(embed=mes, delete_after=5)
         await ctx.message.delete(delay=4)

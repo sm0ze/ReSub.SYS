@@ -70,6 +70,9 @@ LEADLIMIT = 12
 NEWCALC = 1
 DL_ARC_DUR = 60
 
+ROUNDLIMIT = 50
+PLAYERTURNWAIT = 30
+BOTTURNWAIT = 60
 
 global GEMDIFF
 GEMDIFF = os.getenv("GEMDIFF")
@@ -401,23 +404,6 @@ class Options(commands.Cog):
         await ctx.send(embed=emptMes)
         await ctx.message.delete(delay=1)
         return
-
-    @task.error
-    async def task_error(self, ctx: commands.Context, error):
-        if isinstance(error, commands.CommandOnCooldown):
-            cdTime = round(error.retry_after, 2)
-            mes = (
-                "You have no available tasks at this time. Please search ag"
-                "ain in {} minutes or {} seconds."
-            ).format(round(cdTime / 60, 2), cdTime)
-        else:
-            mes = str(error)
-        await ctx.send(
-            embed=discord.Embed(title="No Tasks", description=mes),
-            delete_after=5,
-        )
-        await ctx.message.delete(delay=5)
-        await enm.dupeError(mes, ctx, ERTHRD)
 
     @commands.command(
         enabled=COMON,
@@ -1088,17 +1074,16 @@ class Options(commands.Cog):
         bat = battler(self.bot, ctx.author, opponent)
         await bat.findPlayers()
         mes = discord.Embed(
-            title="{} Vs. {}".format(bat.n1, bat.n2),
-            description="Players are: [p1: {}, p2: {}]".format(
-                bat.p1.play, bat.p2.play
+            title="{}: {} Vs. {}: {}".format(
+                bat.n1, bat.isPlay(bat.p1), bat.n2, bat.isPlay(bat.p2)
             ),
         )
 
         p1Stats = bat.p1.statMessage()
         p2Stats = bat.p2.statMessage()
 
-        p1Adp = bat.p1Adp
-        p2Adp = bat.p2Adp
+        p1Adp = bat.adpStatMessage(bat.p1, bat.p2)
+        p2Adp = bat.adpStatMessage(bat.p2, bat.p1)
 
         mes.add_field(
             name="{}".format(bat.n1),
@@ -1108,10 +1093,12 @@ class Options(commands.Cog):
             name="{}".format(bat.n2),
             value="{}{}".format(p2Stats, p2Adp),
         )
+        mes.set_footer(text=HOSTNAME, icon_url=self.bot.user.display_avatar)
 
         sentMes = await ctx.send(
             embed=mes,
         )
+
         thrd = await ctx.channel.create_thread(
             name=mes.title,
             message=sentMes,
@@ -1124,12 +1111,16 @@ class Options(commands.Cog):
 
         winner = None
         mes.add_field(
-            inline=False, name="{} Move".format(bat.n1), value="Does Nothing."
+            inline=False,
+            name="{} Move".format(bat.n1),
+            value="Does Nothing.",
         )
         mes.add_field(
-            inline=False, name="{} Move".format(bat.n2), value="Does Nothing."
+            inline=False,
+            name="{} Move".format(bat.n2),
+            value="Does Nothing.",
         )
-        i = 0
+        totMoves = 0
         while not winner:
             Who2Move = bat.nextRound()
             for peep in range(2):
@@ -1155,64 +1146,58 @@ class Options(commands.Cog):
             moves = bat.move(Who2Move, p1Move, p2Move)
             p1Stats = bat.p1.statMessage()
             p2Stats = bat.p2.statMessage()
+
+            p1Adp = bat.adpStatMessage(bat.p1, bat.p2)
+            p2Adp = bat.adpStatMessage(bat.p2, bat.p1)
+
             mes.set_field_at(
                 0,
                 name="{}".format(bat.n1),
-                value="{}".format(p1Stats),
+                value="{}{}".format(p1Stats, p1Adp),
             )
             mes.set_field_at(
                 1,
                 name="{}".format(bat.n2),
-                value="{}".format(p2Stats),
+                value="{}{}".format(p2Stats, p2Adp),
             )
             mes.set_field_at(
                 2,
                 inline=False,
-                name="{} Move".format(bat.n1),
+                name="{} Move #{} ".format(bat.n1, bat.p1.t),
                 value="{}".format(moves[0]),
             )
             mes.set_field_at(
                 3,
                 inline=False,
-                name="{} Move".format(bat.n2),
+                name="{} Move #{} ".format(bat.n2, bat.p2.t),
                 value="{}".format(moves[1]),
             )
             winner = moves[2]
             await bat.echoMes(mes, thrd)
-            i += 1
-            if not winner and i > 25:
+            totMoves += 1
+            if not winner and totMoves > ROUNDLIMIT:
                 winner = "exhaustion"
-                i = "too many"
+                totMoves = "too many"
+            elif winner:
+                totMoves = bat.p1.t if winner == bat.p1.n else bat.p2.t
 
         mes.clear_fields()
         mes.add_field(
-            name="Winner is {} after {} moves.".format(winner, i),
+            name="Winner is {} after {} moves.".format(winner, totMoves),
             value="Prize to be implemented.",
         )
+        if not winner == "exhaustion":
+            mes.set_thumbnail(
+                url=(
+                    bat.p1.p.display_avatar
+                    if winner == bat.n1
+                    else bat.p2.p.display_avatar
+                )
+            )
         await bat.echoMes(mes, thrd)
+        await bat.echoMes("<#{}>".format(ctx.channel.id), thrd, False)
         await thrd.edit(archived=1)
         await ctx.send(embed=mes)
-
-    @duel.error
-    async def duel_error(self, ctx: commands.Context, error):
-        print("error Type:", type(error))
-        if isinstance(error, commands.CommandInvokeError):
-            print("error Cause:", type(error.__cause__))
-            if isinstance(error.__cause__, notSupeDuel):
-                mes = "You can't fight a civilian!"
-                tle = "Civilian"
-            else:
-                tle = "Error!!"
-                mes = str(error)
-        else:
-            tle = "Error!!"
-            mes = str(error)
-        await ctx.send(
-            embed=discord.Embed(title=tle, description=mes),
-            delete_after=5,
-        )
-        await ctx.message.delete(delay=5)
-        await enm.dupeError(mes, ctx, ERTHRD)
 
     @commands.command(enabled=COMON)
     async def emoji(self, ctx: commands.Context, idTry=""):
@@ -1725,7 +1710,7 @@ async def fetchEmoji(ctx: commands.Context, emojiStr):
 
 
 async def playerDuelInput(
-    self,
+    self: Options,
     ctx: commands.Context,
     peep: player,
     notPeep: player,
@@ -1752,6 +1737,7 @@ async def playerDuelInput(
     mes = discord.Embed(title="Game Stats")
     mes.add_field(name="Your Current", value=statsMes)
     mes.add_field(name="Opponent", value=stats2Mes)
+    mes.set_footer(text=HOSTNAME, icon_url=self.bot.user.display_avatar)
     if not moveStr:
         moveStr = "You are exhausted."
     mes.add_field(inline=False, name="Available Moves", value=moveStr)
@@ -1763,7 +1749,10 @@ async def playerDuelInput(
     def check(reaction, user):
         return user.id == peep.p.id and str(reaction.emoji) in reactionList
 
-    timeOut = 15
+    if notPeep.play:
+        timeOut = PLAYERTURNWAIT
+    else:
+        timeOut = BOTTURNWAIT
     if not reactionList:
         timeOut = 1
     active = True

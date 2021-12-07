@@ -460,7 +460,7 @@ async def testAll(ctx: commands.Context, host: str = HOSTNAME):
     await ctx.send("Testing Done")
 
 
-@bot.command()
+@bot.command(aliases=["tog"])
 @commands.is_owner()
 async def toggle(ctx: commands.Context, mes="t", host=HOSTNAME):
     if host != HOSTNAME:
