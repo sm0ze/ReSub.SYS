@@ -1,7 +1,8 @@
 import discord
 from discord.ext import commands
 
-from BossSystemExecutable import debug
+from BossSystemExecutable import ERRORTHREAD, debug
+from enhancements import dupeError, getSendLoc
 
 
 class ErrorHandler(commands.Cog):
@@ -9,6 +10,11 @@ class ErrorHandler(commands.Cog):
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        global ERTHRD
+        ERTHRD = await getSendLoc(ERRORTHREAD, self.bot, "thread")
 
     @commands.Cog.listener()
     async def on_command_error(
@@ -56,6 +62,7 @@ class ErrorHandler(commands.Cog):
         await ctx.send(embed=mes, delete_after=5)
         await ctx.message.delete(delay=4)
         print(mes.to_dict())
+        await dupeError(mes, ctx, ERTHRD)
 
 
 def setup(bot: commands.Bot):

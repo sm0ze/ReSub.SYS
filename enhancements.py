@@ -1,8 +1,18 @@
 # enhancements.py
+import time
+import typing
 import discord
+from discord.ext import commands
 from power import power, leader
 
-from BossSystemExecutable import debug
+from BossSystemExecutable import HOSTNAME, STARTCHANNEL, nON
+
+DEBUG = 0
+
+
+def debug(*args):
+    if DEBUG:
+        print(*args)
 
 
 # count number of unique strings in nested list
@@ -266,3 +276,69 @@ def spent(
     debug("retlist is: {}".format(retList))
     debug("End spent")
     return retList
+
+
+async def dupeError(
+    mes,
+    ctx: commands.Context,
+    channel: typing.Union[discord.TextChannel, discord.Thread],
+):
+    author = nON(ctx.author)
+    autID = ctx.author.id
+    currTime = time.localtime()
+    currTimeStr = "{0:04d}.{1:02d}.{2:02d}_{3:02d}.{4:02d}.{5:02d}".format(
+        currTime.tm_year,
+        currTime.tm_mon,
+        currTime.tm_mday,
+        currTime.tm_hour,
+        currTime.tm_min,
+        currTime.tm_sec,
+    )
+    if isinstance(channel, discord.Thread):
+        if channel.archived:
+            await channel.edit(archived=0)
+
+    await channel.send(
+        "At {}, {}({}) produced this error on {}:".format(
+            currTimeStr, author, autID, HOSTNAME
+        )
+    )
+    if isinstance(mes, discord.Embed):
+        await channel.send(embed=mes)
+    if isinstance(mes, str):
+        await channel.send(mes)
+
+    if isinstance(channel, discord.Thread):
+        await channel.edit(archived=1)
+
+
+async def getSendLoc(id, bot: commands.Bot, attr: str = "channel"):
+    otherOpt = []
+    iterList = [x for y in bot.guilds for x in getattr(y, "{}s".format(attr))]
+    sendLoc = [x for x in iterList if int(x.id) == int(id)]
+
+    if attr == "thread":
+        otherOpt = [
+            x.archived_threads()
+            for y in bot.guilds
+            for x in y.text_channels
+            if int(x.id) == int(STARTCHANNEL)
+        ]
+
+    if otherOpt and not sendLoc:
+        sendLoc = []
+        for x in otherOpt:
+            async for y in x:
+                if int(y.id) == int(id):
+                    sendLoc.append(y)
+
+    debug(
+        "searching for {} in {} or {} = {}".format(
+            id, iterList, otherOpt, sendLoc
+        )
+    )
+
+    if isinstance(sendLoc, list):
+        if sendLoc:
+            sendLoc = sendLoc[0]
+    return sendLoc

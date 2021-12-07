@@ -1,5 +1,6 @@
 # options.py
 
+import asyncio
 import math
 import os
 import random
@@ -17,7 +18,7 @@ from sqlitedict import SqliteDict
 from battle import battler, player
 
 import enhancements as enm
-from BossSystemExecutable import DEBUG, HOSTNAME, TEST, askToken, debug, nON
+from BossSystemExecutable import HOSTNAME, TEST, askToken, nON, ERRORTHREAD
 from exceptions import notSupeDuel
 from power import (
     cmdInf,
@@ -30,7 +31,16 @@ from power import (
     restrictedList,
     rsltDict,
     taskVar,
+    moveOpt,
 )
+
+DEBUG = 0
+
+
+def debug(*args):
+    if DEBUG:
+        print(*args)
+
 
 # .env variables that are not shared with github and other users.
 # Use your own if testing this with your own bot
@@ -60,8 +70,6 @@ LEADLIMIT = 12
 NEWCALC = 1
 DL_ARC_DUR = 60
 
-statMes = "HP: {0}/{9}\nSta: {10}/{12} +{11}\nPA: {1}\nPD: {2}\nMA: {3}\nMD: {4}\nRec: {5}\nAcc: {6}\nEva: {7}\nSwi: {8}"
-adpMes = "\n\nAdapted PA: {0}\n Adapted MA: {1}"
 
 global GEMDIFF
 GEMDIFF = os.getenv("GEMDIFF")
@@ -108,6 +116,11 @@ class Options(commands.Cog):
 
         # messy implementation for Supe
         return commands.check(await predicate(ctx))
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        global ERTHRD
+        ERTHRD = await enm.getSendLoc(ERRORTHREAD, self.bot, "thread")
 
     @tasks.loop(minutes=30)
     async def grabLoop(self):
@@ -404,6 +417,7 @@ class Options(commands.Cog):
             delete_after=5,
         )
         await ctx.message.delete(delay=5)
+        await enm.dupeError(mes, ctx, ERTHRD)
 
     @commands.command(
         enabled=COMON,
@@ -645,7 +659,7 @@ class Options(commands.Cog):
         ctx: commands.Context,
         mem: typing.Optional[discord.Member],
         *,
-        typeRank: str = ""
+        typeRank: str = "",
     ):
         debug("Build command start")
         debug(typeRank)
@@ -753,7 +767,7 @@ class Options(commands.Cog):
         lead: typing.Optional[int] = int(LEADLIMIT),
         page: typing.Optional[int] = int(1),
         *,
-        enh: str = ""
+        enh: str = "",
     ):
 
         xpKey = ["xp", "gdv"]
@@ -916,7 +930,7 @@ class Options(commands.Cog):
         ctx: commands.Context,
         val: typing.Union[float, int] = 0.0,
         *,
-        mem: str = ""
+        mem: str = "",
     ):
         val = round(val, 2)
         debug("val is", val)
@@ -1050,11 +1064,10 @@ class Options(commands.Cog):
     async def stats(self, ctx: commands.Context, peep: discord.Member = False):
         if not peep:
             peep = ctx.author
-        p = player(peep)
-        pStats = p.bStat()
+        p = player(peep, self.bot)
         mes = discord.Embed(
             title="{} Stats".format(p.n),
-            description=statMes.format(*pStats),
+            description=p.statMessage(),
         )
         mes.set_thumbnail(url=p.p.display_avatar)
         mes.set_footer(
@@ -1072,20 +1085,20 @@ class Options(commands.Cog):
             opponent = get(ctx.guild.members, id=self.bot.user.id)
         elif str(SUPEROLE) not in [x.name for x in opponent.roles]:
             raise notSupeDuel("Not a supe.")
-        bat = battler(ctx.author, opponent)
+        bat = battler(self.bot, ctx.author, opponent)
+        await bat.findPlayers()
         mes = discord.Embed(
             title="{} Vs. {}".format(bat.n1, bat.n2),
+            description="Players are: [p1: {}, p2: {}]".format(
+                bat.p1.play, bat.p2.play
+            ),
         )
 
-        stats1 = bat.p1.bStat()
-        stats2 = bat.p2.bStat()
-        p1Stats = statMes.format(*stats1)
-        p2Stats = statMes.format(*stats2)
+        p1Stats = bat.p1.statMessage()
+        p2Stats = bat.p2.statMessage()
 
-        p1AdpSt = bat.p1Adp
-        p2AdpSt = bat.p2Adp
-        p1Adp = adpMes.format(*p1AdpSt)
-        p2Adp = adpMes.format(*p2AdpSt)
+        p1Adp = bat.p1Adp
+        p2Adp = bat.p2Adp
 
         mes.add_field(
             name="{}".format(bat.n1),
@@ -1119,11 +1132,29 @@ class Options(commands.Cog):
         i = 0
         while not winner:
             Who2Move = bat.nextRound()
-            moves = bat.move(Who2Move)
-            stats1 = bat.p1.bStat()
-            stats2 = bat.p2.bStat()
-            p1Stats = statMes.format(*stats1)
-            p2Stats = statMes.format(*stats2)
+            for peep in range(2):
+                move = None
+                play = Who2Move[peep]
+                if play == bat.p1:
+                    notPlay = bat.p2
+                else:
+                    notPlay = bat.p1
+
+                if isinstance(play, player):
+                    if play.play:
+                        move = await playerDuelInput(
+                            self, ctx, play, notPlay, bat
+                        )
+                    else:
+                        move = bat.moveSelf(play, notPlay)
+                if peep:
+                    p2Move = move
+                else:
+                    p1Move = move
+
+            moves = bat.move(Who2Move, p1Move, p2Move)
+            p1Stats = bat.p1.statMessage()
+            p2Stats = bat.p2.statMessage()
             mes.set_field_at(
                 0,
                 name="{}".format(bat.n1),
@@ -1147,7 +1178,7 @@ class Options(commands.Cog):
                 value="{}".format(moves[1]),
             )
             winner = moves[2]
-            await thrd.send(embed=mes)
+            await bat.echoMes(mes, thrd)
             i += 1
             if not winner and i > 25:
                 winner = "exhaustion"
@@ -1158,7 +1189,7 @@ class Options(commands.Cog):
             name="Winner is {} after {} moves.".format(winner, i),
             value="Prize to be implemented.",
         )
-        await thrd.send(embed=mes)
+        await bat.echoMes(mes, thrd)
         await thrd.edit(archived=1)
         await ctx.send(embed=mes)
 
@@ -1181,6 +1212,74 @@ class Options(commands.Cog):
             delete_after=5,
         )
         await ctx.message.delete(delay=5)
+        await enm.dupeError(mes, ctx, ERTHRD)
+
+    @commands.command(enabled=COMON)
+    async def emoji(self, ctx: commands.Context, idTry=""):
+        if idTry:
+            emo = await fetchEmoji(ctx, idTry)
+            if emo:
+                await ctx.send(emo)
+            else:
+                await ctx.send("Could not find emoji '{}'".format(idTry))
+        else:
+            emo = [str(m) for m in self.bot.emojis]
+            per_page = 10  # 10 members per page
+            pages = math.ceil(len(emo) / per_page)
+            cur_page = 1
+            chunk = emo[:per_page]
+            linebreak = "\n"
+            message = await ctx.send(
+                f"Page {cur_page}/{pages}:\n{linebreak.join(chunk)}"
+            )
+            await message.add_reaction("◀️")
+            await message.add_reaction("▶️")
+            active = True
+
+            def check(reaction, user):
+                return user == ctx.author and str(reaction.emoji) in [
+                    "◀️",
+                    "▶️",
+                ]
+                # or you can use unicodes, respectively: "\u25c0" or "\u25b6"
+
+            while active:
+                try:
+                    reaction, user = await self.bot.wait_for(
+                        "reaction_add", timeout=60, check=check
+                    )
+
+                    if str(reaction.emoji) == "▶️" and cur_page != pages:
+                        cur_page += 1
+                        if cur_page != pages:
+                            num = (cur_page - 1) * per_page
+                            num2 = cur_page * per_page
+                            chunk = emo[num:num2]
+                        else:
+                            num = (cur_page - 1) * per_page
+                            chunk = emo[num:]
+                        await message.edit(
+                            content="Page {}/{}:\n{}".format(
+                                cur_page, pages, linebreak.join(chunk)
+                            )
+                        )
+                        await message.remove_reaction(reaction, user)
+
+                    elif str(reaction.emoji) == "◀️" and cur_page > 1:
+                        cur_page -= 1
+                        num = (cur_page - 1) * per_page
+                        num2 = cur_page * per_page
+
+                        chunk = emo[num:num2]
+                        await message.edit(
+                            content="Page {}/{}:\n{}".format(
+                                cur_page, pages, linebreak.join(chunk)
+                            )
+                        )
+                        await message.remove_reaction(reaction, user)
+                except asyncio.TimeoutError:
+                    await message.delete()
+                    active = False
 
 
 # function to move roles to correct rank positions
@@ -1613,6 +1712,89 @@ def topEnh(ctx: commands.Context, enh: str) -> dict:
                     if rank > peepDict[peep]:
                         peepDict[peep] = rank
     return peepDict
+
+
+async def fetchEmoji(ctx: commands.Context, emojiStr):
+    foundEmoji = None
+    convertEmoji = await commands.EmojiConverter().convert(
+        ctx=ctx, argument=emojiStr
+    )
+    if convertEmoji:
+        foundEmoji = convertEmoji
+    return foundEmoji
+
+
+async def playerDuelInput(
+    self,
+    ctx: commands.Context,
+    peep: player,
+    notPeep: player,
+    battle: battler,
+):
+    statsMes = peep.statMessage()
+    statsMes += battle.adpStatMessage(peep, notPeep)
+    stats2Mes = notPeep.statMessage()
+    stats2Mes += battle.adpStatMessage(notPeep, peep)
+
+    moveStr = ""
+    reactionList = []
+    moveList = []
+    chosenMove = False
+
+    for key in moveOpt.keys():
+        moveCost = moveOpt[key]["cost"]
+        if moveCost <= peep.sta:
+            react = moveOpt[key]["reaction"]
+            moveStr += "{}: ({}) {}\n".format(react, moveCost, key)
+            moveList.append(key)
+            reactionList.append(react)
+
+    mes = discord.Embed(title="Game Stats")
+    mes.add_field(name="Your Current", value=statsMes)
+    mes.add_field(name="Opponent", value=stats2Mes)
+    if not moveStr:
+        moveStr = "You are exhausted."
+    mes.add_field(inline=False, name="Available Moves", value=moveStr)
+
+    msg = await peep.p.send(embed=mes)
+    for reac in reactionList:
+        await msg.add_reaction(reac)
+
+    def check(reaction, user):
+        return user.id == peep.p.id and str(reaction.emoji) in reactionList
+
+    timeOut = 15
+    if not reactionList:
+        timeOut = 1
+    active = True
+    while active:
+        try:
+            reaction, user = await self.bot.wait_for(
+                "reaction_add", timeout=timeOut, check=check
+            )
+            debug("reaction", reaction, "user", user)
+            for move in moveList:
+                debug(
+                    str(moveOpt[move]["reaction"]),
+                    "==",
+                    str(reaction.emoji),
+                    str(reaction.emoji) == str(moveOpt[move]["reaction"]),
+                )
+                if str(reaction.emoji) == str(moveOpt[move]["reaction"]):
+                    debug(str(reaction.emoji), "found")
+                    chosenMove = True
+                    desperate = moveOpt[move]["desperate"]
+                    typeMove = moveOpt[move]["type"]
+                    moveString = moveOpt[move]["moveStr"]
+                    # await msg.remove_reaction(reaction, user)
+                    active = False
+                    break
+
+        except asyncio.TimeoutError:
+            await peep.p.send("Timeout")
+            active = False
+    if chosenMove:
+        return desperate, typeMove, moveString
 
 
 def save(key: int, value: dict, cache_file=SAVEFILE):

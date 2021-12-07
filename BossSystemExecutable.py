@@ -47,6 +47,7 @@ load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
 SAVEFILE = os.getenv("SAVEFILE")
 STARTCHANNEL = os.getenv("STARTCHANNEL")
+ERRORTHREAD = os.getenv("ERRORTHREAD")
 
 if not TOKEN:
     TOKEN = askToken("DISCORD_TOKEN")
@@ -54,6 +55,8 @@ if not SAVEFILE:
     SAVEFILE = askToken("SAVEFILE")
 if not STARTCHANNEL:
     STARTCHANNEL = askToken("STARTCHANNEL")
+if not ERRORTHREAD:
+    ERRORTHREAD = askToken("ERRORTHREAD")
 
 SUPEROLE = "Supe"
 MANAGER = "System"  # manager role name for guild
@@ -86,7 +89,9 @@ async def on_ready():
     # Generalised login message. Once bot is closer to finished and expected to
     # run 24/7, will add a discord channel message on login
     global STRCHNL
+    global ERTHRD
     channelList = [x for y in bot.guilds for x in y.channels]
+    threadList = [x for y in bot.guilds for x in y.threads]
     debug(channelList)
     debug(
         [
@@ -100,8 +105,11 @@ async def on_ready():
 
     debug("STARTCHANNEL: ", STARTCHANNEL)
     STRCHNL = [x for x in channelList if int(x.id) == int(STARTCHANNEL)]
+    ERTHRD = [x for x in threadList if int(x.id) == int(ERRORTHREAD)]
     if STRCHNL:
         STRCHNL = STRCHNL[0]
+    if ERTHRD:
+        ERTHRD = ERTHRD[0]
     debug("STRCHNL: ", STRCHNL)
     print("Bot has logged in as {} on {}".format(bot.user, HOSTNAME))
     global loginTime
@@ -311,9 +319,24 @@ async def upload(ctx: commands.Context, host: str = HOSTNAME):
     debug("cmd:", "upload", "ctx:", ctx, "host:", host)
     if host != HOSTNAME:
         return
+    currTime = time.localtime()
+    currTimeStr = "{0:04d}.{1:02d}.{2:02d}_{3:02d}.{4:02d}.{5:02d}".format(
+        currTime.tm_year,
+        currTime.tm_mon,
+        currTime.tm_mday,
+        currTime.tm_hour,
+        currTime.tm_min,
+        currTime.tm_sec,
+    )
+    debug("currTime", currTime)
+    debug("currTimeStr", currTimeStr)
+    nameStamp = "{}_{}".format(
+        SAVEFILE,
+        currTimeStr,
+    )
     await ctx.send(
         "File {} from {}".format(SAVEFILE, HOSTNAME),
-        file=discord.File(SAVEFILE),
+        file=discord.File(SAVEFILE, filename=nameStamp),
     )
 
 
