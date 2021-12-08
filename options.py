@@ -1761,8 +1761,9 @@ async def playerDuelInput(
     )
 
     msg = await peep.p.send(embed=mes)
-    for reac in reactionList:
-        await msg.add_reaction(reac)
+    if not peep.missTurn:
+        for reac in reactionList:
+            await msg.add_reaction(reac)
 
     def check(reaction, user):
         return user.id == peep.p.id and str(reaction.emoji) in reactionList
@@ -1771,9 +1772,11 @@ async def playerDuelInput(
         timeOut = PLAYERTURNWAIT
     else:
         timeOut = BOTTURNWAIT
-    if not reactionList:
-        timeOut = 1
+
     active = True
+    if not reactionList or peep.missTurn:
+        active = False
+
     while active:
         try:
             reaction, user = await self.bot.wait_for(
@@ -1798,7 +1801,6 @@ async def playerDuelInput(
                     break
 
         except asyncio.TimeoutError:
-            await peep.p.send("Timeout")
             active = False
     if chosenMove:
         return desperate, typeMove, moveString
