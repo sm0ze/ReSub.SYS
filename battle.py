@@ -288,9 +288,10 @@ class player:
         if self.weak:
             self.pd = self.pd / 2
             self.md = self.md / 2
-            mes += "{} has {}% HP and is has lowered defenses.\n".format(
-                self.n, self.hpPer()
-            )
+            mes += (
+                "{} has {}% HP and has halved "
+                "defenses until their next turn.\n"
+            ).format(self.n, self.hpPer())
         else:
             self.md = self.md * 2
             self.pd = self.pd * 2
