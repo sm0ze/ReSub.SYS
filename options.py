@@ -35,6 +35,7 @@ from power import (
 )
 
 DEBUG = 0
+COMON = True
 
 
 def debug(*args):
@@ -58,8 +59,6 @@ if not SAVEFILE:
 if not STARTCHANNEL:
     STARTCHANNEL = askToken("STARTCHANNEL")
 
-
-COMON = True
 
 SUPEROLE = "Supe"
 PERMROLES = ["Supe"]  # guild role(s) for using these bot commands
@@ -1065,14 +1064,17 @@ class Options(commands.Cog):
 
     @commands.command(enabled=COMON, aliases=["d"])
     async def duel(
-        self, ctx: commands.Context, opponent: discord.Member = False
+        self,
+        ctx: commands.Context,
+        dontAsk: typing.Optional[typing.Literal[1]],
+        opponent: discord.Member = False,
     ):
         if not opponent:
             opponent = get(ctx.guild.members, id=self.bot.user.id)
         elif str(SUPEROLE) not in [x.name for x in opponent.roles]:
             raise notSupeDuel("Not a supe.")
         bat = battler(self.bot, ctx.author, opponent)
-        await bat.findPlayers()
+        await bat.findPlayers(dontAsk)
         mes = discord.Embed(
             title="{}: {} Vs. {}: {}".format(
                 bat.n1, bat.isPlay(bat.p1), bat.n2, bat.isPlay(bat.p2)
@@ -1105,9 +1107,10 @@ class Options(commands.Cog):
             auto_archive_duration=DL_ARC_DUR,
             reason=mes.title,
         )
-
-        await thrd.add_user(ctx.author)
-        await thrd.add_user(opponent)
+        if bat.p1.play:
+            await thrd.add_user(ctx.author)
+        if bat.p2.play:
+            await thrd.add_user(opponent)
 
         winner = None
         mes.add_field(
@@ -1120,8 +1123,9 @@ class Options(commands.Cog):
             name="{} Move".format(bat.n2),
             value="Does Nothing.",
         )
-        totMoves = 0
+        totRounds = int(0)
         while not winner:
+            totRounds += 1
             Who2Move = bat.nextRound()
             for peep in range(2):
                 move = None
@@ -1134,7 +1138,7 @@ class Options(commands.Cog):
                 if isinstance(play, player):
                     if play.play:
                         move = await playerDuelInput(
-                            self, ctx, play, notPlay, bat
+                            self, ctx, totRounds, play, notPlay, bat
                         )
                     else:
                         move = bat.moveSelf(play, notPlay)
@@ -1173,17 +1177,19 @@ class Options(commands.Cog):
                 value="{}".format(moves[1]),
             )
             winner = moves[2]
+            mes.description = "{}/{} Total Rounds".format(
+                totRounds, ROUNDLIMIT
+            )
             await bat.echoMes(mes, thrd)
-            totMoves += 1
-            if not winner and totMoves > ROUNDLIMIT:
+            if not winner and totRounds > ROUNDLIMIT:
                 winner = "exhaustion"
-                totMoves = "too many"
+                totRounds = "too many"
             elif winner:
-                totMoves = bat.p1.t if winner == bat.p1.n else bat.p2.t
+                totRounds = bat.p1.t if winner == bat.p1.n else bat.p2.t
 
         mes.clear_fields()
         mes.add_field(
-            name="Winner is {} after {} moves.".format(winner, totMoves),
+            name="Winner is {} after {} moves.".format(winner, totRounds),
             value="Prize to be implemented.",
         )
         if not winner == "exhaustion":
@@ -1712,6 +1718,7 @@ async def fetchEmoji(ctx: commands.Context, emojiStr):
 async def playerDuelInput(
     self: Options,
     ctx: commands.Context,
+    totRounds: int,
     peep: player,
     notPeep: player,
     battle: battler,
@@ -1734,13 +1741,20 @@ async def playerDuelInput(
             moveList.append(key)
             reactionList.append(react)
 
-    mes = discord.Embed(title="Game Stats")
+    mes = discord.Embed(
+        title="Game Stats",
+        description="{}/{} Total Rounds".format(totRounds, ROUNDLIMIT),
+    )
     mes.add_field(name="Your Current", value=statsMes)
     mes.add_field(name="Opponent", value=stats2Mes)
     mes.set_footer(text=HOSTNAME, icon_url=self.bot.user.display_avatar)
     if not moveStr:
         moveStr = "You are exhausted."
-    mes.add_field(inline=False, name="Available Moves", value=moveStr)
+    mes.add_field(
+        inline=False,
+        name="Available Moves ({} Stamina)".format(peep.sta),
+        value=moveStr,
+    )
 
     msg = await peep.p.send(embed=mes)
     for reac in reactionList:

@@ -207,21 +207,27 @@ class player:
             self.defending = ""
             addOn = "no longer "
 
-        self.recSta()
-        ret = "{} is {}defending from {} attacks.\n".format(
-            self.n, addOn, defType
-        )
+        ret = (
+            "{} is {}defending from {} attacks "
+            "and recovers {} additional stamina.\n"
+        ).format(self.n, addOn, defType, self.recSta())
         return ret
 
-    def recSta(self, val: int = 1):
+    def recSta(self, val: int = 1) -> int:
+        staStrt = self.sta
         self.sta += val
         if self.sta > self.totSta:
             self.sta = self.totSta
+        staEnd = self.sta
+        return staEnd - staStrt
 
     def recHP(self, val: int = 1):
+        strtHP = self.hp
         self.hp += val
         if self.hp > self.totHP:
             self.hp = self.totHP
+        endHP = self.hp
+        return endHP - strtHP
 
     async def ask(
         self,
@@ -297,10 +303,10 @@ class battler:
             if toThrd:
                 await thrd.send(mes)
 
-    async def findPlayers(self):
+    async def findPlayers(self, dontAsk):
         if not self.p1.p.bot:
             await self.p1.ask(self.p2.n)
-        if not self.p1.p.bot:
+        if not self.p2.p.bot and not dontAsk:
             await self.p2.ask(self.p1.n)
 
     def nextRound(self) -> list[typing.Union[player, None]]:
@@ -375,7 +381,12 @@ class battler:
     def turn(self, peep: player, attPeep: player, move: list[str]) -> str:
         mes = ""
         if peep.missTurn:
+            extraSta = 1
             mes += "{} misses this turn due to exhaustion!\n".format(peep.n)
+            mes += (
+                "This exhaustion means {} recovers an "
+                "additional {} stamina this turn.\n"
+            ).format(peep.n, peep.recSta(extraSta))
         elif peep.weak:
             mes += peep.beWeak(False)
         if peep.defending:
@@ -443,20 +454,17 @@ class battler:
 
     def recover(self, peep: player) -> str:
         mes = ""
-        startSta = peep.sta
-        peep.recSta(peep.staR)
-        staRec = peep.sta - startSta
+        staRec = peep.recSta(peep.staR)
         if staRec:
-            mes += "{} recovers {} stamina for a total of {}.\n".format(
-                peep.n, staRec, peep.sta
+            mes += (
+                "{} recovers {} stamina for a running total of {}.\n".format(
+                    peep.n, staRec, peep.sta
+                )
             )
 
-        if peep.totHP > peep.hp:
-            strtHp = peep.hp
-            peep.recHP(peep.rec)
-            heal = peep.hp - strtHp
-            if heal:
-                mes += "{} heals for {:0.2g}.\n".format(peep.n, heal)
+        heal = peep.recHP(peep.rec)
+        if heal:
+            mes += "{} heals for {:0.2g}.\n".format(peep.n, heal)
         peep.t += 1
         return mes
 
