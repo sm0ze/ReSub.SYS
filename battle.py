@@ -106,11 +106,11 @@ class player:
 
         self.swiNow = 0
         self.defending = ""
+        self.noDef = False
         self.tired = 0
         self.missTurn = int(0)
 
         self.weak = False
-        self.weakTyp = ""
 
     def iniCalc(self) -> None:
         statDict = {}
@@ -199,18 +199,38 @@ class player:
             defAlr = True
 
         if self.defending == "Physical":
+            if self.noDef and val == float(0.5):
+                self.noDef = not self.noDef
+                val = float(0)
+            elif not self.noDef and val == float(2) and not self.pd:
+                self.noDef = not self.noDef
+                self.pd = 1.5
+
             self.pd = float(val * self.pd)
-        if self.defending == "Mental":
+
+        elif self.defending == "Mental":
+            if self.noDef and val == float(0.5):
+                self.noDef = not self.noDef
+                val = float(0)
+            elif not self.noDef and val == float(2) and not self.md:
+                self.noDef = not self.noDef
+                self.md = 1.5
+
             self.md = float(val * self.md)
 
         if defAlr:
             self.defending = ""
             addOn = "no longer "
 
-        ret = (
-            "{} is {}defending from {} attacks "
-            "and recovers {} additional stamina.\n"
-        ).format(self.n, addOn, defType, self.recSta())
+        ret = ("{} is {}defending from {} attacks").format(
+            self.n, addOn, defType
+        )
+        if not defAlr:
+            ret += " and recovers {} additional stamina.\n".format(
+                self.recSta()
+            )
+        else:
+            ret += ".\n"
         return ret
 
     def recSta(self, val: int = 1) -> int:
@@ -262,18 +282,19 @@ class player:
                 await self.p.send("Timeout")
                 active = False
 
-    def beWeak(self, boo: bool, typ: str = "pd"):
+    def beWeak(self, boo: bool):
         self.weak = boo
         mes = ""
         if self.weak:
-            self.weakTyp = typ
-            setattr(self, typ, getattr(self, typ) / 2)
-            mes += "{} has {}% HP and is therfore now weak to {}.\n".format(
-                self.n, self.hpPer(), typ
+            self.pd = self.pd / 2
+            self.md = self.md / 2
+            mes += "{} has {}% HP and is has lowered defenses.\n".format(
+                self.n, self.hpPer()
             )
         else:
-            setattr(self, self.weakTyp, getattr(self, self.weakTyp) * 2)
-            mes += "{} is no longer weak to {}.\n".format(self.n, typ)
+            self.md = self.md * 2
+            self.pd = self.pd * 2
+            mes += "{} no longer has lowered defenses.\n".format(self.n)
         return mes
 
 
@@ -496,9 +517,7 @@ class battler:
                 attMove = "Mental"
 
         if desperate and attacker.hpPer() > 50:
-            mes += attacker.beWeak(
-                True, "pd" if attMove == "Physical" else "md"
-            )
+            mes += attacker.beWeak(True)
 
         attChance = attacker.acc - defender.eva
         critChance = 0
@@ -603,7 +622,7 @@ class battler:
         return adpMes.format(*adaptedStats)
 
     def isPlay(self, peep: player):
-        return "Playing" if peep.play else "A Bot"
+        return "Playing" if peep.play else "Bot"
 
 
 def attackCalc(

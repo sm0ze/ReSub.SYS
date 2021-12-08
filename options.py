@@ -69,6 +69,8 @@ LEADLIMIT = 12
 NEWCALC = 1
 DL_ARC_DUR = 60
 
+
+DEFDUELOPP = 159985870458322944
 ROUNDLIMIT = 50
 PLAYERTURNWAIT = 30
 BOTTURNWAIT = 60
@@ -1070,7 +1072,7 @@ class Options(commands.Cog):
         opponent: discord.Member = False,
     ):
         if not opponent:
-            opponent = get(ctx.guild.members, id=self.bot.user.id)
+            opponent = get(ctx.guild.members, id=DEFDUELOPP)
         elif str(SUPEROLE) not in [x.name for x in opponent.roles]:
             raise notSupeDuel("Not a supe.")
         bat = battler(self.bot, ctx.author, opponent)
@@ -1737,7 +1739,9 @@ async def playerDuelInput(
         moveCost = moveOpt[key]["cost"]
         if moveCost <= peep.sta:
             react = moveOpt[key]["reaction"]
-            moveStr += "{}: ({}) {}\n".format(react, moveCost, key)
+            moveStr += "{}: ({}) {}\n".format(
+                react, moveCost, moveOpt[key]["name"]
+            )
             moveList.append(key)
             reactionList.append(react)
 

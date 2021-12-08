@@ -26,17 +26,18 @@ class ErrorHandler(commands.Cog):
         # for messy handling without isinstance()
         command = ctx.command
         mes = None
+        delaySet = 5
 
         if isinstance(error, commands.CommandNotFound):
             return
         elif isinstance(error, commands.DisabledCommand):
             return
 
-        elif isinstance(error, KeyError):
+        elif isinstance(error.__cause__, KeyError):
             mes = discord.Embed(
                 title="KeyError",
                 description="{} is not a recognised option".format(
-                    KeyError.args
+                    error.__cause__.args
                 ),
             )
         elif isinstance(error, commands.CommandOnCooldown):
@@ -64,8 +65,10 @@ class ErrorHandler(commands.Cog):
 
         if not mes:
             mes = discord.Embed(title="Error!!!", description=error)
-        await ctx.send(embed=mes, delete_after=5)
-        await ctx.message.delete(delay=4)
+
+        await ctx.send(embed=mes, delete_after=delaySet)
+        if delaySet:
+            await ctx.message.delete(delay=delaySet)
         print(mes.to_dict())
         await dupeError(mes, ctx, ERTHRD)
 
