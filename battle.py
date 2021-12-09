@@ -1,11 +1,12 @@
 # battle.py
 import asyncio
+import math
 import typing
 import discord
 import random
 from BossSystemExecutable import nON
 from enhancements import funcBuild, spent
-from power import power, leader  # , moveOpt
+from power import power, leader, moveOpt
 import pandas as pd
 
 DEBUG = 0
@@ -35,7 +36,7 @@ statMes = """HP:\t{0:0.2g}/{9:0.2g} (**{13}%**) + {5}
 Sta: **{10}**/{12} +{11}
 P: {1}A/{2:0.2g}D
 M: {3}A/{4:0.2g}D
-Acc/Eva: {6}/{7}
+Acc/Eva({16}): {6}/{7}
 Swi: {14}/{15} +{8}"""
 
 
@@ -104,13 +105,16 @@ class player:
 
         self.swi = SWI + self.calcStat("Swi")
 
-        self.swiNow = 0
-        self.defending = ""
-        self.noDef = False
-        self.tired = 0
+        self.swiNow = int(0)
+        self.defending = str("")
+        self.noDef = bool(False)
+        self.tired = int(0)
         self.missTurn = int(0)
 
-        self.weak = False
+        self.weak = bool(False)
+
+        self.focusNum = int(0)
+        self.focused = False
 
     def iniCalc(self) -> None:
         statDict = {}
@@ -177,6 +181,7 @@ class player:
             self.hpPer(),
             self.swiNow,
             SWITOT,
+            self.focusNum,
         )
         return ret
 
@@ -297,6 +302,23 @@ class player:
             self.pd = self.pd * 2
             mes += "{} no longer has lowered defenses.\n".format(self.n)
         return mes
+
+    def focus(self, inc: bool = True):
+        self.focused = bool(False)
+        if inc:
+            self.focusNum += 1
+            self.sta -= 1
+            self.eva += 5
+            self.acc += 5
+        else:
+            while self.focusNum:
+                self.focusNum -= 1
+                self.eva -= 5
+                self.acc -= 5
+
+    def focusTill(self, num: int = 2):
+        while self.sta > num:
+            self.focus()
 
 
 class battler:
@@ -433,6 +455,11 @@ class battler:
                 )
                 peep.sta += staRec
 
+        if peep.focusNum and not peep.focused:
+            peep.focused = bool(True)
+        elif peep.focusNum and peep.focused:
+            peep.focus(False)
+
         if not peep.sta:
             peep.missTurn = int(2)
             peep.tired += 1
@@ -456,21 +483,215 @@ class battler:
         return mes
 
     def moveSelf(self, peep: player, notPeep: player):
+        moveStr = "Physical"
         desperate = 0
-        typeMove = "Defend"
-        moveStr = ""
-        phys, ment, hitChance = self.adp(peep, notPeep)
+        typeMove = "Attack"
 
-        if peep.sta > 5:
+        physA, mentA, hitChanceA = self.adp(peep, notPeep)
+        physD, mentD, hitChanceD = self.adp(notPeep, peep)
+
+        normSta = moveOpt["physA"]["cost"]
+        despSta = moveOpt["dPhysA"]["cost"]
+
+        # norm attack value
+        atk = physA
+
+        # desperate attack value
+        dAtk = physA + peep.pa
+
+        critDesp = physA + 2 * peep.pa
+
+        # peep stamina after norm attack
+        staAftA = peep.sta - normSta
+
+        # num of available focusses with a norm attack
+        fAA = staAftA if staAftA > 0 else 0
+
+        # peep stamina after desp attack
+        staAftD = peep.sta - despSta
+
+        # num of available focusses with a desp attack
+        fAD = staAftD if staAftD > 0 else 0
+
+        # notPeep's hp next peep turn
+        nextHP = notPeep.hp + notPeep.rec
+
+        # if peep at max stamina
+        maxSta = peep.sta == peep.totSta
+
+        # if notPeep is one norm hit from loss
+        oneHit = notPeep.hp <= atk
+
+        # is notPeep is one desp hit from loss
+        oneDespHit = notPeep.hp <= dAtk
+
+        canAt = staAftA >= 0
+        canDespAt = staAftD >= 0
+
+        if mentA > physA:
+            moveStr = "Mental"
+        elif mentA == physA:
+            moveStr = random.choice(["Physical", "Mental"])
+
+        if moveStr == "Mental":
+            # update attack values for mental attacks
+            atk = mentA
+            dAtk = mentA + peep.ma
+            critDesp = mentA + 2 * peep.ma
+
+        if hitChanceA <= 50:
+            # lowhit func
+            if oneHit and hitChanceA + 5 * fAA > 50:
+                while hitChanceA < 50 and peep.sta > normSta:
+                    peep.focus(normSta)
+                    physA, mentA, hitChanceA = self.adp(peep, notPeep)
+
+                if moveStr == "Mental":
+                    # update attack values for mental attacks
+                    atk = mentA
+                    dAtk = mentA + peep.ma
+                else:
+                    atk = physA
+                    dAtk = physA + peep.pa
+                # then normal attack
+            elif oneDespHit and hitChanceA + 5 * fAD > 50:
+                while hitChanceA < 50 and peep.sta > despSta:
+                    peep.focus(despSta)
+                    physA, mentA, hitChanceA = self.adp(peep, notPeep)
+                desperate = 1
+
+                if moveStr == "Mental":
+                    # update attack values for mental attacks
+                    atk = mentA
+                    dAtk = mentA + peep.ma
+                else:
+                    atk = physA
+                    dAtk = physA + peep.pa
+                # then desp attaack
+            elif maxSta:
+                if oneHit or (
+                    atk > notPeep.rec * (peep.totSta / (peep.staR + 1))
+                ):
+                    peep.focusTill(normSta)
+                    # then normal attack
+                else:
+                    peep.focusTill(despSta)
+                    desperate = 1
+                    # then desp attaack
+            else:
+                typeMove = "Defend"
+
+        elif hitChanceA < 75:
+            # avhit func
+            if oneHit and nextHP > atk and canAt:
+                peep.focusTill(normSta)
+                # then normal attack
+            elif oneHit and staAftA >= 2:
+                peep.focusTill(normSta)
+                # then normal attack
+            elif oneDespHit and nextHP > dAtk and canDespAt:
+                peep.focusTill(despSta)
+                desperate = 1
+                # then desperate attack
+            elif oneDespHit and staAftD >= 2:
+                peep.focusTill(despSta)
+                desperate = 1
+                # then desperate attack
+            elif maxSta:
+                if nextHP <= dAtk * 2:
+                    desperate = 1
+                    # then desperate attack
+                elif atk > notPeep.rec * (10 / (peep.rec + 1)):
+                    pass
+                    # then Normal attack
+                else:
+                    desperate = 1
+                    # then desperate attack
+            else:
+                typeMove = "Defend"
+
+        elif hitChanceA < 150:
+            # highhit func
+            if oneHit and canAt:
+                peep.focusTill(normSta)
+                # then normal hit
+            elif oneDespHit and canDespAt:
+                peep.focusTill(despSta)
+                desperate = 1
+                # then desperate attack
+            elif maxSta:
+                if nextHP <= dAtk * 2:
+                    desperate = 1
+                    # then desperate attack
+                elif dAtk < notPeep.rec * (10 / (peep.rec + 1)):
+                    peep.focus()
+                    desperate = 1
+                    pass
+                    # then desperate attack
+                else:
+                    desperate = 1
+                    # then desperate attack
+            elif staAftA >= 1 and atk > notPeep.rec * 2:
+                pass
+                # then normal attack
+            else:
+                typeMove = "Defend"
+
+        else:
+            # crithit func
+            if oneHit and canAt:
+                peep.focusTill(normSta)
+                # then normal attack
+            elif oneDespHit and canDespAt:
+                peep.focusTill(despSta)
+                desperate = 1
+                # then desperate attack
+            elif notPeep.hp <= critDesp and staAftD >= 2:
+                peep.focus()
+                desperate = 1
+                # then desperate attack
+            elif maxSta:
+                if critDesp * 2 >= nextHP:
+                    desperate = 1
+                    # then desperate attack
+                elif critDesp < notPeep.rec * (10 / (peep.rec + 1)):
+                    peep.focus()
+                    desperate = 1
+                    # then desperate attack
+                else:
+                    desperate = 1
+            elif staAftA >= 1 and atk > notPeep.rec * 2:
+                pass
+                # then normal attack
+            else:
+                typeMove = "Defend"
+
+        if typeMove == "Defend":
+            # defend func
+            if physD > mentD:
+                moveStr = "Physical"
+            elif mentD > physD:
+                moveStr = "Mental"
+            else:
+                moveStr = random.choice(["Physical", "Mental"])
+
+        """if peep.sta > 5:
             desperate = 1
 
-        if hitChance and (phys > 0 or ment > 0 or desperate):
+        if hitChanceA and (physA > 0 or mentA > 0 or desperate):
             if peep.sta > 2:
                 typeMove = "Attack"
-            if phys >= ment:
+                if physA >= mentA:
+                    moveStr = "Physical"
+                else:
+                    moveStr = "Mental"
+
+        if typeMove == "Defend":
+            if physD >= mentD:
                 moveStr = "Physical"
             else:
                 moveStr = "Mental"
+                """
 
         return desperate, typeMove, moveStr
 

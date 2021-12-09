@@ -81,7 +81,6 @@ moveOpt = {
         "type": "Attack",
         "moveStr": "Physical",
         "cost": 2,
-        "end": 1,
         "reaction": "🗡️",
     },
     "mentA": {
@@ -90,7 +89,6 @@ moveOpt = {
         "type": "Attack",
         "moveStr": "Mental",
         "cost": 2,
-        "end": 1,
         "reaction": "😠",
     },
     "dPhysA": {
@@ -99,7 +97,6 @@ moveOpt = {
         "type": "Attack",
         "moveStr": "Physical",
         "cost": 5,
-        "end": 1,
         "reaction": "⚔️",
     },
     "dMentA": {
@@ -108,7 +105,6 @@ moveOpt = {
         "type": "Attack",
         "moveStr": "Mental",
         "cost": 5,
-        "end": 1,
         "reaction": "🤯",
     },
     "physD": {
@@ -117,7 +113,6 @@ moveOpt = {
         "type": "Defend",
         "moveStr": "Physical",
         "cost": 0,
-        "end": 1,
         "reaction": "🛡️",
     },
     "mentD": {
@@ -126,20 +121,25 @@ moveOpt = {
         "type": "Defend",
         "moveStr": "Mental",
         "cost": 0,
-        "end": 1,
         "reaction": "😎",
     },
-}
-"""
-"focus": {
+    "focus": {
+        "name": "Focus",
         "desperate": 0,
         "type": "Utility",
         "moveStr": "Focus",
         "cost": 1,
-        "end": 0,
         "reaction": "😤",
     },
-}"""
+    "quit": {
+        "name": "Retire",
+        "desperate": 0,
+        "type": "Quit",
+        "moveStr": "MakeBot",
+        "cost": 0,
+        "reaction": "🎮",
+    },
+}
 
 
 # list of roles that give user extra enhancement points, +1 for each match

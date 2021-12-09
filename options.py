@@ -1752,7 +1752,7 @@ async def playerDuelInput(
     mes.add_field(name="Your Current", value=statsMes)
     mes.add_field(name="Opponent", value=stats2Mes)
     mes.set_footer(text=HOSTNAME, icon_url=self.bot.user.display_avatar)
-    if not moveStr:
+    if peep.missTurn:
         moveStr = "You are exhausted."
     mes.add_field(
         inline=False,
@@ -1783,6 +1783,10 @@ async def playerDuelInput(
                 "reaction_add", timeout=timeOut, check=check
             )
             debug("reaction", reaction, "user", user)
+            if str(reaction.emoji) == str(moveOpt["quit"]["reaction"]):
+                peep.play = False
+                active = False
+                break
             for move in moveList:
                 debug(
                     str(moveOpt[move]["reaction"]),
@@ -1803,7 +1807,14 @@ async def playerDuelInput(
         except asyncio.TimeoutError:
             active = False
     if chosenMove:
-        return desperate, typeMove, moveString
+        if "Focus" == moveString:
+            peep.focus()
+            desperate, typeMove, moveString = await playerDuelInput(
+                self, ctx, totRounds, peep, notPeep, battle
+            )
+    else:
+        desperate, typeMove, moveString = battle.moveSelf(peep, notPeep)
+    return desperate, typeMove, moveString
 
 
 def save(key: int, value: dict, cache_file=SAVEFILE):
