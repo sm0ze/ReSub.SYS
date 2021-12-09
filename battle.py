@@ -1,6 +1,5 @@
 # battle.py
 import asyncio
-import math
 import typing
 import discord
 import random
@@ -8,6 +7,7 @@ from BossSystemExecutable import nON
 from enhancements import funcBuild, spent
 from power import power, leader, moveOpt
 import pandas as pd
+from collections import namedtuple
 
 DEBUG = 0
 
@@ -16,21 +16,6 @@ def debug(*args):
     if DEBUG:
         print(*args)
 
-
-HP = 15
-REC = 0
-STA = 5
-STATOT = 10
-STAR = 1
-PA = 1
-PD = 0
-MA = 1
-MD = 0
-ACC = 95
-EVA = 5
-SWI = 10
-
-SWITOT = 50
 
 statMes = """HP:\t{0:0.2g}/{9:0.2g} (**{13}%**) + {5}
 Sta: **{10}**/{12} +{11}
@@ -52,19 +37,27 @@ statsName = "BotStats"
 bonusName = "BotBonus"
 
 replaceName = "BotReplace"
+
+baseName = "BotBase"
+
 urlStats = (
-    "https://docs.google.com/spreadsheets/d/{}/gviz/tq?tqx=" "out:csv&sheet={}"
+    "https://docs.google.com/spreadsheets/d/{}/gviz/tq?tqx=out:csv&sheet={}"
 ).format(statsToken, statsName)
 urlBonus = (
-    "https://docs.google.com/spreadsheets/d/{}/gviz/tq?tqx=" "out:csv&sheet={}"
+    "https://docs.google.com/spreadsheets/d/{}/gviz/tq?tqx=out:csv&sheet={}"
 ).format(statsToken, bonusName)
 urlReplace = (
-    "https://docs.google.com/spreadsheets/d/{}/gviz/tq?tqx=" "out:csv&sheet={}"
+    "https://docs.google.com/spreadsheets/d/{}/gviz/tq?tqx=out:csv&sheet={}"
 ).format(statsToken, replaceName)
 
+urlBase = (
+    "http://docs.google.com/spreadsheets/d/{}/gviz/tq?tqx=out:csv&sheet={}"
+).format(statsToken, baseName)
 
 statCalcDict = {}
 bonusDict = {}
+replaceDict = {}
+baseDict = {}
 
 urlList = [[urlStats, statCalcDict], [urlBonus, bonusDict]]
 
@@ -83,27 +76,28 @@ class player:
 
         self.iniCalc()
 
-        addHP = float(HP + self.calcStat("HP"))
+        addHP = float(int(baseDict["HP"]) + self.calcStat("HP"))
 
         self.hp = addHP
         self.totHP = addHP
 
-        self.rec = REC + self.calcStat("Rec")
+        self.rec = int(baseDict["REC"]) + self.calcStat("Rec")
 
-        self.sta = STA + self.calcStat("Sta")
-        self.totSta = STATOT + self.calcStat("StaTot")
-        self.staR = STAR + self.calcStat("StaR")
+        self.sta = int(baseDict["STA"]) + self.calcStat("Sta")
+        self.totSta = int(baseDict["STATOT"]) + self.calcStat("StaTot")
+        self.staR = int(baseDict["STAR"]) + self.calcStat("StaR")
 
-        self.pa = PA + self.calcStat("PA")
-        self.pd = float(PD + self.calcStat("PD"))
+        self.pa = int(baseDict["PA"]) + self.calcStat("PA")
+        self.pd = float(int(baseDict["PD"]) + self.calcStat("PD"))
 
-        self.ma = MA + self.calcStat("MA")
-        self.md = float(MD + self.calcStat("MD"))
+        self.ma = int(baseDict["MA"]) + self.calcStat("MA")
+        self.md = float(int(baseDict["MD"]) + self.calcStat("MD"))
 
-        self.acc = ACC + self.calcStat("Acc")
-        self.eva = EVA + self.calcStat("Eva")
+        self.acc = int(baseDict["ACC"]) + self.calcStat("Acc")
+        self.eva = int(baseDict["EVA"]) + self.calcStat("Eva")
 
-        self.swi = SWI + self.calcStat("Swi")
+        self.swi = int(baseDict["SWI"]) + self.calcStat("Swi")
+        self.totSwi = int(baseDict["SWITOT"])
 
         self.swiNow = int(0)
         self.defending = str("")
@@ -164,7 +158,29 @@ class player:
         return ret
 
     def bStat(self):
-        ret = (
+        stats = namedtuple(
+            "stats",
+            [
+                "hp",
+                "pa",
+                "pd",
+                "ma",
+                "md",
+                "rec",
+                "acc",
+                "eva",
+                "swi",
+                "totHP",
+                "sta",
+                "staR",
+                "totSta",
+                "percentHP",
+                "swiNow",
+                "totSwi",
+                "focusNum",
+            ],
+        )
+        ret = stats(
             self.hp,
             self.pa,
             self.pd,
@@ -180,7 +196,7 @@ class player:
             self.totSta,
             self.hpPer(),
             self.swiNow,
-            SWITOT,
+            self.totSwi,
             self.focusNum,
         )
         return ret
@@ -331,6 +347,8 @@ class battler:
         self.p2 = player(member2, bot)
         self.n2 = nON(member2)
 
+        self.totSwi = int(baseDict["SWITOT"])
+
     async def echoMes(self, mes, thrd, toThrd: bool = True):
         if isinstance(mes, discord.Embed):
             if self.p1.play:
@@ -357,16 +375,16 @@ class battler:
         p1Swi = self.p1.swiNow
         p2Swi = self.p2.swiNow
         Who2Move = [None, None]
-        while p1Swi < SWITOT and p2Swi < SWITOT:
+        while p1Swi < self.totSwi and p2Swi < self.totSwi:
             p1Swi += self.p1.swi
             p2Swi += self.p2.swi
             debug("p1Swi:", p1Swi, "p2Swi:", p2Swi)
 
-        if p1Swi >= SWITOT:
-            p1Swi -= SWITOT
+        if p1Swi >= self.totSwi:
+            p1Swi -= self.totSwi
             Who2Move[0] = self.p1
-        if p2Swi >= SWITOT:
-            p2Swi -= SWITOT
+        if p2Swi >= self.totSwi:
+            p2Swi -= self.totSwi
             Who2Move[1] = self.p2
 
         self.p1.swiNow = p1Swi
@@ -832,14 +850,16 @@ class battler:
         return mes
 
     def adp(self, at1: player, at2: player):
+        adpStats = namedtuple("adpStats", ["phys", "ment", "hitChance"])
         phys = at1.pa - at2.pd
         ment = at1.ma - at2.md
         hitChance = at1.acc - at2.eva
 
-        ret = (phys, ment, hitChance)
+        ret = adpStats(phys, ment, hitChance)
         return ret
 
     def adpStatMessage(self, at1: player, at2: player):
+
         adaptedStats = self.adp(at1, at2)
         return adpMes.format(*adaptedStats)
 
@@ -938,7 +958,6 @@ for url, dic in urlList:
         debug("shrt", shrt)
     debug("dic", dic)
 
-replaceDict = {}
 try:
     frame = None
     frame = pd.read_csv(urlReplace)
@@ -955,3 +974,14 @@ for tup in frame.itertuples():
             debug("replace '{}' with '{}'".format(shrt, shrt2))
             replaceDict[shrt] = shrt2
 debug("replaceDict", replaceDict)
+
+try:
+    frame = None
+    frame = pd.read_csv(urlBase)
+except Exception as e:
+    print(e)
+
+for tup in frame.itertuples():
+    debug(tup)
+    baseDict[tup.Constant] = tup.BaseStat
+debug("baseDict", baseDict)
