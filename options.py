@@ -1144,6 +1144,7 @@ class Options(commands.Cog):
                         )
                     else:
                         move = bat.moveSelf(play, notPlay)
+                # peep will be either 0 or 1
                 if peep:
                     p2Move = move
                 else:

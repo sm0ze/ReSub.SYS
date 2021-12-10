@@ -110,6 +110,8 @@ class player:
         self.focusNum = int(0)
         self.focused = False
 
+        self.forceDesp = False
+
     def iniCalc(self) -> None:
         statDict = {}
         for enhan in self.sG[0][2]:
@@ -333,8 +335,9 @@ class player:
                 self.acc -= 5
 
     def focusTill(self, num: int = 2):
-        while self.sta > num:
-            self.focus()
+        if self.sta > num:
+            while self.sta > num:
+                self.focus()
 
 
 class battler:
@@ -505,19 +508,19 @@ class battler:
         desperate = 0
         typeMove = "Attack"
 
-        physA, mentA, hitChanceA = self.adp(peep, notPeep)
-        physD, mentD, hitChanceD = self.adp(notPeep, peep)
+        Attack = self.adp(peep, notPeep)
+        Defend = self.adp(notPeep, peep)
 
         normSta = moveOpt["physA"]["cost"]
         despSta = moveOpt["dPhysA"]["cost"]
 
         # norm attack value
-        atk = physA
+        atk = Attack.phys
 
         # desperate attack value
-        dAtk = physA + peep.pa
+        dAtk = Attack.phys + peep.pa
 
-        critDesp = physA + 2 * peep.pa
+        critDesp = Attack.phys + 2 * peep.pa
 
         # peep stamina after norm attack
         staAftA = peep.sta - normSta
@@ -546,45 +549,35 @@ class battler:
         canAt = staAftA >= 0
         canDespAt = staAftD >= 0
 
-        if mentA > physA:
+        if Attack.ment > atk:
             moveStr = "Mental"
-        elif mentA == physA:
+        elif Attack.ment == atk:
             moveStr = random.choice(["Physical", "Mental"])
 
         if moveStr == "Mental":
             # update attack values for mental attacks
-            atk = mentA
-            dAtk = mentA + peep.ma
-            critDesp = mentA + 2 * peep.ma
+            atk = Attack.ment
+            dAtk = Attack.ment + peep.ma
+            critDesp = Attack.ment + 2 * peep.ma
 
-        if hitChanceA <= 50:
+        if peep.forceDesp:
+            desperate = 1
+            peep.forceDesp = False
+            debug("Force Desperate", Attack.hitChance)
+
+        elif Attack.hitChance <= 50:
             # lowhit func
-            if oneHit and hitChanceA + 5 * fAA > 50:
-                while hitChanceA < 50 and peep.sta > normSta:
-                    peep.focus(normSta)
-                    physA, mentA, hitChanceA = self.adp(peep, notPeep)
-
-                if moveStr == "Mental":
-                    # update attack values for mental attacks
-                    atk = mentA
-                    dAtk = mentA + peep.ma
-                else:
-                    atk = physA
-                    dAtk = physA + peep.pa
+            debug("lowHit", Attack.hitChance)
+            if oneHit and Attack.hitChance + 5 * fAA > 50:
+                while Attack.hitChance < 50 and peep.sta > normSta:
+                    peep.focus()
+                    Attack = self.adp(peep, notPeep)
                 # then normal attack
-            elif oneDespHit and hitChanceA + 5 * fAD > 50:
-                while hitChanceA < 50 and peep.sta > despSta:
-                    peep.focus(despSta)
-                    physA, mentA, hitChanceA = self.adp(peep, notPeep)
+            elif oneDespHit and Attack.hitChance + 5 * fAD > 50:
+                while Attack.hitChance < 50 and peep.sta > despSta:
+                    peep.focus()
+                    Attack = self.adp(peep, notPeep)
                 desperate = 1
-
-                if moveStr == "Mental":
-                    # update attack values for mental attacks
-                    atk = mentA
-                    dAtk = mentA + peep.ma
-                else:
-                    atk = physA
-                    dAtk = physA + peep.pa
                 # then desp attaack
             elif maxSta:
                 if oneHit or (
@@ -599,25 +592,35 @@ class battler:
             else:
                 typeMove = "Defend"
 
-        elif hitChanceA < 75:
+            if moveStr == "Mental":
+                # update attack values for mental attacks
+                atk = Attack.ment
+                dAtk = Attack.ment + peep.ma
+            else:
+                atk = Attack.phys
+                dAtk = Attack.phys + peep.pa
+
+        elif Attack.hitChance < 75:
             # avhit func
+            debug("avHit", Attack.hitChance)
             if oneHit and nextHP > atk and canAt:
-                peep.focusTill(normSta)
+                peep.focusTill(normSta + 1)
                 # then normal attack
             elif oneHit and staAftA >= 2:
-                peep.focusTill(normSta)
+                peep.focusTill(normSta + 1)
                 # then normal attack
             elif oneDespHit and nextHP > dAtk and canDespAt:
                 peep.focusTill(despSta)
                 desperate = 1
                 # then desperate attack
             elif oneDespHit and staAftD >= 2:
-                peep.focusTill(despSta)
+                peep.focusTill(despSta + 1)
                 desperate = 1
                 # then desperate attack
             elif maxSta:
                 if nextHP <= dAtk * 2:
                     desperate = 1
+                    peep.forceDesp = True
                     # then desperate attack
                 elif atk > notPeep.rec * (10 / (peep.rec + 1)):
                     pass
@@ -628,23 +631,24 @@ class battler:
             else:
                 typeMove = "Defend"
 
-        elif hitChanceA < 150:
+        elif Attack.hitChance < 150:
             # highhit func
+            debug("highHit", Attack.hitChance)
             if oneHit and canAt:
-                peep.focusTill(normSta)
+                peep.focusTill(normSta + 1)
                 # then normal hit
             elif oneDespHit and canDespAt:
-                peep.focusTill(despSta)
+                peep.focusTill(despSta + 1)
                 desperate = 1
                 # then desperate attack
             elif maxSta:
                 if nextHP <= dAtk * 2:
                     desperate = 1
+                    peep.forceDesp = True
                     # then desperate attack
                 elif dAtk < notPeep.rec * (10 / (peep.rec + 1)):
                     peep.focus()
                     desperate = 1
-                    pass
                     # then desperate attack
                 else:
                     desperate = 1
@@ -656,12 +660,13 @@ class battler:
                 typeMove = "Defend"
 
         else:
+            debug("critHit", Attack.hitChance)
             # crithit func
             if oneHit and canAt:
-                peep.focusTill(normSta)
+                peep.focusTill(normSta + 1)
                 # then normal attack
             elif oneDespHit and canDespAt:
-                peep.focusTill(despSta)
+                peep.focusTill(despSta + 1)
                 desperate = 1
                 # then desperate attack
             elif notPeep.hp <= critDesp and staAftD >= 2:
@@ -671,6 +676,7 @@ class battler:
             elif maxSta:
                 if critDesp * 2 >= nextHP:
                     desperate = 1
+                    peep.forceDesp = True
                     # then desperate attack
                 elif critDesp < notPeep.rec * (10 / (peep.rec + 1)):
                     peep.focus()
@@ -686,30 +692,12 @@ class battler:
 
         if typeMove == "Defend":
             # defend func
-            if physD > mentD:
+            if Defend.phys > Defend.ment:
                 moveStr = "Physical"
-            elif mentD > physD:
+            elif Defend.ment > Defend.phys:
                 moveStr = "Mental"
             else:
                 moveStr = random.choice(["Physical", "Mental"])
-
-        """if peep.sta > 5:
-            desperate = 1
-
-        if hitChanceA and (physA > 0 or mentA > 0 or desperate):
-            if peep.sta > 2:
-                typeMove = "Attack"
-                if physA >= mentA:
-                    moveStr = "Physical"
-                else:
-                    moveStr = "Mental"
-
-        if typeMove == "Defend":
-            if physD >= mentD:
-                moveStr = "Physical"
-            else:
-                moveStr = "Mental"
-                """
 
         return desperate, typeMove, moveStr
 
