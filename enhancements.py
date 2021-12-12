@@ -40,7 +40,7 @@ def cost(inName: str, inDict: dict = power):
     required = []
 
     logP.debug(
-        str(inName) + " has requisites: " + str(inDict[inName]["Prereq"])
+        "{} has requisites: {}".format(inName, inDict[inName]["Prereq"])
     )
 
     # for each prereq given enhancement has

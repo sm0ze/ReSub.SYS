@@ -1,5 +1,6 @@
 import os
 import socket
+import time
 
 import dotenv
 
@@ -53,3 +54,30 @@ logP.debug("All .env Tokens loaded")
 def setGemDiff(var: float):
     os.environ["GEMDIFF"] = str(var)
     dotenv.set_key(dotenv_file, "GEMDIFF", os.environ["GEMDIFF"])
+
+
+SUPEROLE = "Supe"
+MANAGER = "System"  # manager role name for guild
+CMDPREFIX = "~"
+STARTTIME = time.time()
+HIDE = False
+PERMROLES = [SUPEROLE]  # guild role(s) for using these bot commands
+
+LOWESTROLE = 2  # bot sorts roles by rank from position of int10 to LOWESTROLE
+LEADLIMIT = 12
+NEWCALC = 1
+DL_ARC_DUR = 60
+
+
+DEFDUELOPP = 159985870458322944
+ROUNDLIMIT = 50
+PLAYERTURNWAIT = 30
+BOTTURNWAIT = 60
+
+global GEMDIFF
+GEMDIFF = os.getenv("GEMDIFF")
+if not GEMDIFF:
+    GEMDIFF = 0.5
+TASKCD = 60 * 30
+
+VERSION = 0

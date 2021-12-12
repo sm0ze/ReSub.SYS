@@ -2,7 +2,6 @@
 
 import asyncio
 import math
-import os
 import random
 import typing
 
@@ -32,43 +31,37 @@ from power import (
     taskVar,
 )
 from sharedVars import (
+    BOTTURNWAIT,
+    DEFDUELOPP,
+    DL_ARC_DUR,
     ERRORTHREAD,
+    GEMDIFF,
+    HIDE,
     HOSTNAME,
+    LEADLIMIT,
+    LOWESTROLE,
+    MANAGER,
+    NEWCALC,
+    PERMROLES,
+    PLAYERTURNWAIT,
+    ROUNDLIMIT,
     SAVEFILE,
+    SUPEROLE,
+    TASKCD,
     TATSU,
     setGemDiff,
 )
 
 logP = log.get_logger(__name__)
 
-COMON = True
-
-SUPEROLE = "Supe"
-PERMROLES = ["Supe"]  # guild role(s) for using these bot commands
-MANAGER = "System"  # manager role name for guild
-LOWESTROLE = 2  # bot sorts roles by rank from position of int10 to LOWESTROLE
-HIDE = False
-LEADLIMIT = 12
-NEWCALC = 1
-DL_ARC_DUR = 60
+COMON = False
 
 
-DEFDUELOPP = 159985870458322944
-ROUNDLIMIT = 50
-PLAYERTURNWAIT = 30
-BOTTURNWAIT = 60
-
-global GEMDIFF
-GEMDIFF = os.getenv("GEMDIFF")
-if not GEMDIFF:
-    GEMDIFF = 0.5
-taskCD = 60 * 30
-# taskCD = 0
+ENHLIST = [(x, y) for (x, y) in powerTypes.items()]
 
 # TODO: implement this and similiar instead of
 # multiple enhancement.dict.keys() calls
 # enhancement (type, rank) pairs for list command
-ENHLIST = [(x, y) for (x, y) in powerTypes.items()]
 
 
 class Options(commands.Cog):
@@ -198,7 +191,7 @@ class Options(commands.Cog):
         brief=cmdInf["task"]["brief"],
         description=cmdInf["task"]["description"],
     )
-    @commands.cooldown(1, taskCD, type=commands.BucketType.user)
+    @commands.cooldown(1, TASKCD, type=commands.BucketType.user)
     async def task(self, ctx: commands.Context):
         """
         It can be 60% minor, you only,
@@ -385,6 +378,37 @@ class Options(commands.Cog):
         await ctx.message.delete(delay=1)
         return
 
+    @commands.command(enabled=True, aliases=["gen"])
+    async def generate(self, ctx: commands.Context, val: int = 5, typ=""):
+        if val < 0:
+            await ctx.send("A positive integer is required")
+            return
+        if typ not in leader.keys():
+            if typ in leader.values():
+                typ = [x for x in leader.keys() if leader[x] == typ]
+                if typ:
+                    typ = typ[0]
+            else:
+                typ = ""
+        build = genBuild(val, typ)
+        logP.debug("For {} points build {} was generated".format(val, build))
+        mes = discord.Embed(title="Generated Build")
+
+        if build:
+            if not typ:
+                top = leader[highestEhn(build, False)]
+            else:
+                top = leader[typ]
+            buildNames = [power[x]["Name"] for x in build]
+            buildStr = ""
+            for x in buildNames:
+                buildStr += "{} \n".format(x)
+            mes.add_field(
+                name="{} build for {} points".format(top, val),
+                value="{}".format(buildStr),
+            )
+            await ctx.send(embed=mes)
+
     @commands.command(
         enabled=COMON,
         aliases=["a"],
@@ -404,10 +428,8 @@ class Options(commands.Cog):
 
         # if author did not provide an enhancement to add, return
         if not typeRank:
-            await ctx.send(
-                "Cannot add enhancements without an enhancement to add"
-            )
-            return
+            buildList = [highestEhn(userEnhancements)]
+            typeRank = buildList
         # otherwise split the arglist into a readable shorthand enhancment list
         else:
             fixArg = typeRank.replace(" ", ",")
@@ -415,9 +437,12 @@ class Options(commands.Cog):
             buildList = [x.strip() for x in fixArg.split(",") if x.strip()]
             logP.debug(buildList)
 
+        buildList, userEnhancements = checkAddBuild(
+            buildList, userEnhancements
+        )
+
         # add requested enhancements to current user build
         # then grab the information for this new user build
-        [userEnhancements.append(x) for x in buildList]
         userWants = enm.funcBuild(userEnhancements)
         userWantsCost = userWants[0]
         userWantsBuild = userWants[2]
@@ -1797,6 +1822,189 @@ async def playerDuelInput(
     else:
         desperate, typeMove, moveString = battle.moveSelf(peep, notPeep)
     return desperate, typeMove, moveString
+
+
+def genBuild(val: int = 0, typ: str = ""):
+    build = []
+    buildFinal = []
+    pickList = [x for x in leader.keys() if leader[x] not in restrictedList]
+
+    if not typ:
+        typ = random.choice(pickList)
+        pickList.remove(typ)
+
+    logP.debug("Building a build of {} for {}".format(val, typ))
+
+    checkInt = 1
+    building = True
+    searchBuild = [typ + str(checkInt)]
+    nextLargest = 0
+    secondLoop = False
+    prevBuild = []
+    maxTyp = []
+
+    testMax = True
+    maxSearch = [typ + str(10)]
+    while testMax:
+        maxBuild = enm.funcBuild(maxSearch)
+        if val > maxBuild[0]:
+            logP.debug("with {} points {} can be maxed".format(val, typ))
+            maxTyp.append(typ + str(10))
+            build = maxBuild[2]
+            typ = random.choice(pickList)
+            pickList.remove(typ)
+            maxSearch.append(typ + str(10))
+            logP.debug("new max list is {}".format(maxSearch))
+        else:
+            testMax = False
+    if maxTyp:
+        searchBuild = maxTyp.copy()
+        searchBuild.append(typ + str(checkInt))
+
+    while building:
+        want = enm.funcBuild(searchBuild)
+        trimmed = enm.trim(want[1])
+
+        searchBuild = []
+
+        for group in trimmed:
+            rank = group[0]
+            name = group[1]
+            shrt = [x for x in leader.keys() if leader[x] == name]
+            if shrt:
+                shrt = shrt[0]
+            searchBuild.append(str(shrt) + str(rank))
+
+        logP.debug(
+            "Testing {} build: {}, {}".format(want[0], searchBuild, want[2])
+        )
+        if want[0] < val:
+            checkInt += 1
+            if checkInt > 10:
+                checkInt = 10
+            prevBuild = searchBuild.copy()
+            searchBuild.append(typ + str(checkInt))
+        elif want[0] == val:
+            building = False
+            build = want[2]
+        else:
+            nextLargest += 1
+            if nextLargest > len(want[2]) - 1:
+                nextLargest = 0
+                if not secondLoop:
+                    secondLoop = True
+                else:
+                    build = enm.funcBuild(prevBuild)
+                    build = build[2]
+                    building = False
+            name = want[2][nextLargest][1]
+            rank = want[2][nextLargest][0]
+            shrt = [x for x in leader.keys() if leader[x] == name][0]
+            searchBuild = prevBuild
+            searchBuild.append(shrt + str(rank))
+
+    for group in build:
+        rank = group[0]
+        name = group[1]
+        shrt = [x for x in leader.keys() if leader[x] == name]
+        if shrt:
+            shrt = shrt[0]
+
+        buildFinal.append(str(shrt) + str(rank))
+    return buildFinal
+
+    """while currTot < val:
+        temp = []
+        testBuild = []
+        temp, testBuild = checkAddBuild(typ, build)
+        want = enm.funcBuild(testBuild)
+        if want[0] <= val:
+            currTot = want[0]
+            build.clear()
+            for group in want[2]:
+                rank = group[0]
+                name = group[1]
+                shrt = [x for x in leader.keys() if leader[x] == name]
+                if shrt:
+                    shrt = shrt[0]
+
+                build.append(str(shrt) + str(rank))
+            typ = [highestEhn(build)]
+        else:
+
+            typ = random.choices(pickList)"""
+    return build
+
+
+def checkAddBuild(listAdd: list = [], listBase: list = []):
+    enhNumList = power.keys()
+    userKeyList = {}
+    listRet = []
+    listBaseNew = listBase.copy()
+
+    for item in listBaseNew:
+        typ = item[:3]
+        typRank = int(item[3:])
+        logP.debug("Splitting {} into {} and {}".format(item, typ, typRank))
+        userKeyList[typ] = typRank
+
+    for item in listAdd:
+        if item in listBaseNew:
+            continue
+        elif item in enhNumList:
+            listBaseNew.append(item)
+            listRet.append(item)
+            logP.debug("Adding {} to listBase".format(item))
+            continue
+        elif item in leader.values():
+            for shrt in leader.keys():
+                if item == leader[shrt]:
+                    item = shrt
+        if item in leader.keys():
+            if leader[item] in restrictedList:
+                continue
+
+            if item in userKeyList.keys():
+                strAdd = str(item) + str(userKeyList[item] + 1)
+                logP.debug("Adding {} to listBase".format(strAdd))
+                listBaseNew.append(strAdd)
+                listRet.append(strAdd)
+            else:
+                strAdd = str(item) + str(1)
+                logP.debug("Adding {} to listBase".format(strAdd))
+                listBaseNew.append(strAdd)
+                listRet.append(strAdd)
+
+    return listRet, listBaseNew
+
+
+def highestEhn(userEhnList: list = [], belowTop: bool = True):
+    topRank = 0
+    topRankStr = ""
+    multTopList = []
+    for item in userEhnList:
+        rank = int(item[3:])
+        typ = str(item[:3])
+        if rank > topRank:
+            if rank == 10:
+                if belowTop:
+                    continue
+            topRank = rank
+            multTopList.clear()
+            multTopList.append(typ)
+            topRankStr = typ
+        elif rank == topRank:
+            multTopList.append(typ)
+
+    if len(multTopList) > 1:
+        topRankStr = str(random.choice(multTopList))
+
+    if not topRankStr:
+        pickList = [
+            x for x in leader.keys() if leader[x] not in restrictedList
+        ]
+        topRankStr = random.choice(pickList)
+    return topRankStr
 
 
 def save(key: int, value: dict, cache_file=SAVEFILE):

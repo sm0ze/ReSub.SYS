@@ -10,11 +10,21 @@ import discord
 import git
 from discord.ext import commands, tasks
 from discord.utils import get
-from enhancements import nON
 
 import log
+from enhancements import nON
 from power import cmdInf, freeRoles, powerTypes
-from sharedVars import STARTCHANNEL, TOKEN, SAVEFILE, HOSTNAME
+from sharedVars import (
+    CMDPREFIX,
+    HIDE,
+    HOSTNAME,
+    MANAGER,
+    SAVEFILE,
+    STARTCHANNEL,
+    STARTTIME,
+    SUPEROLE,
+    TOKEN,
+)
 
 logP = log.get_logger(__name__)
 
@@ -25,11 +35,6 @@ logP.info(
     )
 )
 
-SUPEROLE = "Supe"
-MANAGER = "System"  # manager role name for guild
-CMDPREFIX = "~"
-STARTTIME = time.time()
-HIDE = False
 
 logP.debug("Bot start time set as: {}".format(STARTTIME))
 
@@ -551,5 +556,6 @@ if __name__ == "__main__":
     # and to finish. run the bot
     if runBot:
         logP.info("Bot connection starting....")
+        bot.remove_command("help")
         bot.run(TOKEN, reconnect=True)
 logP.critical("Bot has reached end of file")
