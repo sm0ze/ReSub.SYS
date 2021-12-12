@@ -54,7 +54,7 @@ from sharedVars import (
 
 logP = log.get_logger(__name__)
 
-COMON = False
+COMON = True
 
 
 ENHLIST = [(x, y) for (x, y) in powerTypes.items()]
