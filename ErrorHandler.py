@@ -1,9 +1,11 @@
+# ErrorHandler.py
+
 import discord
 from discord.ext import commands
 
-from BossSystemExecutable import ERRORTHREAD
 from enhancements import dupeError, getSendLoc
 from exceptions import notSupeDuel
+from sharedVars import ERRORTHREAD
 
 
 class ErrorHandler(commands.Cog):
@@ -27,6 +29,7 @@ class ErrorHandler(commands.Cog):
         command = ctx.command
         mes = None
         delaySet = 5
+        dupeEr = True
 
         if isinstance(error, commands.CommandNotFound):
             return
@@ -34,6 +37,7 @@ class ErrorHandler(commands.Cog):
             return
 
         elif isinstance(error.__cause__, KeyError):
+            dupeEr = False
             mes = discord.Embed(
                 title="KeyError",
                 description="{} is not a recognised option".format(
@@ -41,8 +45,9 @@ class ErrorHandler(commands.Cog):
                 ),
             )
         elif isinstance(error, commands.CommandOnCooldown):
+            dupeEr = False
             cdTime = round(error.retry_after, 2)
-            if command == "task":
+            if str(command) == "task":
                 mes = discord.Embed(
                     title="No Tasks",
                     description=(
@@ -54,23 +59,30 @@ class ErrorHandler(commands.Cog):
                 mes = discord.Embed(
                     title="Error!!!",
                     description=(
-                        "Command on cooldown for" "{} minutes or {} seconds"
-                    ).format(round(cdTime / 60, 2), cdTime),
+                        "Command: {}, on cooldown for {} minutes or {} seconds"
+                    ).format(str(command), round(cdTime / 60, 2), cdTime),
                 )
         elif isinstance(error, commands.CommandInvokeError):
             if isinstance(error.__cause__, notSupeDuel):
+                dupeEr = False
                 mes = discord.Embed(
                     title="Civilian", description="You can't fight a civilian!"
                 )
 
         if not mes:
-            mes = discord.Embed(title="Error!!!", description=error)
+            delaySet = 0
+            mes = discord.Embed(
+                title="{} Error!!!".format(str(command)), description=error
+            )
 
-        await ctx.send(embed=mes, delete_after=delaySet)
         if delaySet:
+            await ctx.send(embed=mes, delete_after=delaySet)
             await ctx.message.delete(delay=delaySet)
-        print(mes.to_dict())
-        await dupeError(mes, ctx, ERTHRD)
+        else:
+            await ctx.send(embed=mes)
+
+        if dupeEr:
+            await dupeError(mes, ctx, ERTHRD)
 
 
 def setup(bot: commands.Bot):

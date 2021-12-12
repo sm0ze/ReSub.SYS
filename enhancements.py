@@ -1,59 +1,37 @@
 # enhancements.py
+
 import time
 import typing
+
 import discord
 from discord.ext import commands
-from power import power, leader
 
-from BossSystemExecutable import HOSTNAME, STARTCHANNEL, nON
+import log
+from power import leader, power
+from sharedVars import HOSTNAME, STARTCHANNEL
 
-DEBUG = 0
-
-
-def debug(*args):
-    if DEBUG:
-        print(*args)
+logP = log.get_logger(__name__)
 
 
 # count number of unique strings in nested list
 # and return count and unnested set
 # TODO rewrite messy implementation ?and? every call of this function
-def eleCountUniStr(varList):
+def eleCountUniStr(varList, reqursion: bool = False):
     uniList = []
-
+    if not reqursion:
+        logP.debug("List of {} elements to make unique".format(len(varList)))
     for ele in varList:
-        debug("FuncEleCountUniStr - " + "element is: " + str(ele))
         if isinstance(ele, list):
             if ele:
-                debug("FuncEleCountUniStr - " + "RECURSE HERE")
-
-                rec = eleCountUniStr(ele)
-                debug("FuncEleCountUniStr - " + str(rec))
-
+                rec = eleCountUniStr(ele, True)
                 for uni in rec[1]:
-                    debug(
-                        "FuncEleCountUniStr - "
-                        + "Unique req list: "
-                        + str(uni)
-                    )
-
                     if uni not in uniList:
                         uniList.append(uni)
         else:
-            debug(
-                "FuncEleCountUniStr - " + "Add count with string: " + str(ele)
-            )
-
-            if ele not in uniList:
+            if ele and ele not in uniList:
                 uniList.append(ele)
-
-    debug(
-        "FuncEleCountUniStr - "
-        + "returns cost: "
-        + str(len(uniList))
-        + " and list: "
-        + str(uniList)
-    )
+    if not reqursion:
+        logP.debug("List of {} elements to return".format(len(uniList)))
     return len(uniList), uniList
 
 
@@ -61,22 +39,16 @@ def eleCountUniStr(varList):
 def cost(inName: str, inDict: dict = power):
     required = []
 
-    debug(
-        "FuncCost - "
-        + str(inName)
-        + " has requisites: "
-        + str(inDict[inName]["Prereq"])
+    logP.debug(
+        str(inName) + " has requisites: " + str(inDict[inName]["Prereq"])
     )
 
     # for each prereq given enhancement has
     for req in inDict[inName]["Prereq"]:
-        # check for restriced enhancement, as those are not counted
+        # check for restricted enhancement, as those are not counted
         if req not in required:
-            debug(
-                "FuncCost - "
-                + str(req)
-                + " requisite has name: "
-                + str(inDict[req]["Name"])
+            logP.debug(
+                str(req) + " requisite has name: " + str(inDict[req]["Name"])
             )
 
             # save prereq full name for later
@@ -91,11 +63,10 @@ def cost(inName: str, inDict: dict = power):
 
     # trim list of prereqs to remove duplicates
     ans = eleCountUniStr(required)
-    debug("ans before restricted list = {}".format(ans))
+    logP.debug("ans before restricted list length: {}".format(len(ans)))
 
     # total cost of given enhancement
     ansTot = ans[0]
-    debug("FuncCost - " + str(ans))
     # enhancement cost = ansTot+1
     # unique prereq string = ans[1]
     return ansTot + 1, ans[1], required
@@ -103,10 +74,10 @@ def cost(inName: str, inDict: dict = power):
 
 # function to remove lower ranked enhancements from the list
 def trim(pList, inDict=power):
-    debug("funcTrim - " + "Start of function")
+    logP.debug("Start of trim function")
     tierDict = {}
     trimList = []
-    debug("funcTrim - " + "plist = {}".format(pList))
+    logP.debug("list of length {} to trim".format(len(pList)))
 
     # iterate thorugh list of given enhancements
     for pow in pList:
@@ -121,24 +92,20 @@ def trim(pList, inDict=power):
             for x in inDict.keys()
             if inDict[x]["Name"] == pow
         ][0]
-        debug(
+        logP.debug(
             "Enhancement: {}, Type: {}, Rank: {}".format(pow, powType, powRank)
         )
 
         # if enhancement not already counted, add it to dictionary
         if powType not in tierDict.keys():
             tierDict[powType] = powRank
-            debug(
-                "funcTrim - "
-                + "{} of rank {} added to dict".format(powType, powRank)
-            )
+            logP.debug("{} of rank {} added to dict".format(powType, powRank))
 
         # else if enhancment greater in rank than already counted enhancement
         # edit dictionary
         elif powRank > tierDict[powType]:
-            debug(
-                "funcTrim - "
-                + "{} of rank {} increased to {}".format(
+            logP.debug(
+                "{} of rank {} increased to {}".format(
                     powType, tierDict[powType], powRank
                 )
             )
@@ -149,17 +116,15 @@ def trim(pList, inDict=power):
         trimList.append([val, key])
 
     # return sorted trimmed list of highest ranked enhancements, descending
-    debug(
-        "funcTrim - "
-        + "dict tierDict: {}\n\ttrimList: {}".format(tierDict, trimList)
-    )
+    logP.debug("dict tierDict: {}".format(tierDict))
+    logP.debug("trimList: {}".format(trimList))
     return sorted(trimList, reverse=True, key=lambda x: x[0])
 
 
 # function to turn given list of [rank, enhancment]
 # into str for discord message
 def reqEnd(endList):
-    debug("funcReqEnd - " + "{}".format(endList))
+    logP.debug("{}".format(endList))
 
     # check for no prereqs
     if len(endList[1]) == 0:
@@ -167,21 +132,19 @@ def reqEnd(endList):
 
     # otherwise add prereqs to message
     else:
-        debug("funcReqEnd - " + "{}".format(endList[1]))
+        logP.debug("{}".format(endList[1]))
         reqStr = ""
         for req in endList[1]:
             reqName = power[toType(req[1]) + str(req[0])]["Name"]
             reqStr += "{}\n".format(reqName)
-    debug("funcReqEnd - " + "End of function")
 
     # return message
     return reqStr
 
 
 def toType(role: str):
-    debug(role)
     thing = [x for x in leader.keys() if role == leader[x]][0]
-    debug(thing)
+    logP.debug("Convert: {}, to: {}".format(role, thing))
     return thing
 
 
@@ -190,17 +153,16 @@ def toType(role: str):
 def funcBuild(
     buildList: list[str],
 ) -> tuple[int, list[str], list]:
-    debug("Start funcBuild")
     reqList = []
     nameList = []
-    debug("Build command buildList = {}".format(buildList))
+    logP.debug("Build command buildList has length: {}".format(len(buildList)))
 
     # iterate through shorthand enhancements
     for item in buildList:
-        debug("Build command item = {}".format(item))
+        logP.debug("Build command item: {}".format(item))
         # fetch enhancement prereqs and cost
         temCost = cost(item)
-        debug("Build command prereq cost = {}".format(temCost))
+        logP.debug("Build command prereq cost length: {}".format(len(temCost)))
 
         # add this enhancement's prereqs to list
         reqList.append(temCost[2])
@@ -211,25 +173,22 @@ def funcBuild(
         # add enhancement full name to lists
         reqList.append(tempName)
         nameList.append(tempName)
-    debug("Build command reqList is: {}".format(reqList))
+    logP.debug("Build command reqList is of length: {}".format(len(reqList)))
 
     # restrict nested prereq list to a set of prereqs
     temp = eleCountUniStr(reqList)
-    debug("temp = {}".format(temp))
 
     # fetch highest ranked prereqs of each type in list
     reqList = trim([x for x in temp[1]])
-    debug("reqList = {}".format(reqList))
+    logP.debug("reqList len = {}".format(len(reqList)))
 
     # sum cost of build from prereqs
     costTot = 0
     for group in reqList:
-        debug(group)
         costTot += group[0]
-    debug(costTot, nameList, reqList)
 
+    logP.debug("Total cost of build is: {}".format(costTot))
     # return cost of build, role names and prerequisite roles
-    debug("End funcBuild")
     return costTot, nameList, reqList
 
 
@@ -238,15 +197,14 @@ def funcBuild(
 def spent(
     memList: list[discord.Member],
 ) -> list[list[discord.Member, int, list[str]]]:
-    debug("Start spent")
     retList = []
-    debug("memList is: {}".format(memList))
+    logP.debug("memList is: {}".format(memList))
 
     # iterate thorugh given list of users
     for peep in memList:
         supeRoles = []
-        debug("current user is: {}".format(peep))
-        debug("current user role list: {}".format(peep.roles))
+        logP.debug("current user is: {}".format(peep))
+        logP.debug("current user role list: {}".format(peep.roles))
 
         # messy implementation to grab shorthand for all unrestricted bot
         # managed roles in user role list
@@ -261,7 +219,7 @@ def spent(
                         if power[x]["Name"] == roles.name
                     ][0]
                 )
-        debug("Supe roles: {}".format(supeRoles))
+        logP.debug("Supe roles: {}".format(supeRoles))
 
         # fetch point cost (including prereqs) of enhancements
         if supeRoles:
@@ -273,13 +231,12 @@ def spent(
         # to list to return
         retList.append([peep, pointCount, supeRoles])
 
-    debug("retlist is: {}".format(retList))
-    debug("End spent")
+    logP.debug("retlist is: {}".format(retList))
     return retList
 
 
 async def dupeError(
-    mes,
+    mes: discord.Embed,
     ctx: commands.Context,
     channel: typing.Union[discord.TextChannel, discord.Thread],
 ):
@@ -294,15 +251,17 @@ async def dupeError(
         currTime.tm_min,
         currTime.tm_sec,
     )
+
+    errMes = "At {}, {} ({}) produced this error on {}: ".format(
+        currTimeStr, author, autID, HOSTNAME
+    )
+    logP.warning(errMes + str(mes.to_dict()["description"]))
+
     if isinstance(channel, discord.Thread):
         if channel.archived:
             await channel.edit(archived=0)
 
-    await channel.send(
-        "At {}, {}({}) produced this error on {}:".format(
-            currTimeStr, author, autID, HOSTNAME
-        )
-    )
+    await channel.send(errMes)
     if isinstance(mes, discord.Embed):
         await channel.send(embed=mes)
     if isinstance(mes, str):
@@ -332,7 +291,7 @@ async def getSendLoc(id, bot: commands.Bot, attr: str = "channel"):
                 if int(y.id) == int(id):
                     sendLoc.append(y)
 
-    debug(
+    logP.debug(
         "searching for {} in {} or {} = {}".format(
             id, iterList, otherOpt, sendLoc
         )
@@ -342,3 +301,11 @@ async def getSendLoc(id, bot: commands.Bot, attr: str = "channel"):
         if sendLoc:
             sendLoc = sendLoc[0]
     return sendLoc
+
+
+# dirty little function to avoid 'if user.nick else user.name'
+def nON(user: discord.Member) -> str:
+    if user.nick:
+        return user.nick
+    else:
+        return user.name

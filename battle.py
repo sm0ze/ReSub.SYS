@@ -1,23 +1,28 @@
 # battle.py
+
 import asyncio
-import typing
-import discord
 import random
-from BossSystemExecutable import nON
-from enhancements import funcBuild, spent
-from power import power, leader, moveOpt
-import pandas as pd
+import typing
 from collections import namedtuple
 
-DEBUG = 0
+import discord
 
+import log
+from enhancements import funcBuild, nON, spent
+from power import (
+    leader,
+    moveOpt,
+    power,
+    baseDict,
+    statCalcDict,
+    replaceDict,
+    bonusDict,
+)
 
-def debug(*args):
-    if DEBUG:
-        print(*args)
+logP = log.get_logger(__name__)
 
-
-statMes = """HP:\t{0:0.2g}/{9:0.2g} (**{13}%**) + {5}
+statMes = """{17}
+HP:\t{0:0.2g}/{9:0.2g} (**{13}%**) + {5} ({18}%)
 Sta: **{10}**/{12} +{11}
 P: {1}A/{2:0.2g}D
 M: {3}A/{4:0.2g}D
@@ -31,35 +36,13 @@ adpMes = """
 Hit%: PA/MA
 {2}%: {0:0.2g}/{1:0.2g}"""
 
-statsToken = "1JIJjDzFjtuIU2k0jk1aHdMr2oErD_ySoFm7-iFEBOV0"
+DELIM = 6.66
 
-statsName = "BotStats"
-bonusName = "BotBonus"
-
-replaceName = "BotReplace"
-
-baseName = "BotBase"
-
-urlStats = (
-    "https://docs.google.com/spreadsheets/d/{}/gviz/tq?tqx=out:csv&sheet={}"
-).format(statsToken, statsName)
-urlBonus = (
-    "https://docs.google.com/spreadsheets/d/{}/gviz/tq?tqx=out:csv&sheet={}"
-).format(statsToken, bonusName)
-urlReplace = (
-    "https://docs.google.com/spreadsheets/d/{}/gviz/tq?tqx=out:csv&sheet={}"
-).format(statsToken, replaceName)
-
-urlBase = (
-    "http://docs.google.com/spreadsheets/d/{}/gviz/tq?tqx=out:csv&sheet={}"
-).format(statsToken, baseName)
-
-statCalcDict = {}
-bonusDict = {}
-replaceDict = {}
-baseDict = {}
-
-urlList = [[urlStats, statCalcDict], [urlBonus, bonusDict]]
+rendHP = {
+    "empt": "░",
+    "part": "▒",
+    "full": "▓",
+}
 
 
 class player:
@@ -110,29 +93,26 @@ class player:
         self.focusNum = int(0)
         self.focused = False
 
-        self.forceDesp = False
-
     def iniCalc(self) -> None:
         statDict = {}
         for enhan in self.sG[0][2]:
-            debug("enhan:", enhan)
+            logP.debug("enhan: {}".format(enhan))
             name = enhan[:3]
             rank = int(power[enhan]["Rank"])
             if name not in statDict.keys():
-                debug("Add", name, rank)
+                logP.debug("Add: {}, {}".format(name, rank))
                 statDict[name] = rank
             elif rank > statDict[name]:
-                debug("Up", name, rank)
+                logP.debug("Update: {}, {}".format(name, rank))
                 statDict[name] = rank
 
-        debug(statDict)
-
         for type in leader.keys():
-            debug("type:", type)
             if type not in statDict.keys():
-                debug("added")
+                logP.debug("Added type: {}".format(type))
                 statDict[type] = 0
-        debug(statDict)
+
+        logP.debug("{} stats are: {}".format(self.n, statDict))
+
         self._str = int(statDict["str"])
         self._spe = int(statDict["spe"])
         self._end = int(statDict["end"])
@@ -156,7 +136,7 @@ class player:
         ret = int(0)
         ret += addCalc(self, statType)
         ret += addBonus(self, statType)
-        debug("Adding to", statType, ret)
+        logP.debug("Adding to: {}, {}".format(statType, ret))
         return ret
 
     def bStat(self):
@@ -180,6 +160,8 @@ class player:
                 "swiNow",
                 "totSwi",
                 "focusNum",
+                "hpRender",
+                "hpRecPer",
             ],
         )
         ret = stats(
@@ -200,11 +182,33 @@ class player:
             self.swiNow,
             self.totSwi,
             self.focusNum,
+            self.hpRender(),
+            self.recPer(),
         )
         return ret
 
     def hpPer(self):
         return round((self.hp / self.totHP) * 100)
+
+    def recPer(self):
+        return round((self.rec / self.totHP) * 100)
+
+    def hpRender(self, hpPerBlock: float = DELIM):
+        ret = ""
+        blocks = round(100 / hpPerBlock)
+        currPer = self.hpPer()
+        leftover = currPer % hpPerBlock
+        fullBlocks = round(currPer / hpPerBlock)
+        isPartLeft = leftover >= 0.5 * hpPerBlock
+        emptyBlocks = blocks - fullBlocks
+
+        ret += rendHP["full"] * fullBlocks
+        if isPartLeft:
+            emptyBlocks -= 1
+            ret += rendHP["part"]
+        ret += rendHP["empt"] * emptyBlocks
+
+        return ret
 
     def statMessage(self):
         stats = self.bStat()
@@ -294,7 +298,6 @@ class player:
                 reaction, user = await self.bot.wait_for(
                     "reaction_add", timeout=30, check=check
                 )
-                debug("reaction", reaction, "user", user)
                 if str(reaction.emoji) == "✅":
                     self.play = True
                     active = False
@@ -381,7 +384,7 @@ class battler:
         while p1Swi < self.totSwi and p2Swi < self.totSwi:
             p1Swi += self.p1.swi
             p2Swi += self.p2.swi
-            debug("p1Swi:", p1Swi, "p2Swi:", p2Swi)
+            logP.debug("p1Swi: {}, p2Swi: {}".format(p1Swi, p2Swi))
 
         if p1Swi >= self.totSwi:
             p1Swi -= self.totSwi
@@ -401,7 +404,7 @@ class battler:
         p1Move: list[str] = None,
         p2Move: list[str] = None,
     ):
-        debug("Who2Move", Who2Move)
+        logP.debug("Who2Move: {}".format(Who2Move))
         moves = ["Does Nothing.", "Does Nothing.", None]
         if self.p1 in Who2Move and self.p2 in Who2Move:
             if self.p1.swiNow == self.p2.swiNow:
@@ -433,7 +436,7 @@ class battler:
                     moves[1] += self.turn(self.p2, self.p1, p2Move)
 
         if self.p1.hp <= 0 or self.p2.hp <= 0:
-            debug("p1 Hp:", self.p1.hp, "p2 Hp:", self.p2.hp)
+            logP.debug("p1 Hp: {}, p2 Hp: {}".format(self.p1.hp, self.p2.hp))
             if self.p1.hp == self.p2.hp:
                 moves[2] = "Noone"
             elif self.p1.hp > self.p2.hp:
@@ -543,7 +546,7 @@ class battler:
         # if notPeep is one norm hit from loss
         oneHit = notPeep.hp <= atk
 
-        # is notPeep is one desp hit from loss
+        # if notPeep is one desp hit from loss
         oneDespHit = notPeep.hp <= dAtk
 
         canAt = staAftA >= 0
@@ -560,14 +563,9 @@ class battler:
             dAtk = Attack.ment + peep.ma
             critDesp = Attack.ment + 2 * peep.ma
 
-        if peep.forceDesp:
-            desperate = 1
-            peep.forceDesp = False
-            debug("Force Desperate", Attack.hitChance)
-
         elif Attack.hitChance <= 50:
             # lowhit func
-            debug("lowHit", Attack.hitChance)
+            logP.debug("lowHit: {}".format(Attack.hitChance))
             if oneHit and Attack.hitChance + 5 * fAA > 50:
                 while Attack.hitChance < 50 and peep.sta > normSta:
                     peep.focus()
@@ -602,7 +600,7 @@ class battler:
 
         elif Attack.hitChance < 75:
             # avhit func
-            debug("avHit", Attack.hitChance)
+            logP.debug("avHit: {}".format(Attack.hitChance))
             if oneHit and nextHP > atk and canAt:
                 peep.focusTill(normSta + 1)
                 # then normal attack
@@ -620,7 +618,6 @@ class battler:
             elif maxSta:
                 if nextHP <= dAtk * 2:
                     desperate = 1
-                    peep.forceDesp = True
                     # then desperate attack
                 elif atk > notPeep.rec * (10 / (peep.rec + 1)):
                     pass
@@ -633,7 +630,7 @@ class battler:
 
         elif Attack.hitChance < 150:
             # highhit func
-            debug("highHit", Attack.hitChance)
+            logP.debug("highHit: {}".format(Attack.hitChance))
             if oneHit and canAt:
                 peep.focusTill(normSta + 1)
                 # then normal hit
@@ -644,7 +641,6 @@ class battler:
             elif maxSta:
                 if nextHP <= dAtk * 2:
                     desperate = 1
-                    peep.forceDesp = True
                     # then desperate attack
                 elif dAtk < notPeep.rec * (10 / (peep.rec + 1)):
                     peep.focus()
@@ -660,7 +656,7 @@ class battler:
                 typeMove = "Defend"
 
         else:
-            debug("critHit", Attack.hitChance)
+            logP.debug("critHit: {}".format(Attack.hitChance))
             # crithit func
             if oneHit and canAt:
                 peep.focusTill(normSta + 1)
@@ -676,7 +672,6 @@ class battler:
             elif maxSta:
                 if critDesp * 2 >= nextHP:
                     desperate = 1
-                    peep.forceDesp = True
                     # then desperate attack
                 elif critDesp < notPeep.rec * (10 / (peep.rec + 1)):
                     peep.focus()
@@ -756,7 +751,9 @@ class battler:
         if attChance < 0:
             attChance = 0
         missChance = 100 - attChance
-        debug("attChance", attChance, "missChance", missChance)
+        logP.debug(
+            "attChance: {}, missChance: {}".format(attChance, missChance)
+        )
         hit = random.choices(
             ["Hit", "Missed"],
             [attChance, missChance],
@@ -768,7 +765,9 @@ class battler:
                 dblCritChance = critChance - 100
                 critChance = 100
             normChance = 100 - critChance
-            debug("normChance", normChance, "critChance", critChance)
+            logP.debug(
+                "normChance: {}, critChance: {}".format(normChance, critChance)
+            )
             hit = random.choices(
                 ["Normal", "Critical"], [normChance, critChance]
             )
@@ -779,7 +778,11 @@ class battler:
                     triCritChance = dblCritChance - 100
                     dblCritChance = 100
                 notDblCrit = 100 - dblCritChance
-                debug("dblCritChance", dblCritChance, "notDblCrit", notDblCrit)
+                logP.debug(
+                    "dblCritChance: {}, notDblCrit: {}".format(
+                        dblCritChance, notDblCrit
+                    )
+                )
                 hit = random.choices(
                     ["Critical", "Double Critical"],
                     [notDblCrit, dblCritChance],
@@ -788,11 +791,10 @@ class battler:
                     multi = int(2)
                 else:
                     notTriCrit = 100 - triCritChance
-                    debug(
-                        "triCritChance",
-                        triCritChance,
-                        "notTriCrit",
-                        notTriCrit,
+                    logP.debug(
+                        "triCritChance: {}, notTriCrit: {}".format(
+                            triCritChance, notTriCrit
+                        )
                     )
                     hit = random.choices(
                         ["Double Critical", "Triple Critical"],
@@ -817,7 +819,7 @@ class battler:
             mes += "{} physically attacks {} for {:0.2g} damage.\n".format(
                 attacker.n, defender.n, attDmg
             )
-            debug("physical attack is a:", hit, "for", attDmg)
+            logP.debug("physical attack is a: {}, for: {}".format(hit, attDmg))
         if attMove == "Mental":
             attDmg = attackCalc(
                 multi,
@@ -833,7 +835,7 @@ class battler:
                 defender.n,
                 attDmg,
             )
-            debug("mental attack is a:", hit, "for", attDmg)
+            logP.debug("mental attack is a: {}, for: {}".format(hit, attDmg))
 
         return mes
 
@@ -877,16 +879,18 @@ def addCalc(self, statType) -> int:
         if stat in replaceDict.keys():
             soft = getattr(self, "_{}".format(stat))
             hard = getattr(self, "_{}".format(replaceDict[stat]))
-            debug(
-                "soft {} rank".format(stat),
-                soft,
-                "hard {} rank".format(replaceDict[stat]),
-                hard,
+            logP.debug(
+                str(
+                    "soft {} rank {}, ".format(stat, soft)
+                    + "hard {} rank {}".format(replaceDict[stat], hard)
+                )
             )
             if soft > hard:
-                debug("Adding {} to ignore List".format(replaceDict[stat]))
+                logP.debug(
+                    "Adding {} to ignore List".format(replaceDict[stat])
+                )
                 ignore.append(replaceDict[stat])
-    debug("ignore", ignore)
+    logP.debug("ignore: {}".format(ignore))
 
     for stat in statCalcDict.keys():
         statAm = getattr(self, "_{}".format(stat))
@@ -898,7 +902,7 @@ def addCalc(self, statType) -> int:
             addStat = None
         if addStat:
             ret += statAm * addStat
-            debug(
+            logP.debug(
                 "Adding rank {} {} * {} = {} to {}.".format(
                     statAm,
                     stat,
@@ -918,7 +922,7 @@ def addBonus(self, bonusType) -> int:
             bonusStat = getattr(self, "_{}".format(stat))
             if bonusStat == 10:
                 ret += addBonus
-                debug(
+                logP.debug(
                     "Adding a bonus of {} to {} for having 10 in {}".format(
                         addBonus,
                         bonusType,
@@ -926,50 +930,3 @@ def addBonus(self, bonusType) -> int:
                     )
                 )
     return ret
-
-
-for url, dic in urlList:
-    try:
-        frame = None
-        frame = pd.read_csv(url)
-    except Exception as e:
-        print(e)
-    for tup in frame.itertuples():
-        debug("tuple", tup)
-        shrt = [x[0] for x in leader.items() if x[1] == tup.Role]
-        if shrt:
-            shrt = shrt[0]
-            dic[shrt] = {}
-            for name, value in tup._asdict().items():
-                debug("name", name, "value", value)
-                dic[shrt][name] = value
-        debug("shrt", shrt)
-    debug("dic", dic)
-
-try:
-    frame = None
-    frame = pd.read_csv(urlReplace)
-except Exception as e:
-    print(e)
-for tup in frame.itertuples():
-    debug(tup)
-    shrt = [x[0] for x in leader.items() if x[1] == tup.Role]
-    if shrt:
-        shrt = shrt[0]
-        shrt2 = [x[0] for x in leader.items() if x[1] == tup.ReplaceWith]
-        if shrt2:
-            shrt2 = shrt2[0]
-            debug("replace '{}' with '{}'".format(shrt, shrt2))
-            replaceDict[shrt] = shrt2
-debug("replaceDict", replaceDict)
-
-try:
-    frame = None
-    frame = pd.read_csv(urlBase)
-except Exception as e:
-    print(e)
-
-for tup in frame.itertuples():
-    debug(tup)
-    baseDict[tup.Constant] = tup.BaseStat
-debug("baseDict", baseDict)

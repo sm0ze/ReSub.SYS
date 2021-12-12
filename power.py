@@ -2,14 +2,10 @@
 # this file is a dictionary and other lengthy constant variables dump
 
 import pandas as pd
+import log
 
-DEBUG = 0
 
-
-def debug(*args):
-    if DEBUG:
-        print(*args)
-
+logP = log.get_logger(__name__)
 
 statsheetNom = [
     ["Requirements", "1JIJjDzFjtuIU2k0jk1aHdMr2oErD_ySoFm7-iFEBOV0"]
@@ -439,21 +435,19 @@ def remove_values_from_list(the_list, val):
     return [value for value in the_list if str(value) != val]
 
 
+logP.info("Starting csv download and input...")
 sheet_names = [
     [taskVar["taskOpt"][0][x], taskVar["taskOpt"][1][x]]
     for x in range(0, len(taskVar["taskOpt"][0]))
 ]
-debug(sheet_names)
 for sheetL in sheet_names:
     urlToken = sheetL[1]
     sheet = sheetL[0]
-    debug("sheet name is: ", sheet)
-    debug("url token is: ", urlToken)
     url = (
         "https://docs.google.com/spreadsheets/d/{}/gviz/tq?tqx="
         "out:csv&sheet={}"
     ).format(urlToken, sheet)
-    debug("At URL: ", url)
+    logP.debug("At URL: {}".format(url))
     try:
         frame = None
         frame = pd.read_csv(url)
@@ -462,26 +456,23 @@ for sheetL in sheet_names:
         continue
 
     for i in frame:
-        debug("i in frame is: ", i, type(i))
         if i.startswith("Unnamed"):
-            debug("skipping: ", i)
             continue
         currList = remove_values_from_list([x for x in frame[i]], "nan")
-        debug("Current list of {} is: ".format(i), currList)
         posTask[sheet][i] = currList
-debug(posTask)
+        logP.debug(
+            "{} list of {} is of length {}".format(sheet, i, len(currList))
+        )
 
 for statsheet in statsheetNom:
     statUrlID = statsheet[1]
     statsheetName = statsheet[0]
-    debug("sheet name is: ", statsheetName)
-    debug("url token is: ", statUrlID)
     statUrl = (
         "https://docs.google.com/spreadsheets/d/{}/gviz/tq?tqx="
         "out:csv&sheet={}"
     ).format(statUrlID, statsheetName)
 
-    debug("At URL: ", statUrl)
+    logP.debug("At URL: {}".format(statUrl))
     try:
         frame = None
         frame = pd.read_csv(statUrl)
@@ -490,28 +481,22 @@ for statsheet in statsheetNom:
         continue
 
     for tup in frame.itertuples():
-        # debug("index", index)
-        # debug("row", row)
-        debug("tuple", tup)
         shrt = [x[0] for x in leader.items() if x[1] == tup.Role]
         if shrt:
             shrt = shrt[0]
-        debug("shrt", shrt)
         for i in range(1, 11):
-            power[str(shrt) + str(i)] = {
+            enhNum = str(shrt) + str(i)
+            power[enhNum] = {
                 "Name": "Rank {} {}".format(i, tup.Role),
                 "Type": "{}".format(tup.Role),
                 "Rank": i,
                 "Prereq": [],
             }
-            if power[str(shrt) + str(i)]["Type"] == "Intelligence":
-                power[str(shrt) + str(i)]["Name"] += " (only for Systems)"
+            if power[enhNum]["Type"] == "Intelligence":
+                power[enhNum]["Name"] += " (only for Systems)"
             if i > 1:
-                power[str(shrt) + str(i)]["Prereq"].append(
-                    str(shrt) + str(i - 1)
-                )
+                power[enhNum]["Prereq"].append(str(shrt) + str(i - 1))
         for ite in tup._fields:
-            debug("ite", ite, getattr(tup, ite))
             if str(getattr(tup, ite)) == str("nan"):
                 continue
             if str(ite).lower().startswith("three"):
@@ -530,4 +515,87 @@ for statsheet in statsheetNom:
     power["int1"]["Prereq"].append("sys0")
     power["4th1"]["Prereq"].append("aut0")
     for sett in power.items():
-        debug(sett)
+        logP.debug(sett)
+
+
+statsToken = "1JIJjDzFjtuIU2k0jk1aHdMr2oErD_ySoFm7-iFEBOV0"
+
+statsName = "BotStats"
+bonusName = "BotBonus"
+
+replaceName = "BotReplace"
+
+baseName = "BotBase"
+
+urlStats = (
+    "https://docs.google.com/spreadsheets/d/{}/gviz/tq?tqx=out:csv&sheet={}"
+).format(statsToken, statsName)
+urlBonus = (
+    "https://docs.google.com/spreadsheets/d/{}/gviz/tq?tqx=out:csv&sheet={}"
+).format(statsToken, bonusName)
+urlReplace = (
+    "https://docs.google.com/spreadsheets/d/{}/gviz/tq?tqx=out:csv&sheet={}"
+).format(statsToken, replaceName)
+
+urlBase = (
+    "http://docs.google.com/spreadsheets/d/{}/gviz/tq?tqx=out:csv&sheet={}"
+).format(statsToken, baseName)
+
+statCalcDict = {}
+bonusDict = {}
+replaceDict = {}
+baseDict = {}
+
+urlList = [
+    [urlStats, statCalcDict, "statCalcDict"],
+    [urlBonus, bonusDict, "bonusDict"],
+]
+
+for url, dic, dicName in urlList:
+    try:
+        frame = None
+        frame = pd.read_csv(url)
+    except Exception as e:
+        print(e)
+    for tup in frame.itertuples():
+        shrt = [x[0] for x in leader.items() if x[1] == tup.Role]
+        if shrt:
+            shrt = shrt[0]
+            dic[shrt] = {}
+            for name, value in tup._asdict().items():
+                logP.debug(
+                    "To: {}, adding: [{}][{}] = {}".format(
+                        dicName, shrt, name, value
+                    )
+                )
+                dic[shrt][name] = value
+
+
+try:
+    frame = None
+    frame = pd.read_csv(urlReplace)
+except Exception as e:
+    print(e)
+for tup in frame.itertuples():
+    shrt = [x[0] for x in leader.items() if x[1] == tup.Role]
+    if shrt:
+        shrt = shrt[0]
+        shrt2 = [x[0] for x in leader.items() if x[1] == tup.ReplaceWith]
+        if shrt2:
+            shrt2 = shrt2[0]
+            logP.debug("replace '{}' with '{}'".format(shrt, shrt2))
+            replaceDict[shrt] = shrt2
+
+try:
+    frame = None
+    frame = pd.read_csv(urlBase)
+except Exception as e:
+    print(e)
+
+for tup in frame.itertuples():
+    baseDict[tup.Constant] = tup.BaseStat
+    logP.debug(
+        "Adding Base: {} of {}, to dict".format(tup.Constant, tup.BaseStat)
+    )
+
+logP.info("Finished csv download and input.")

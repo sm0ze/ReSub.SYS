@@ -1,10 +1,7 @@
 # BossSystemExecutable.py
 
-# import asyncio
-# import random
 import datetime
 import os
-import socket
 import sys
 import time
 import typing
@@ -13,56 +10,28 @@ import discord
 import git
 from discord.ext import commands, tasks
 from discord.utils import get
-from dotenv import load_dotenv
+from enhancements import nON
 
+import log
 from power import cmdInf, freeRoles, powerTypes
+from sharedVars import STARTCHANNEL, TOKEN, SAVEFILE, HOSTNAME
 
-DEBUG = 0
-TEST = 0
-HOSTNAME = socket.gethostname()
+logP = log.get_logger(__name__)
 
-
-def debug(*args):
-    if DEBUG:
-        print(*args)
-
-
-# function to grab a discord bot token
-# from user if one is not found in the .env
-def askToken(var: str) -> str:
-    tempToken = input("Enter your {}: ".format(var))
-    with open(".env", "a+") as f:
-        f.write("{}={}\n".format(var, tempToken))
-    return tempToken
-
-
-debug("DEBUG TRUE")
-if TEST:
-    print("TEST TRUE")
-
-# .env variables that are not shared with github and other users.
-# Use your own if testing this with your own bot
-# TOKEN is the discord bot token to authorise this code for the ReSub.SYS bot
-load_dotenv()
-TOKEN = os.getenv("DISCORD_TOKEN")
-SAVEFILE = os.getenv("SAVEFILE")
-STARTCHANNEL = os.getenv("STARTCHANNEL")
-ERRORTHREAD = os.getenv("ERRORTHREAD")
-
-if not TOKEN:
-    TOKEN = askToken("DISCORD_TOKEN")
-if not SAVEFILE:
-    SAVEFILE = askToken("SAVEFILE")
-if not STARTCHANNEL:
-    STARTCHANNEL = askToken("STARTCHANNEL")
-if not ERRORTHREAD:
-    ERRORTHREAD = askToken("ERRORTHREAD")
+runBot = True
+logP.info(
+    "Bot will attempt to connect to discord on host: {}, {}".format(
+        HOSTNAME, runBot
+    )
+)
 
 SUPEROLE = "Supe"
 MANAGER = "System"  # manager role name for guild
 CMDPREFIX = "~"
 STARTTIME = time.time()
 HIDE = False
+
+logP.debug("Bot start time set as: {}".format(STARTTIME))
 
 cogList = ["options.py", "ErrorHandler.py"]
 
@@ -82,6 +51,8 @@ bot = commands.Bot(
     help_command=HELPCOMMAND,
 )
 
+logP.info("Bot initialised")
+
 
 @bot.event
 # function called upon bot initilisation
@@ -92,54 +63,53 @@ async def on_ready():
     global ERTHRD
     channelList = [x for y in bot.guilds for x in y.channels]
     threadList = [x for y in bot.guilds for x in y.threads]
-    debug(channelList)
-    debug(
-        [
-            [
-                "{} == {}".format(x.id, STARTCHANNEL),
-                int(x.id) == int(STARTCHANNEL),
-            ]
-            for x in channelList
-        ]
+    logP.debug(
+        "Bot has access to {} servers, {} channels and {} threads.".format(
+            len(bot.guilds), len(channelList), len(threadList)
+        )
+    )
+    startChannelCheck = [int(x.id) == int(STARTCHANNEL) for x in channelList]
+    logP.debug(
+        (
+            "While searching for StartChannel, {} channels were checked and {}"
+            " channels were found to match the given ID"
+        ).format(len(startChannelCheck), startChannelCheck.count(True))
     )
 
-    debug("STARTCHANNEL: ", STARTCHANNEL)
     STRCHNL = [x for x in channelList if int(x.id) == int(STARTCHANNEL)]
-    ERTHRD = [x for x in threadList if int(x.id) == int(ERRORTHREAD)]
     if STRCHNL:
         STRCHNL = STRCHNL[0]
-    if ERTHRD:
-        ERTHRD = ERTHRD[0]
-    debug("STRCHNL: ", STRCHNL)
-    print("Bot has logged in as {} on {}".format(bot.user, HOSTNAME))
+
+    logP.debug("Start channel by the name of {} found".format(STRCHNL.name))
+
+    strtMes = "Bot has logged in as {} on {}".format(bot.user, HOSTNAME)
+    logP.info(strtMes)
     global loginTime
     loginTime = time.time()
 
-    await STRCHNL.send(
-        "Bot has logged in as {} on {}".format(bot.user, HOSTNAME)
-    )
+    logP.debug("Bot last login time set as: {}".format(loginTime))
+
+    await STRCHNL.send(strtMes)
 
     # looped command to update bot's discord presence flavour text
     update_presence.start()
 
-    # bot permissions debugging
-    if DEBUG:
-        botGuild = get(bot.guilds)
-        botMember = botGuild.me
-
-        debug("botGuild = ", botGuild)
-        debug("botMember = ", botMember)
-
+    # bot permissions logP.debugging
+    for guild in bot.guilds:
+        botMember = guild.me
         botGuildPermissions = botMember.guild_permissions
-
+        permList = []
+        i = 0
         for perm in botGuildPermissions:
-            debug(perm)
-
-
-@bot.event
-async def on_thread_update(before, after):
-    debug("before = ", before)
-    debug("after = ", after)
+            permList.append(perm)
+            if perm[1]:
+                i += 1
+        logP.debug(
+            "Bot: {}, in guild: {}, has {}/{} permissions".format(
+                nON(botMember), guild.name, i, len(permList)
+            )
+        )
+    logP.info("Bot is now waiting for commands")
 
 
 @bot.event
@@ -220,13 +190,12 @@ async def update_presence():
         members, len(powerTypes.keys())
     )
 
-    debug("\t\t" + str(nameSet))
-
     await bot.change_presence(
         activity=discord.Activity(
             type=discord.ActivityType.watching, name=nameSet
         )
     )
+    logP.debug("Rich presence set to: " + nameSet)
 
 
 @bot.command(
@@ -235,6 +204,7 @@ async def update_presence():
     description=cmdInf["uptime"]["description"],
 )
 async def uptime(ctx: commands.Context):
+    logP.debug("command uptime called")
     uptimeLogin = str(
         datetime.timedelta(seconds=int(round(time.time() - loginTime)))
     )
@@ -244,10 +214,21 @@ async def uptime(ctx: commands.Context):
     mes = discord.Embed(title="Uptime")
     mes.add_field(name=uptimeLogin, value="Time since last login.")
     mes.add_field(name=uptimeStartup, value="Time since bot startup.")
+    mes.set_footer(
+        text="{} is currently running on {}.".format(
+            bot.user.display_name, HOSTNAME
+        )
+    )
     mes.set_thumbnail(url=bot.user.display_avatar)
     await ctx.send(embed=mes)
+    logP.debug(
+        "Bot has been logged in for: {}, and powered up for: {}".format(
+            uptimeLogin, uptimeStartup
+        )
+    )
     # "{} has been logged in for {}\nand powered up for {}"
     # .format(bot.user.name, uptimeLogin, uptimeStartup)
+    logP.debug("command uptime completed")
 
 
 @bot.command()
@@ -256,15 +237,19 @@ async def resume(
     ctx: commands.Context, up: typing.Optional[int] = 0, host: str = HOSTNAME
 ):
     global asleep
-    debug("cmd:", "resume", "ctx:", ctx, "host:", host, "up:", up)
+    logP.debug(
+        "Command resume called for host: {}, to update: {}".format(host, up)
+    )
     if host != HOSTNAME:
         return
     if asleep:
         await dupeMes(ctx, "Bot is now awake on {}".format(HOSTNAME))
         asleep = False
+        logP.info("Bot is now awake")
     if up:
         await ctx.invoke(bot.get_command("update"))
         await ctx.invoke(bot.get_command("restart"))
+    logP.debug("command resume completed")
 
 
 @bot.command(
@@ -275,22 +260,25 @@ async def resume(
 # gives requested role to command caller if it is in freeRoles
 async def role(ctx: commands.Context, *, roleToAdd: str = freeRoles[0]):
     member = ctx.message.author
-    debug(roleToAdd)
+    sendMes = ""
+    logP.debug(
+        "Trying to toggle the role: {}, for: {}".format(roleToAdd, nON(member))
+    )
     roleAdd = get(member.guild.roles, name=roleToAdd)
     if not roleAdd:
-        await ctx.send("'{}' is not a valid role.".format(roleToAdd))
+        sendMes = "'{}' is not a valid role.".format(roleToAdd)
     elif roleAdd.name not in freeRoles:
-        await ctx.send("That is not a role you can add with this command!")
+        sendMes = "That is not a role you can add with this command!"
     elif roleAdd not in member.roles:
         await member.add_roles(roleAdd)
-        await ctx.send(
-            "{} is granted the role: '{}'!".format(nON(member), roleAdd)
-        )
+        sendMes = "{} is granted the role: '{}'!".format(nON(member), roleAdd)
     else:
         await member.remove_roles(roleAdd)
-        await ctx.send(
-            "{} no longer has the role: '{}'!".format(nON(member), roleAdd)
+        sendMes = "{} no longer has the role: '{}'!".format(
+            nON(member), roleAdd
         )
+    await ctx.send(sendMes)
+    logP.debug("command role resolution: " + sendMes)
 
 
 @bot.command(
@@ -301,11 +289,12 @@ async def role(ctx: commands.Context, *, roleToAdd: str = freeRoles[0]):
 )
 @commands.has_any_role(MANAGER)
 async def restart(ctx: commands.Context, host: str = HOSTNAME):
-    debug("cmd:", "restart", "ctx:", ctx, "host:", host)
+    logP.debug("Command restart called for host: {}".format(host))
     if host != HOSTNAME:
         return
     text = "Restarting bot on {}...".format(HOSTNAME)
     await dupeMes(ctx, text)
+    logP.warning("Bot is now restarting")
     restart_bot()
 
 
@@ -316,7 +305,7 @@ async def restart(ctx: commands.Context, host: str = HOSTNAME):
 )
 @commands.has_any_role(MANAGER)
 async def upload(ctx: commands.Context, host: str = HOSTNAME):
-    debug("cmd:", "upload", "ctx:", ctx, "host:", host)
+    logP.debug("Command upload called for host: {}".format(host))
     if host != HOSTNAME:
         return
     currTime = time.localtime()
@@ -328,8 +317,8 @@ async def upload(ctx: commands.Context, host: str = HOSTNAME):
         currTime.tm_min,
         currTime.tm_sec,
     )
-    debug("currTime", currTime)
-    debug("currTimeStr", currTimeStr)
+    logP.debug("currTime: {}".format(currTime))
+    logP.debug("currTimeStr: " + currTimeStr)
     nameStamp = "{}_{}".format(
         SAVEFILE,
         currTimeStr,
@@ -338,6 +327,7 @@ async def upload(ctx: commands.Context, host: str = HOSTNAME):
         "File {} from {}".format(SAVEFILE, HOSTNAME),
         file=discord.File(SAVEFILE, filename=nameStamp),
     )
+    logP.debug("command upload completed")
 
 
 @bot.command(
@@ -347,12 +337,13 @@ async def upload(ctx: commands.Context, host: str = HOSTNAME):
 )
 @commands.is_owner()
 async def end(ctx: commands.Context, host: str = HOSTNAME):
-    debug("cmd:", "end", "ctx:", ctx, "host:", host)
+    logP.debug("Command end called for host: {}".format(host))
     if host != HOSTNAME:
         return
     text = "Bot on {} is terminating".format(HOSTNAME)
     await dupeMes(ctx, text)
     await bot.close()
+    logP.warning("Bot is now offline and terminating")
     sys.exit()
 
 
@@ -364,15 +355,18 @@ async def end(ctx: commands.Context, host: str = HOSTNAME):
 )
 @commands.is_owner()
 async def update(ctx: commands.Context, host: str = HOSTNAME):
-    debug("cmd:", "update", "ctx:", ctx, "host:", host)
+    logP.debug("Command update called for host: {}".format(host))
     if host != HOSTNAME:
         return
     text1 = "Update starting on {}".format(HOSTNAME)
     await dupeMes(ctx, text1)
+    logP.warning(text1)
     git_dir = "/.git/ReSub.SYS"
     g = git.cmd.Git(git_dir)
     text2 = "{}\n{}".format(HOSTNAME, g.pull())
     await dupeMes(ctx, text2)
+    logP.warning(text1)
+    logP.info("Command update completed")
 
 
 @bot.command(
@@ -383,12 +377,13 @@ async def update(ctx: commands.Context, host: str = HOSTNAME):
 )
 @commands.is_owner()
 async def pause(ctx: commands.Context, host: str = HOSTNAME):
-    debug("cmd:", "pause", "ctx:", ctx, "host:", host)
+    logP.debug("Command pause called for host: {}".format(host))
     if host != HOSTNAME:
         return
     global asleep
     asleep = True
     await dupeMes(ctx, "Bot is now asleep on {}".format(HOSTNAME))
+    logP.info("Bot is now paused")
 
 
 @bot.command(
@@ -443,39 +438,50 @@ async def run(ctx: commands.Context):
 @bot.command()
 @commands.has_any_role(MANAGER)
 async def testAll(ctx: commands.Context, host: str = HOSTNAME):
-    debug("cmd:", "debug", "ctx:", ctx, "host:", host)
+    logP.debug("command testAll called for host: {}".format(host))
     if host != HOSTNAME:
         return
     host = ""
+    logP.info("Command testAll starting")
     for cmd in bot.commands:
-        await ctx.send("Testing command **{}**.".format(cmd.name))
+        mes = "Testing command **{}**.".format(cmd.name)
+        await ctx.send(mes)
+        logP.debug(mes)
         param = cmd.clean_params
-        await ctx.send("clean params: {}".format(param))
+        mes = "clean params: {}".format(param)
+        await ctx.send(mes)
+        logP.debug(mes)
         if "host" in param.keys():
+            logP.debug("Skipping command")
             continue
         if cmd.name in ["hhelp", "help"]:
+            logP.debug("Skipping command")
             continue
         if cmd.can_run:
+            logP.debug("Running command")
             await cmd.__call__(ctx)
     await ctx.send("Testing Done")
+    logP.info("Command testAll finished")
 
 
 @bot.command(aliases=["tog"])
 @commands.is_owner()
 async def toggle(ctx: commands.Context, mes="t", host=HOSTNAME):
+    logP.debug("command toggle called for host: {}".format(host))
     if host != HOSTNAME:
         return
-
     getComm = bot.get_command(mes)
     if ctx.command == getComm:
         await dupeMes(ctx, "Cannot disable this command.")
     elif getComm:
         getComm.enabled = not getComm.enabled
         ternary = "enabled" if getComm.enabled else "disabled"
+        message = "Command '{}' {} on {}.".format(getComm.name, ternary, host)
         await dupeMes(
             ctx,
-            "Command '{}' {} on {}.".format(getComm.name, ternary, host),
+            message,
         )
+        logP.info(message)
     else:
         await dupeMes(ctx, "Command '{}' was not found.".format(mes))
 
@@ -513,14 +519,6 @@ async def start(self, ctx):
     """
 
 
-# dirty little function to avoid 'if user.nick else user.name'
-def nON(user: discord.Member) -> str:
-    if user.nick:
-        return user.nick
-    else:
-        return user.name
-
-
 def restart_bot() -> None:
     os.execv(sys.executable, ["python"] + sys.argv)
 
@@ -540,6 +538,7 @@ if __name__ == "__main__":
     # discord.py cog importing
     for filename in cogList:
         if filename.endswith(".py"):
+            logP.debug("Loading Cog: {}".format(filename))
             bot.load_extension(f"{filename[:-3]}")
 
         # general exception for excluding __pycache__
@@ -550,4 +549,7 @@ if __name__ == "__main__":
             print(f"Unable to load {filename[:-3]}")
 
     # and to finish. run the bot
-    bot.run(TOKEN, reconnect=True)
+    if runBot:
+        logP.info("Bot connection starting....")
+        bot.run(TOKEN, reconnect=True)
+logP.critical("Bot has reached end of file")
