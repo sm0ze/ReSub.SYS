@@ -41,7 +41,7 @@ from sharedVars import (
 
 logP = log.get_logger(__name__)
 
-COMON = False
+COMON = True
 
 SUPEROLE = "Supe"
 PERMROLES = ["Supe"]  # guild role(s) for using these bot commands
