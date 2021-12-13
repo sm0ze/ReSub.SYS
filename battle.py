@@ -457,8 +457,8 @@ class battler:
             ).format(peep.n, peep.recSta(extraSta))
         elif peep.weak:
             mes += peep.beWeak(False)
-        if peep.defending:
-            mes += peep.defend()
+        # if peep.defending:
+        #     mes += peep.defend()
 
         if not move:
             move = self.moveSelf(peep, attPeep)

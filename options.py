@@ -378,7 +378,7 @@ class Options(commands.Cog):
         await ctx.message.delete(delay=1)
         return
 
-    @commands.command(enabled=True, aliases=["gen"])
+    @commands.command(enabled=COMON, aliases=["gen"])
     async def generate(self, ctx: commands.Context, val: int = 5, typ=""):
         if val < 0:
             await ctx.send("A positive integer is required")
@@ -461,7 +461,12 @@ class Options(commands.Cog):
         # check to ensure user has enough enhancement points to
         # get requested additions
         if pointTot[0] < userWants[0]:
-            await ctx.send(
+            userWantsIni = genBuild(
+                pointTot[0], highestEhn(userSpent[0][2]), userSpent[0][2]
+            )
+            userWants = enm.funcBuild(userWantsIni)
+            userWantsBuild = userWants[2]
+            """await ctx.send(
                 (
                     "{} needs {} available enhancements for {} but only has {}"
                 ).format(
@@ -471,7 +476,7 @@ class Options(commands.Cog):
                     pointTot[0],
                 )
             )
-            return
+            return"""
 
         # the guild role names grabbed from shorthand to add to user
         addList = [
@@ -1121,15 +1126,11 @@ class Options(commands.Cog):
             name="{} Move".format(bat.n1),
             value="Does Nothing.",
         )
-        mes.add_field(
-            inline=False,
-            name="{} Move".format(bat.n2),
-            value="Does Nothing.",
-        )
         totRounds = int(0)
         while not winner:
             totRounds += 1
             Who2Move = bat.nextRound()
+            iniMove = ""
             for peep in range(2):
                 move = None
                 play = Who2Move[peep]
@@ -1139,6 +1140,9 @@ class Options(commands.Cog):
                     notPlay = bat.p1
 
                 if isinstance(play, player):
+
+                    if play.defending:
+                        iniMove = play.defend()
                     if play.play:
                         move = await playerDuelInput(
                             self, ctx, totRounds, play, notPlay, bat
@@ -1168,18 +1172,29 @@ class Options(commands.Cog):
                 name="{}".format(bat.n2),
                 value="{}{}".format(p2Stats, p2Adp),
             )
-            mes.set_field_at(
-                2,
-                inline=False,
-                name="{} Move #{} ".format(bat.n1, bat.p1.t),
-                value="{}".format(moves[0]),
-            )
-            mes.set_field_at(
-                3,
-                inline=False,
-                name="{} Move #{} ".format(bat.n2, bat.p2.t),
-                value="{}".format(moves[1]),
-            )
+            if bat.p1 in Who2Move:
+                moveTxt = iniMove + moves[0]
+                mes.set_field_at(
+                    2,
+                    inline=False,
+                    name="{} Move #{} ".format(bat.n1, bat.p1.t),
+                    value="{}".format(moveTxt),
+                )
+            elif bat.p2 in Who2Move:
+                moveTxt = iniMove + moves[1]
+                mes.set_field_at(
+                    2,
+                    inline=False,
+                    name="{} Move #{} ".format(bat.n2, bat.p2.t),
+                    value="{}".format(moveTxt),
+                )
+            else:
+                mes.set_field_at(
+                    2,
+                    inline=False,
+                    name="No moves",
+                    value="At all.",
+                )
             winner = moves[2]
             mes.description = "{}/{} Total Rounds".format(
                 totRounds, ROUNDLIMIT
@@ -1193,7 +1208,11 @@ class Options(commands.Cog):
 
         mes.clear_fields()
         mes.add_field(
-            name="Winner is {} after {} moves.".format(winner, totRounds),
+            name="Winner is {} after {} move{}.".format(
+                winner,
+                totRounds,
+                pluralInt(2 if len(str(totRounds)) > 3 else totRounds),
+            ),
             value="Prize to be implemented.",
         )
         if not winner == "exhaustion":
@@ -1824,7 +1843,7 @@ async def playerDuelInput(
     return desperate, typeMove, moveString
 
 
-def genBuild(val: int = 0, typ: str = ""):
+def genBuild(val: int = 0, typ: str = "", iniBuild: list = []):
     build = []
     buildFinal = []
     pickList = [x for x in leader.keys() if leader[x] not in restrictedList]
@@ -1837,9 +1856,12 @@ def genBuild(val: int = 0, typ: str = ""):
 
     checkInt = 1
     building = True
-    searchBuild = [typ + str(checkInt)]
+    if not iniBuild:
+        searchBuild = [typ + str(checkInt)]
+    else:
+        searchBuild = iniBuild.copy()
     nextLargest = 0
-    secondLoop = False
+    secondLoop = 0
     prevBuild = []
     maxTyp = []
 
@@ -1891,16 +1913,16 @@ def genBuild(val: int = 0, typ: str = ""):
             nextLargest += 1
             if nextLargest > len(want[2]) - 1:
                 nextLargest = 0
-                if not secondLoop:
-                    secondLoop = True
+                if secondLoop < 5:
+                    secondLoop += 1
                 else:
                     build = enm.funcBuild(prevBuild)
                     build = build[2]
                     building = False
-            name = want[2][nextLargest][1]
-            rank = want[2][nextLargest][0]
+            name = want[2][-nextLargest][1]
+            rank = want[2][-nextLargest][0]
             shrt = [x for x in leader.keys() if leader[x] == name][0]
-            searchBuild = prevBuild
+            searchBuild = prevBuild.copy()
             searchBuild.append(shrt + str(rank))
 
     for group in build:

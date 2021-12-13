@@ -184,7 +184,7 @@ async def on_message(message: discord.Message):
     await bot.process_commands(message)
 
 
-@tasks.loop(seconds=150)
+@tasks.loop(seconds=300)
 # bot's discord rich presence updater
 async def update_presence():
     guilds = bot.guilds
@@ -201,6 +201,7 @@ async def update_presence():
         )
     )
     logP.debug("Rich presence set to: " + nameSet)
+    return
 
 
 @bot.command(
