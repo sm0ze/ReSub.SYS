@@ -393,8 +393,8 @@ class Options(commands.Cog):
         build = genBuild(val, typ)
         logP.debug("For {} points build {} was generated".format(val, build))
         mes = discord.Embed(title="Generated Build")
-
         if build:
+            costBuild = enm.funcBuild(build)
             if not typ:
                 top = leader[highestEhn(build, False)]
             else:
@@ -404,7 +404,7 @@ class Options(commands.Cog):
             for x in buildNames:
                 buildStr += "{} \n".format(x)
             mes.add_field(
-                name="{} build for {} points".format(top, val),
+                name="{} build for {} points".format(top, costBuild[0]),
                 value="{}".format(buildStr),
             )
             await ctx.send(embed=mes)
