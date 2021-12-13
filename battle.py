@@ -389,7 +389,7 @@ class battler:
         if p1Swi >= self.totSwi:
             p1Swi -= self.totSwi
             Who2Move[0] = self.p1
-        if p2Swi >= self.totSwi:
+        elif p2Swi >= self.totSwi:
             p2Swi -= self.totSwi
             Who2Move[1] = self.p2
 
@@ -563,7 +563,7 @@ class battler:
             dAtk = Attack.ment + peep.ma
             critDesp = Attack.ment + 2 * peep.ma
 
-        elif Attack.hitChance <= 50:
+        if Attack.hitChance <= 50:
             # lowhit func
             logP.debug("lowHit: {}".format(Attack.hitChance))
             if oneHit and Attack.hitChance + 5 * fAA > 50:
