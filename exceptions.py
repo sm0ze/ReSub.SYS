@@ -4,3 +4,7 @@ class Error(Exception):
 
 class notSupeDuel(Error):
     pass
+
+
+class notNPC(Error):
+    pass

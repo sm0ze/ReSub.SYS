@@ -344,14 +344,12 @@ class player:
 
 
 class battler:
-    def __init__(
-        self, bot, member1: discord.Member, member2: discord.Member
-    ) -> None:
+    def __init__(self, bot, member1: discord.Member, member2) -> None:
         self.p1 = player(member1, bot)
-        self.n1 = nON(member1)
+        self.n1 = self.p1.n
 
         self.p2 = player(member2, bot)
-        self.n2 = nON(member2)
+        self.n2 = self.p2.n
 
         self.totSwi = int(baseDict["SWITOT"])
 

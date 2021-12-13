@@ -4,7 +4,7 @@ import discord
 from discord.ext import commands
 
 from enhancements import dupeError, getSendLoc
-from exceptions import notSupeDuel
+from exceptions import notNPC, notSupeDuel
 from sharedVars import ERRORTHREAD
 
 
@@ -41,7 +41,7 @@ class ErrorHandler(commands.Cog):
             mes = discord.Embed(
                 title="KeyError",
                 description="{} is not a recognised option".format(
-                    error.__cause__.args
+                    error.__cause__.args[0]
                 ),
             )
         elif isinstance(error, commands.CommandOnCooldown):
@@ -67,6 +67,12 @@ class ErrorHandler(commands.Cog):
                 dupeEr = False
                 mes = discord.Embed(
                     title="Civilian", description="You can't fight a civilian!"
+                )
+            if isinstance(error.__cause__, notNPC):
+                dupeEr = False
+                mes = discord.Embed(
+                    title="Non Player Character",
+                    description=error.__cause__.args[0],
                 )
 
         if not mes:

@@ -598,4 +598,27 @@ for tup in frame.itertuples():
         "Adding Base: {} of {}, to dict".format(tup.Constant, tup.BaseStat)
     )
 
+npcDict = {}
+npcSheet = "NPC"
+npcToken = "1GAs0JctnNcWHTiCb7YPZk-9CtEd53RtDKb5VLPE_PbM"
+npcUrl = (
+    "http://docs.google.com/spreadsheets/d/{}/gviz/" "tq?tqx=out:csv&sheet={}"
+).format(npcToken, npcSheet)
+
+try:
+    frame = None
+    frame = pd.read_csv(npcUrl)
+except Exception as e:
+    print(e)
+
+for tup in frame.itertuples():
+    npcDict[str(tup.ID)] = {}
+    for ite in tup._fields:
+        loc = str(ite).lower() if str(ite) != str("_18") else "4th"
+        if str(getattr(tup, ite)) == str("nan"):
+            continue
+        npcDict[str(tup.ID)][loc] = getattr(tup, ite)
+    logP.debug("Added NPC: {}".format(npcDict[str(tup.ID)]))
+
+
 logP.info("Finished csv download and input.")
