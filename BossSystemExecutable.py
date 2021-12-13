@@ -10,7 +10,7 @@ import discord
 import git
 from discord.ext import commands, tasks
 from discord.utils import get
-
+from pretty_help import DefaultMenu, PrettyHelp
 import log
 from enhancements import nON
 from power import cmdInf, freeRoles, powerTypes
@@ -46,6 +46,22 @@ asleep = False
 # need all intents to properly manage user roles and fetch MEE6 level
 INTENTS = discord.Intents.all()
 
+
+# ":discord:743511195197374563" is a custom discord emoji format.
+# Adjust to match your own custom emoji.
+menu = DefaultMenu(
+    page_left="⬅️",
+    page_right="➡️",
+    remove="⏹️",
+    active_time=60,
+)
+
+# Custom ending note
+ending_note = "{ctx.bot.user.name}"
+
+bot = commands.Bot(command_prefix="!")
+
+
 # DefaultHelpCommand along with a no_category rename
 HELPCOMMAND = commands.DefaultHelpCommand(no_category="\nBasic Options")
 
@@ -53,7 +69,13 @@ bot = commands.Bot(
     command_prefix=CMDPREFIX,
     case_insensitive=True,
     intents=INTENTS,
-    help_command=HELPCOMMAND,
+)
+
+bot.help_command = PrettyHelp(
+    menu=menu,
+    ending_note=ending_note,
+    delete_after_timeout=True,
+    no_category="Basic Options",
 )
 
 logP.info("Bot initialised")
@@ -557,6 +579,5 @@ if __name__ == "__main__":
     # and to finish. run the bot
     if runBot:
         logP.info("Bot connection starting....")
-        bot.remove_command("help")
         bot.run(TOKEN, reconnect=True)
 logP.critical("Bot has reached end of file")
