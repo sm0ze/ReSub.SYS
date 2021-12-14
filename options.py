@@ -547,7 +547,7 @@ class Options(commands.Cog):
         # debug("TO CUT")
         # await cut(ctx, [user])
         if not sendMes:
-            await ctx.send(("You cannot add enhancements with that selsction"))
+            await ctx.send(("You cannot add enhancements with that selection"))
         else:
             await ctx.send(sendMes)
         return

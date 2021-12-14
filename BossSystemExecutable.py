@@ -332,7 +332,9 @@ async def restart(ctx: commands.Context, host: str = HOSTNAME):
     description=cmdInf["upload"]["description"],
 )
 @commands.has_any_role(MANAGER)
-async def upload(ctx: commands.Context, host: str = HOSTNAME):
+async def upload(
+    ctx: commands.Context, logg: typing.Optional[int] = 0, host: str = HOSTNAME
+):
     logP.debug("Command upload called for host: {}".format(host))
     if host != HOSTNAME:
         return
@@ -351,10 +353,16 @@ async def upload(ctx: commands.Context, host: str = HOSTNAME):
         SAVEFILE,
         currTimeStr,
     )
-    await ctx.send(
-        "File {} from {}".format(SAVEFILE, HOSTNAME),
-        file=discord.File(SAVEFILE, filename=nameStamp),
-    )
+    if logg:
+        await ctx.send(
+            "File {} from {} at: {}".format(SAVEFILE, HOSTNAME, currTimeStr),
+            file=discord.File(log.LOG_FILE),
+        )
+    else:
+        await ctx.send(
+            "File {} from {}".format(SAVEFILE, HOSTNAME),
+            file=discord.File(SAVEFILE, filename=nameStamp),
+        )
     logP.debug("command upload completed")
 
 
