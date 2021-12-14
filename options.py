@@ -426,17 +426,26 @@ class Options(commands.Cog):
         userEnhancements = userSpent[0][2]
         userHas = enm.funcBuild(userEnhancements)
         userHasBuild = userHas[2]
+        specified = (
+            False
+            if not typeRank
+            else False
+            if typeRank in leader.keys()
+            else True
+        )
 
+        pointTot = await count(user, 1, 1)
         # if author did not provide an enhancement to add, return
         if not typeRank:
             buildList = [highestEhn(userEnhancements)]
-            typeRank = buildList
+            typeRank = buildList[0]
         # otherwise split the arglist into a readable shorthand enhancment list
         else:
             fixArg = typeRank.replace(" ", ",")
             fixArg = fixArg.replace(";", ",")
             buildList = [x.strip() for x in fixArg.split(",") if x.strip()]
-            logP.debug(buildList)
+
+        logP.debug(buildList)
 
         buildList, userEnhancements = checkAddBuild(
             buildList, userEnhancements
@@ -447,7 +456,7 @@ class Options(commands.Cog):
         userWants = enm.funcBuild(userEnhancements)
         userWantsCost = userWants[0]
         userWantsBuild = userWants[2]
-        pointTot = await count(user, 1, 1)
+
         logP.debug(
             "{} with point total {} has {} {} and wants {} {}".format(
                 user,
@@ -462,22 +471,21 @@ class Options(commands.Cog):
         # check to ensure user has enough enhancement points to
         # get requested additions
         if pointTot[0] < userWants[0]:
-            userWantsIni = genBuild(
-                pointTot[0], highestEhn(userSpent[0][2]), userSpent[0][2]
-            )
+            if specified:
+                await ctx.send(
+                    (
+                        "{} needs {} available enhancements for {} but only has {}"
+                    ).format(
+                        enm.nON(user),
+                        userWantsCost,
+                        [power[x]["Name"] for x in buildList],
+                        pointTot[0],
+                    )
+                )
+                return
+            userWantsIni = genBuild(pointTot[0], typeRank, userSpent[0][2])
             userWants = enm.funcBuild(userWantsIni)
             userWantsBuild = userWants[2]
-            """await ctx.send(
-                (
-                    "{} needs {} available enhancements for {} but only has {}"
-                ).format(
-                    enm.nON(user),
-                    userWantsCost,
-                    [power[x]["Name"] for x in buildList],
-                    pointTot[0],
-                )
-            )
-            return"""
 
         # the guild role names grabbed from shorthand to add to user
         addList = [
@@ -1089,7 +1097,7 @@ class Options(commands.Cog):
             elif str(SUPEROLE) not in [x.name for x in opponent.roles]:
                 raise notSupeDuel("{} is not a {}.".format(opponent, SUPEROLE))
             bat = battler(self.bot, ctx.author, opponent)
-            await bat.findPlayers(dontAsk)
+
         else:
             npcPlayer = [
                 npcDict[x]
@@ -1097,11 +1105,14 @@ class Options(commands.Cog):
                 if str(opponent) == npcDict[x]["name"] or str(opponent) == x
             ]
             if npcPlayer:
+                picVar = "avatar"
                 npcPlayer = npcPlayer[0]
+                if picVar not in npcPlayer.keys():
+                    npcPlayer[picVar] = self.bot.user.display_avatar
                 npcEnh = [
                     "{}{}".format(x, npcPlayer[x])
                     for x in npcPlayer.keys()
-                    if x not in ["name", "id", "index"]
+                    if x not in ["name", "id", "index", picVar]
                 ]
                 npcEnhTrim = [x for x in npcEnh if int(x[3:])]
                 npcWant = enm.funcBuild(npcEnhTrim)
@@ -1109,7 +1120,7 @@ class Options(commands.Cog):
                 for x in npcWant[1]:
                     npcBuildStr += "{}\n".format(x)
                 logP.debug("Found npc: {}".format(npcPlayer))
-                await ctx.send(
+                """await ctx.send(
                     (
                         "If sm0ze could figure out how to code this, you "
                         "would be fighting {} with the enhancements: \n{}"
@@ -1117,12 +1128,16 @@ class Options(commands.Cog):
                         npcPlayer["name"],
                         npcBuildStr,
                     )
+                )"""
+
+                bat = battler(
+                    self.bot,
+                    ctx.author,
+                    [npcPlayer["name"], npcPlayer[picVar], npcEnhTrim],
                 )
-                return
-                bat = battler(self.bot, ctx.author, npcPlayer)
             else:
                 raise notNPC("{} is not an NPC".format(opponent))
-
+        await bat.findPlayers(dontAsk, [bat.p1, bat.p2])
         await startDuel(self, ctx, bat, opponent)
 
     @commands.command(enabled=COMON)
@@ -1709,14 +1724,7 @@ async def playerDuelInput(
                 active = False
                 break
             for move in moveList:
-                logP.debug(
-                    [
-                        str(moveOpt[move]["reaction"]),
-                        "==",
-                        str(reaction.emoji),
-                        str(reaction.emoji) == str(moveOpt[move]["reaction"]),
-                    ]
-                )
+
                 if str(reaction.emoji) == str(moveOpt[move]["reaction"]):
                     logP.debug([str(reaction.emoji), "found"])
                     chosenMove = True
@@ -2034,13 +2042,7 @@ async def startDuel(
         value="Prize to be implemented.",
     )
     if not winner == "exhaustion":
-        mes.set_thumbnail(
-            url=(
-                bat.p1.p.display_avatar
-                if winner == bat.n1
-                else bat.p2.p.display_avatar
-            )
-        )
+        mes.set_thumbnail(url=(bat.p1.pic if winner == bat.n1 else bat.p2.pic))
     await bat.echoMes(mes, thrd)
     await bat.echoMes("<#{}>".format(ctx.channel.id), thrd, False)
     await thrd.edit(archived=1)

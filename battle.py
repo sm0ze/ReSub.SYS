@@ -36,26 +36,44 @@ adpMes = """
 Hit%: PA/MA
 {2}%: {0:0.2g}/{1:0.2g}"""
 
-DELIM = 6.66
+DELIM = 16
 
 rendHP = {
     "empt": "░",
-    "part": "▒",
-    "full": "▓",
+    "partLo": "▒",
+    "partHi": "▓",
+    "full": "█",
 }
 
 
 class player:
-    def __init__(self, member: discord.Member, bot) -> None:
+    def __init__(
+        self,
+        member,
+        bot,
+    ) -> None:
         self.bot = bot
-        self.p = member
-        self.n = nON(member)
+
+        if isinstance(member, discord.Member):
+            self.p = member
+            self.n = nON(member)
+            self.sG = spent([member])
+            self.bL = self.sG[0][2]
+            self.npc = False
+            self.pic = self.p.display_avatar
+        else:
+            self.p = None
+            self.n = member[0]
+            self.sG = None
+            self.bL = member[-1]
+            self.npc = True
+            self.pic = member[1]
+
+        self.fB = funcBuild(self.bL)
+        self.stats = self.fB[2]
+
         self.t = int(0)
         self.play = False
-
-        self.sG = spent([member])
-        self.fB = funcBuild(self.sG[0][2])
-        self.stats = self.fB[2]
 
         self.iniCalc()
 
@@ -95,7 +113,7 @@ class player:
 
     def iniCalc(self) -> None:
         statDict = {}
-        for enhan in self.sG[0][2]:
+        for enhan in self.bL:
             logP.debug("enhan: {}".format(enhan))
             name = enhan[:3]
             rank = int(power[enhan]["Rank"])
@@ -193,19 +211,31 @@ class player:
     def recPer(self):
         return round((self.rec / self.totHP) * 100)
 
-    def hpRender(self, hpPerBlock: float = DELIM):
+    def hpRender(self, blocks: int = DELIM):
         ret = ""
-        blocks = round(100 / hpPerBlock)
-        currPer = self.hpPer()
-        leftover = currPer % hpPerBlock
+        unchangedHP = self.hpPer()
+        hpPerBlock = round(100 / blocks, 3)
+        currPer = unchangedHP if unchangedHP > 0 else 0
+        leftover = float(currPer) % hpPerBlock
         fullBlocks = round(currPer / hpPerBlock)
-        isPartLeft = leftover >= 0.5 * hpPerBlock
+        isPartLeft = bool(leftover)
         emptyBlocks = blocks - fullBlocks
+        if isPartLeft:
+            emptyBlocks -= 1
+
+        logP.debug(
+            (
+                "Hp render for {} is: [Blocks: {}, full: {}, "
+                "part: {}, empty: {}]"
+            ).format(self.n, blocks, fullBlocks, isPartLeft, emptyBlocks)
+        )
 
         ret += rendHP["full"] * fullBlocks
         if isPartLeft:
-            emptyBlocks -= 1
-            ret += rendHP["part"]
+            if leftover >= 0.5 * hpPerBlock:
+                ret += rendHP["partHi"]
+            else:
+                ret += rendHP["partLo"]
         ret += rendHP["empt"] * emptyBlocks
 
         return ret
@@ -278,13 +308,14 @@ class player:
 
     async def ask(
         self,
-        opp: str = "ReSub.SYS",
     ):
-        if self.p.bot:
+        if self.npc:
+            return
+        elif self.p.bot:
             return
 
         reactionList = ["✅", "❌"]
-        mes = discord.Embed(title="Do you wish to play against {}".format(opp))
+        mes = discord.Embed(title="Do you wish to play a duel?")
         msg = await self.p.send(embed=mes)
         for reac in reactionList:
             await msg.add_reaction(reac)
@@ -369,11 +400,15 @@ class battler:
             if toThrd:
                 await thrd.send(mes)
 
-    async def findPlayers(self, dontAsk):
-        if not self.p1.p.bot:
-            await self.p1.ask(self.p2.n)
-        if not self.p2.p.bot and not dontAsk:
-            await self.p2.ask(self.p1.n)
+    async def findPlayers(self, dontAsk, playList: list[player] = None):
+        if not playList:
+            playList = [self.p1, self.p2]
+
+        for peep in playList:
+            if not peep.npc:
+                if not peep.p.bot:
+                    if not dontAsk == 1:
+                        await peep.ask()
 
     def nextRound(self) -> list[typing.Union[player, None]]:
         p1Swi = self.p1.swiNow
@@ -852,7 +887,7 @@ class battler:
         return adpMes.format(*adaptedStats)
 
     def isPlay(self, peep: player):
-        return "Playing" if peep.play else "Bot"
+        return "Playing" if peep.play else "NPC" if peep.npc else "Bot"
 
 
 def attackCalc(

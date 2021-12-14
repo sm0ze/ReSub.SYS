@@ -514,6 +514,11 @@ async def toggle(ctx: commands.Context, mes="t", host=HOSTNAME):
         await dupeMes(ctx, "Command '{}' was not found.".format(mes))
 
 
+@bot.command()
+async def geturl(ctx: commands.Context, emoji: discord.Emoji):
+    await ctx.send(emoji.url)
+
+
 """
 @client.event
 async def on_message(self, message):

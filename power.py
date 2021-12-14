@@ -7,6 +7,10 @@ import log
 
 logP = log.get_logger(__name__)
 
+urltoAdd = (
+    "https://docs.google.com/spreadsheets/d/{}/gviz/tq?tqx=out:csv&sheet={}"
+)
+
 statsheetNom = [
     ["Requirements", "1JIJjDzFjtuIU2k0jk1aHdMr2oErD_ySoFm7-iFEBOV0"]
 ]
@@ -443,10 +447,7 @@ sheet_names = [
 for sheetL in sheet_names:
     urlToken = sheetL[1]
     sheet = sheetL[0]
-    url = (
-        "https://docs.google.com/spreadsheets/d/{}/gviz/tq?tqx="
-        "out:csv&sheet={}"
-    ).format(urlToken, sheet)
+    url = urltoAdd.format(urlToken, sheet)
     logP.debug("At URL: {}".format(url))
     try:
         frame = None
@@ -467,10 +468,7 @@ for sheetL in sheet_names:
 for statsheet in statsheetNom:
     statUrlID = statsheet[1]
     statsheetName = statsheet[0]
-    statUrl = (
-        "https://docs.google.com/spreadsheets/d/{}/gviz/tq?tqx="
-        "out:csv&sheet={}"
-    ).format(statUrlID, statsheetName)
+    statUrl = urltoAdd.format(statUrlID, statsheetName)
 
     logP.debug("At URL: {}".format(statUrl))
     try:
@@ -527,19 +525,11 @@ replaceName = "BotReplace"
 
 baseName = "BotBase"
 
-urlStats = (
-    "https://docs.google.com/spreadsheets/d/{}/gviz/tq?tqx=out:csv&sheet={}"
-).format(statsToken, statsName)
-urlBonus = (
-    "https://docs.google.com/spreadsheets/d/{}/gviz/tq?tqx=out:csv&sheet={}"
-).format(statsToken, bonusName)
-urlReplace = (
-    "https://docs.google.com/spreadsheets/d/{}/gviz/tq?tqx=out:csv&sheet={}"
-).format(statsToken, replaceName)
+urlStats = urltoAdd.format(statsToken, statsName)
+urlBonus = urltoAdd.format(statsToken, bonusName)
+urlReplace = urltoAdd.format(statsToken, replaceName)
 
-urlBase = (
-    "http://docs.google.com/spreadsheets/d/{}/gviz/tq?tqx=out:csv&sheet={}"
-).format(statsToken, baseName)
+urlBase = urltoAdd.format(statsToken, baseName)
 
 statCalcDict = {}
 bonusDict = {}
@@ -601,9 +591,7 @@ for tup in frame.itertuples():
 npcDict = {}
 npcSheet = "NPC"
 npcToken = "1GAs0JctnNcWHTiCb7YPZk-9CtEd53RtDKb5VLPE_PbM"
-npcUrl = (
-    "http://docs.google.com/spreadsheets/d/{}/gviz/" "tq?tqx=out:csv&sheet={}"
-).format(npcToken, npcSheet)
+npcUrl = urltoAdd.format(npcToken, npcSheet)
 
 try:
     frame = None
