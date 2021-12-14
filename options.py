@@ -477,7 +477,8 @@ class Options(commands.Cog):
             if specified or pointTot[0] < userWants[0]:
                 await ctx.send(
                     (
-                        "{} needs {} available enhancements for {} but only has {}"
+                        "{} needs {} available enhancements "
+                        "for {} but only has {}"
                     ).format(
                         enm.nON(user),
                         userWantsCost,
@@ -546,12 +547,7 @@ class Options(commands.Cog):
         # debug("TO CUT")
         # await cut(ctx, [user])
         if not sendMes:
-            await ctx.send(
-                (
-                    "You cannot add enhancements of an equal or lower "
-                    "rank than you already have of that type"
-                )
-            )
+            await ctx.send(("You cannot add enhancements with that selsction"))
         else:
             await ctx.send(sendMes)
         return
@@ -1756,6 +1752,12 @@ def genBuild(val: int = 0, typ: str = "", iniBuild: list = []):
     if not typ:
         typ = random.choice(pickList)
         pickList.remove(typ)
+    elif typ not in leader.keys():
+        if typ[:3] in leader.keys():
+            typ = typ[:3]
+        else:
+            typ = random.choice(pickList)
+            pickList.remove(typ)
 
     logP.debug("Building a build of {} for {}".format(val, typ))
 
