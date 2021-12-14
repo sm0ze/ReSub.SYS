@@ -8,7 +8,7 @@ from collections import namedtuple
 import discord
 
 import log
-from enhancements import funcBuild, nON, spent
+from sharedFuncs import funcBuild, nON, spent
 from power import (
     leader,
     moveOpt,

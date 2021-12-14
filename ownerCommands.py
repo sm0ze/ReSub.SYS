@@ -2,7 +2,7 @@ import sys
 import typing
 from discord.ext import commands
 import git
-from enhancements import dupeMes
+from sharedFuncs import dupeMes
 import log
 from power import cmdInf
 from sharedVars import HOSTNAME

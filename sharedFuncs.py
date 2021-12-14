@@ -1,14 +1,17 @@
-# enhancements.py
+# sharedFuncs.py
 
+import math
 import time
 import typing
 
 import discord
 from discord.ext import commands
+from discord.ext.commands.converter import MemberConverter
+from sqlitedict import SqliteDict
 
 import log
 from power import leader, power
-from sharedVars import HOSTNAME, STARTCHANNEL
+from sharedVars import HOSTNAME, SAVEFILE, STARTCHANNEL, SUPEROLE
 
 logP = log.get_logger(__name__)
 
@@ -328,3 +331,115 @@ async def dupeMes(bot, channel=None, mes: str = None):
             if channel:
                 if not STRCHNL == channel:
                     await channel.send(mes)
+
+
+async def memGrab(
+    self, ctx: commands.Context, memList: str = ""
+) -> list[typing.Union[discord.User, discord.Member]]:
+    logP.debug(
+        "memList: {}\nand mentions: {}".format(memList, ctx.message.mentions)
+    )
+    grabList = []
+    # first check for users mentioned in message
+    if ctx.message.mentions:
+        grabList = ctx.message.mentions
+        logP.debug("Message mentions: {}".format(grabList))
+
+    # else check for users named by command caller
+    elif memList:
+        strMemList = memList.split(", ")
+        logP.debug("split grablist: {}".format(strMemList))
+        for posMem in strMemList:
+            logP.debug(["trying to find: ", posMem])
+            grabMem = await MemberConverter().convert(ctx, posMem)
+            if grabMem:
+                grabList.append(grabMem)
+
+    # else use the command caller themself
+    else:
+        grabList.append(ctx.message.author)
+        logP.debug("Author is: {}".format(grabList))
+    logP.debug("fixed grablist: {}".format(grabList))
+
+    # return: mentioned users || named users || message author
+    return grabList
+
+
+def save(key: int, value: dict, cache_file=SAVEFILE):
+    try:
+        with SqliteDict(cache_file) as mydict:
+            mydict[key] = value  # Using dict[key] to store
+            mydict.commit()  # Need to commit() to actually flush the data
+        logP.debug("saved {} of length: {}".format(key, len(value)))
+    except Exception as ex:
+        logP.warning(["Error during storing data (Possibly unsupported):", ex])
+
+
+def load(key: int, cache_file=SAVEFILE) -> dict:
+    try:
+        with SqliteDict(cache_file) as mydict:
+            # No need to use commit(), since we are only loading data!
+            value = mydict[key]
+        logP.debug("Loaded with key {} length: {}".format(key, len(value)))
+        return value
+    except Exception as ex:
+        logP.warning(["Error during loading data:", ex])
+
+
+def lvlEqu(givVar: float = 0, inv=0) -> float:
+    if inv:
+        calVar = (20 * math.pow(givVar, 2)) / 1.25
+        logP.debug(
+            "{:0.2g} GDV is equivalent to {:,} XP".format(givVar, calVar)
+        )
+    else:
+        calVar = math.sqrt((1.25 * givVar) / 20)
+        logP.debug(
+            "{:,} XP is equivalent to {:0.2g} GDV".format(givVar, calVar)
+        )
+    return round(calVar, 2)
+
+
+def aOrAn(inp: str):
+    logP.debug(["input is: ", inp])
+    ret = "A"
+    if inp[0].lower() in "aeiou":
+        ret = "An"
+    logP.debug(["ret: ", ret])
+    return ret
+
+
+def pluralInt(val: int):
+    rtnStr = ""
+    if not val == 1:
+        rtnStr = "s"
+    return rtnStr
+
+
+def topEnh(ctx: commands.Context, enh: str) -> dict:
+
+    enhNameList = {
+        power[x]["Name"]: 0 for x in power.keys() if enh == power[x]["Type"]
+    }
+    peepDict = {}
+    for peep in ctx.message.author.guild.members:
+        if SUPEROLE not in [x.name for x in peep.roles]:
+            continue
+        for role in peep.roles:
+            if role.name in enhNameList.keys():
+                enhNameList[role.name] += 1
+                if peep not in peepDict.keys():
+                    peepDict[peep] = [
+                        power[x]["Rank"]
+                        for x in power.keys()
+                        if power[x]["Name"] == role.name
+                    ][0]
+                else:
+                    rank = [
+                        power[x]["Rank"]
+                        for x in power.keys()
+                        if power[x]["Name"] == role.name
+                    ][0]
+                    if rank > peepDict[peep]:
+                        peepDict[peep] = rank
+    return peepDict

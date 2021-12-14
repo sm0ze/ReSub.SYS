@@ -6,7 +6,7 @@ import typing
 import discord
 from discord.ext import commands
 from discord.utils import get
-from enhancements import nON
+from sharedFuncs import nON
 import log
 from power import cmdInf, freeRoles
 from sharedVars import HOSTNAME, STARTTIME

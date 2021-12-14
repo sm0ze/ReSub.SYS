@@ -5,7 +5,7 @@ from discord.ext import commands, tasks
 from discord.utils import get
 from pretty_help import DefaultMenu, PrettyHelp
 import log
-from enhancements import dupeMes, nON
+from sharedFuncs import dupeMes, nON
 from power import powerTypes
 from sharedVars import (
     CMDPREFIX,

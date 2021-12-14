@@ -8,12 +8,23 @@ import typing
 import discord
 import tatsu
 from discord.ext import commands, tasks
-from discord.ext.commands import MemberConverter
 from discord.utils import get
 from mee6_py_api import API
-from sqlitedict import SqliteDict
 
-import enhancements as enm
+from sharedFuncs import (
+    funcBuild,
+    load,
+    lvlEqu,
+    memGrab,
+    nON,
+    pluralInt,
+    reqEnd,
+    save,
+    spent,
+    toType,
+    topEnh,
+    trim,
+)
 import log
 from battle import battler, player
 from exceptions import notNPC, notSupeDuel
@@ -39,12 +50,10 @@ from sharedVars import (
     HIDE,
     HOSTNAME,
     LEADLIMIT,
-    LOWESTROLE,
     MANAGER,
     COMMANDSROLES,
     PLAYERTURNWAIT,
     ROUNDLIMIT,
-    SAVEFILE,
     SUPEROLE,
     TASKCD,
     TATSU,
@@ -118,46 +127,6 @@ class roleCommands(
         logP.debug("funcTrim END")
         return
 
-    """@commands.command(
-        hidden=HIDE,
-        brief=cmdInf["trimAll"]["Brief"],
-        description=cmdInf["trimAll"]["Description"],
-    )
-    @commands.has_any_role(MANAGER)
-    # manager command to role trim all users bot has access to
-    async def trimAll(self, ctx: commands.Context):
-        debug("funcTrimAll START")
-
-        memberList = isSuper(self, self.bot.users)
-        debug("\tmemberlist to cut = {}".format([x.name for x in memberList]))
-
-        await cut(ctx, memberList)
-        debug("funcTrimAll END")
-        return"""
-
-    @commands.command(
-        enabled=COMON,
-        hidden=HIDE,
-        brief=cmdInf["roleInf"]["Brief"],
-        description=cmdInf["roleInf"]["Description"],
-    )
-    @commands.has_any_role(MANAGER)
-    # manager command to check if guild has role and messages
-    # some information of the role
-    async def roleInf(self, ctx: commands.Context, *, roleStr: str = SUPEROLE):
-        supeGuildRoles = await orderRole(self, ctx)
-        roleStrId = [x for x in supeGuildRoles if roleStr == x.name]
-        logP.debug("Role string ID is: {}".format(roleStrId[0].id))
-        if roleStrId:
-            roleStrId = roleStrId[0]
-            await ctx.send(
-                (
-                    "{.name} has: \nposition - {.position}"
-                    "\ncolour - {.colour}"
-                ).format(roleStrId, roleStrId, roleStrId)
-            )
-        return
-
     @commands.command(
         enabled=COMON,
         brief=cmdInf["convert"]["Brief"],
@@ -228,7 +197,7 @@ class roleCommands(
             )
         )
         emptMes = discord.Embed(
-            title="Alert, {}!".format(enm.nON(ctx.message.author)),
+            title="Alert, {}!".format(nON(ctx.message.author)),
             description=("A new {} GDV task " "has been assigned.").format(
                 taskType[0]
             ),
@@ -324,7 +293,7 @@ class roleCommands(
 
             if peep[0].id == ctx.message.author.id or taskAdd != -1:
                 emptMes.add_field(
-                    name="{} Earns".format(enm.nON(peep[0])),
+                    name="{} Earns".format(nON(peep[0])),
                     value="{:,} GDV XP\nTotal of {:,} XP".format(
                         taskGrant * peep[1], authInf[peep[0].id]["invXP"][-1]
                     ),
@@ -340,10 +309,10 @@ class roleCommands(
         currEnhP = stateL[0]
         logP.debug(
             "{} has {} available enhancements".format(
-                enm.nON(ctx.message.author), currEnhP
+                nON(ctx.message.author), currEnhP
             )
         )
-        stateG = enm.spent([ctx.message.author])
+        stateG = spent([ctx.message.author])
         currEnh = int(stateG[0][1])
         logP.debug(["and enhancments of number = ", currEnh])
         logP.debug(
@@ -353,7 +322,7 @@ class roleCommands(
         )
         if currEnh < currEnhP:
             val = "{} has {} unspent enhancement point{}.".format(
-                enm.nON(ctx.message.author),
+                nON(ctx.message.author),
                 currEnhP - currEnh,
                 pluralInt(currEnhP - currEnh),
             )
@@ -390,7 +359,7 @@ class roleCommands(
         logP.debug("For {} points build {} was generated".format(val, build))
         mes = discord.Embed(title="Generated Build")
         if build:
-            costBuild = enm.funcBuild(build)
+            costBuild = funcBuild(build)
             if not typ:
                 top = leader[highestEhn(build, False)]
             else:
@@ -417,9 +386,9 @@ class roleCommands(
         # fetch message author and their current enhancement roles
         # as well as the build for those roles
         user = ctx.message.author
-        userSpent = enm.spent([user])
+        userSpent = spent([user])
         userEnhancements = userSpent[0][2]
-        userHas = enm.funcBuild(userEnhancements)
+        userHas = funcBuild(userEnhancements)
         userHasBuild = userHas[2]
         specified = (
             False
@@ -448,7 +417,7 @@ class roleCommands(
 
         # add requested enhancements to current user build
         # then grab the information for this new user build
-        userWants = enm.funcBuild(userEnhancements)
+        userWants = funcBuild(userEnhancements)
         userWantsCost = userWants[0]
         userWantsBuild = userWants[2]
 
@@ -467,7 +436,7 @@ class roleCommands(
         # get requested additions
         if pointTot[0] < userWants[0]:
             userWantsIni = genBuild(pointTot[0], typeRank, userSpent[0][2])
-            userWants = enm.funcBuild(userWantsIni)
+            userWants = funcBuild(userWantsIni)
             userWantsBuild = userWants[2]
             if specified or pointTot[0] < userWants[0]:
                 await ctx.send(
@@ -475,7 +444,7 @@ class roleCommands(
                         "{} needs {} available enhancements "
                         "for {} but only has {}"
                     ).format(
-                        enm.nON(user),
+                        nON(user),
                         userWantsCost,
                         [power[x]["Name"] for x in buildList],
                         pointTot[0],
@@ -485,7 +454,7 @@ class roleCommands(
 
         # the guild role names grabbed from shorthand to add to user
         addList = [
-            power[enm.toType(x[1]) + str(x[0])]["Name"] for x in userWantsBuild
+            power[toType(x[1]) + str(x[0])]["Name"] for x in userWantsBuild
         ]
         logP.debug("Add list = {}".format(addList))
 
@@ -499,7 +468,7 @@ class roleCommands(
         if cantAdd:
             await ctx.send(
                 ("Cannot add enhancements as {} does not have {}").format(
-                    enm.nON(user), cantAdd
+                    nON(user), cantAdd
                 )
             )
             return
@@ -516,7 +485,7 @@ class roleCommands(
             roleId = get(guildRoles, name=role)
             if roleId in user.roles:
                 logP.debug(
-                    "{} already has the role {}".format(enm.nON(user), roleId)
+                    "{} already has the role {}".format(nON(user), roleId)
                 )
                 # sendMes += ("{} already has the role {}\n"
                 #               ).format(nON(user), roleId))
@@ -536,7 +505,7 @@ class roleCommands(
 
             # add requested role to user
             await user.add_roles(roleId)
-            sendMes += "{} now has {}!\n".format(enm.nON(user), roleId)
+            sendMes += "{} now has {}!\n".format(nON(user), roleId)
 
         # trim the user of excess roles
         # debug("TO CUT")
@@ -545,20 +514,6 @@ class roleCommands(
             await ctx.send(("You cannot add enhancements with that selection"))
         else:
             await ctx.send(sendMes)
-        return
-
-    @commands.command(
-        enabled=COMON,
-        hidden=HIDE,
-        brief=cmdInf["moveRoles"]["Brief"],
-        description=cmdInf["moveRoles"]["Description"],
-    )
-    @commands.has_any_role(MANAGER)
-    # manager command to correct role position for roles that
-    # have been created by bot
-    async def moveRoles(self, ctx: commands.Context):
-        managed = await manageRoles(ctx)
-        await ctx.send(embed=managed)
         return
 
     @commands.command(
@@ -578,7 +533,7 @@ class roleCommands(
             return
 
         # fetch points of each SUPEROLE user
-        pointList = enm.spent(supeUsers)
+        pointList = spent(supeUsers)
 
         # return result
         for group in pointList:
@@ -589,7 +544,7 @@ class roleCommands(
                     "{} has {} enhancement{} active out of {} enhancement{} "
                     "available."
                 ).format(
-                    enm.nON(group[0]),
+                    nON(group[0]),
                     group[1],
                     pluralInt(group[1]),
                     pointTot[0],
@@ -666,11 +621,11 @@ class roleCommands(
             fixArg = fixArg.replace(";", ",")
             buildList = [x.strip() for x in fixArg.split(",") if x.strip()]
         else:
-            buildList = enm.spent([mem])[0][2]
+            buildList = spent([mem])[0][2]
         logP.debug("buildList = {}".format(buildList))
 
         # fetch cost and requisite list for build
-        buildTot = enm.funcBuild(buildList)
+        buildTot = funcBuild(buildList)
 
         # return build to command caller
         mes = discord.Embed(
@@ -685,63 +640,8 @@ class roleCommands(
         mes.add_field(
             inline=False,
             name="Required Enhancements",
-            value=enm.reqEnd([buildTot[0], buildTot[2]]),
+            value=reqEnd([buildTot[0], buildTot[2]]),
         )
-        await ctx.send(embed=mes)
-
-    @commands.command(
-        enabled=COMON,
-        brief=cmdInf["average"]["Brief"],
-        description=cmdInf["average"]["Description"],
-    )
-    @commands.has_any_role(MANAGER)
-    async def average(self, ctx: commands.Context):
-        mes = discord.Embed(title="Average Enhancment Points")
-        totSumPeeps = 0
-        totLenPeeps = 0
-        getSupe = [x for x in ctx.guild.roles if str(x.name) == SUPEROLE]
-        if not getSupe:
-            await ctx.send("No users of role: {}".format(SUPEROLE))
-        else:
-            getSupe = getSupe[0]
-        for val in leader.values():
-            peepDict = topEnh(ctx, val)
-
-            sumPeep = sum(peepDict.values())
-            lenPeep = len(peepDict.keys())
-            avPeep = round(sumPeep / len(getSupe.members), 4)
-
-            totSumPeeps += sumPeep
-
-            mes.add_field(
-                name="{}".format(val),
-                value=(
-                    "{} host{} for a total of {} point{}.\n "
-                    "Serverwide average of {}."
-                ).format(
-                    lenPeep,
-                    pluralInt(lenPeep),
-                    sumPeep,
-                    pluralInt(sumPeep),
-                    avPeep,
-                ),
-            )
-        totLenPeeps = len(getSupe.members)
-        totAvPeep = round(totSumPeeps / totLenPeeps, 2)
-        mes.add_field(
-            name=SUPEROLE,
-            value=(
-                "There is a total of {} host{} with a sum of {} "
-                "enhancement point{} spent.\n Serverwide average of {}."
-            ).format(
-                totLenPeeps,
-                pluralInt(totLenPeeps),
-                totSumPeeps,
-                pluralInt(totSumPeeps),
-                totAvPeep,
-            ),
-        )
-        mes.set_footer(text=HOSTNAME, icon_url=self.bot.user.display_avatar)
         await ctx.send(embed=mes)
 
     @commands.command(
@@ -836,7 +736,7 @@ class roleCommands(
             logP.debug("Supe list is of length: {}".format(len(supeList)))
 
             # fetch points of each SUPEROLE user
-            pointList = enm.spent(supeList)
+            pointList = spent(supeList)
 
             # sort list of users with enhancements by
             # number of enhancements; descending
@@ -867,20 +767,20 @@ class roleCommands(
             if not enh:
                 blankMessage.add_field(
                     inline=True,
-                    name="**{}** - {}".format(i, enm.nON(group[0])),
+                    name="**{}** - {}".format(i, nON(group[0])),
                     value="\t{} enhancements".format(group[1]),
                 )
             else:
                 if not enh.lower() in xpKey:
                     blankMessage.add_field(
                         inline=True,
-                        name="**{}** - {}".format(i, enm.nON(group[0])),
+                        name="**{}** - {}".format(i, nON(group[0])),
                         value="\tRank {} {}".format(group[1], enh),
                     )
                 else:
                     blankMessage.add_field(
                         inline=True,
-                        name="**{}** - {}".format(i, enm.nON(group[0])),
+                        name="**{}** - {}".format(i, nON(group[0])),
                         value="\t{:,} {}".format(group[1], enh.upper()),
                     )
             i += 1
@@ -913,56 +813,18 @@ class roleCommands(
     @commands.command(
         enabled=COMON,
         hidden=HIDE,
-        brief=cmdInf["xpAdd"]["Brief"],
-        description=cmdInf["xpAdd"]["Description"],
-    )
-    @commands.has_any_role(MANAGER)
-    async def xpAdd(
-        self,
-        ctx: commands.Context,
-        val: typing.Union[float, int] = 0.0,
-        *,
-        mem: str = "",
-    ):
-        val = round(val, 2)
-        logP.debug("val to add is: {}".format(val))
-        memList = await memGrab(self, ctx, mem)
-        logP.debug("memList is: {}".format(memList))
-        peep = memList[0]
-
-        infGrab = load(peep.guild.id)
-        if not infGrab:
-            infGrab = {}
-        if peep.id not in infGrab.keys():
-            infGrab[peep.id] = {"Name": peep.name, "invXP": [0, 0, 0]}
-        iniVal = infGrab[peep.id]["invXP"][-1]
-        sum = iniVal + val
-        if sum < 0.0:
-            sum = 0.0
-        infGrab[peep.id]["invXP"][-1] = sum
-        save(ctx.message.author.guild.id, infGrab)
-        await ctx.send("Host {}: {} -> {}".format(enm.nON(peep), iniVal, sum))
-
-    @commands.command(
-        enabled=COMON,
-        hidden=HIDE,
         aliases=["x"],
         brief=cmdInf["xpGrab"]["Brief"],
         description=cmdInf["xpGrab"]["Description"],
     )
-    # @commands.has_any_role(MANAGER)
     @commands.cooldown(1, 1, commands.BucketType.default)
     async def xpGrab(self, ctx: commands.Context, *, mem: str = ""):
         typeMem = await memGrab(self, ctx, mem)
         typeMem = [typeMem[0]]
-        pointList = enm.spent(typeMem)
-        # tatForce = 0
+        pointList = spent(typeMem)
         i = 0
-        # for role in ctx.author.roles:
-        #     if role.name == MANAGER:
-        #         tatForce = 1
         for peep in typeMem:
-            mes = discord.Embed(title="{} Stats".format(enm.nON(peep)))
+            mes = discord.Embed(title="{} Stats".format(nON(peep)))
             stuff = await count(peep, 1)
             group = pointList[i]
             unspent = stuff[0] - group[1]
@@ -1113,7 +975,7 @@ class roleCommands(
                     if x not in ["name", "id", "index", picVar]
                 ]
                 npcEnhTrim = [x for x in npcEnh if int(x[3:])]
-                npcWant = enm.funcBuild(npcEnhTrim)
+                npcWant = funcBuild(npcEnhTrim)
                 npcBuildStr = ""
                 for x in npcWant[1]:
                     npcBuildStr += "{}\n".format(x)
@@ -1139,103 +1001,7 @@ class roleCommands(
         await startDuel(self, ctx, bat, opponent)
 
 
-# function to move roles to correct rank positions
-async def manageRoles(ctx: commands.Context):
-
-    # spam message negation
-    movedRoles = discord.Embed(title="Moving Roles")
-    toMove = {}
-
-    # iterate through all guild roles
-    for role in ctx.message.guild.roles:
-        logP.debug("Looking at role: {}".format(role.name))
-
-        # grab shorthand for enhancement
-        roleShort = [x for x in power.keys() if power[x]["Name"] == role.name]
-        logP.debug("roleShort = {}".format(roleShort))
-
-        # check to ensure role is one overseen by this bot
-        if roleShort == []:
-            logP.debug("Role not Supe")
-            continue
-
-        # check for intelligence roles as they are the rank position constants
-        # and should not be changed by this command
-        elif "Intelligence" == power[roleShort[0]]["Type"]:
-            logP.debug("Role type intelligence")
-            continue
-
-        # fetch enhancement rank
-        roleRank = power[roleShort[0]]["Rank"]
-        logP.debug("Role rank is: {}".format(roleRank))
-
-        # check for restricted roles
-        if not roleRank:
-            logP.debug("Role rank zero")
-            continue
-
-        # check for rank 1 roles that do not have a lowerbound intelligence
-        # role for positioning
-        elif roleRank == 1:
-            roleRankLower = LOWESTROLE
-
-        else:
-            roleRankLower = [
-                x.position
-                for x in ctx.message.guild.roles
-                if x.name
-                == "Rank {} Intelligence (only for Systems)".format(
-                    roleRank - 1
-                )
-            ][0]
-
-        # fetch upperbound intelligence rank position
-        roleRankUpper = [
-            x.position
-            for x in ctx.message.guild.roles
-            if x.name
-            == "Rank {} Intelligence (only for Systems)".format(roleRank)
-        ][0]
-
-        # roleDiff = roleRankUpper - roleRankLower
-
-        # check for if role is already in postion
-        if role.position < roleRankUpper:
-            if role.position >= roleRankLower:
-                logP.debug(
-                    "Role within bounds {} - {}".format(
-                        roleRankUpper, roleRankLower
-                    )
-                )
-                continue
-
-        # move role to current upperbound intelligence position,
-        # forcing intelligence position to increase
-        # ASSUMES current role position is lower than intelligence position
-        # TODO remove assumption
-        logP.debug(
-            "Role to be moved from {.position} to {}".format(
-                role, roleRankUpper - 1
-            )
-        )
-
-        movedRoles.add_field(
-            name=role.name,
-            value="{} -> {}".format(role.position, roleRankUpper),
-        )
-
-        toMove[role] = roleRankUpper
-    await ctx.message.guild.edit_role_positions(positions=toMove)
-
-    # return moved roles as single message to function call
-    if not movedRoles.fields:
-        movedRoles.description = "No roles moved"
-    return movedRoles
-
-
 # function to get specified user's enhancement points
-
-
 async def count(
     peepList: typing.Union[list[discord.Member], discord.Member],
     tatFrc: int = 0,
@@ -1289,7 +1055,7 @@ async def count(
             totXP = ReSubXP + MEE6xp + (TATSUxp / 2)
         else:
             totXP = float(0)
-        if enm.nON(peep) == "Geminel":
+        if nON(peep) == "Geminel":
             totXP = round(totXP * float(GEMDIFF), 3)
 
         gdv = lvlEqu(totXP)
@@ -1305,7 +1071,7 @@ async def count(
                 " gdv: {},"
                 " enhP: {}"
             ).format(
-                enm.nON(peep),
+                nON(peep),
                 ReSubXP,
                 TATSUxp,
                 MEE6xp,
@@ -1381,54 +1147,20 @@ def isSuper(
     return supeGuildList
 
 
-# function to fetch all users requested by command caller
-async def memGrab(
-    self, ctx: commands.Context, memList: str = ""
-) -> list[typing.Union[discord.User, discord.Member]]:
-    logP.debug(
-        "memList: {}\nand mentions: {}".format(memList, ctx.message.mentions)
-    )
-    grabList = []
-    # first check for users mentioned in message
-    if ctx.message.mentions:
-        grabList = ctx.message.mentions
-        logP.debug("Message mentions: {}".format(grabList))
-
-    # else check for users named by command caller
-    elif memList:
-        strMemList = memList.split(", ")
-        logP.debug("split grablist: {}".format(strMemList))
-        for posMem in strMemList:
-            logP.debug(["trying to find: ", posMem])
-            grabMem = await MemberConverter().convert(ctx, posMem)
-            if grabMem:
-                grabList.append(grabMem)
-
-    # else use the command caller themself
-    else:
-        grabList.append(ctx.message.author)
-        logP.debug("Author is: {}".format(grabList))
-    logP.debug("fixed grablist: {}".format(grabList))
-
-    # return: mentioned users || named users || message author
-    return grabList
-
-
 # get roles of a lower rank on member to remove later
 def toCut(member: discord.Member) -> list[str]:
 
     # fetch unrestricted managed roles member has
-    supeRoles = enm.spent([member])
+    supeRoles = spent([member])
     logP.debug("supeRoles = {}".format(supeRoles[0][2]))
 
     # fetch build of member
-    supeBuild = enm.funcBuild(supeRoles[0][2])
+    supeBuild = funcBuild(supeRoles[0][2])
     logP.debug("supeBuild = {}".format(supeBuild[1]))
 
     # fetch trimmed build of user
     supeTrim = [
-        power[enm.toType(x[1]) + str(x[0])]["Name"]
-        for x in enm.trim(supeBuild[1])
+        power[toType(x[1]) + str(x[0])]["Name"] for x in trim(supeBuild[1])
     ]
     logP.debug("supeTrim = {}".format(supeTrim))
 
@@ -1471,83 +1203,10 @@ async def cut(
                 )
 
         # notify current user has been finished with to discord
-        sendMes += "{} has been cut down to size!".format(enm.nON(peep))
-        mes.add_field(name="{}".format(enm.nON(peep)), value=sendMes)
+        sendMes += "{} has been cut down to size!".format(nON(peep))
+        mes.add_field(name="{}".format(nON(peep)), value=sendMes)
     await ctx.send(embed=mes)
     return
-
-
-# function to fetch all guild roles that are managed by bot
-async def orderRole(self, ctx: commands.Context):
-    logP.debug(power.values())
-
-    supeList = [
-        x
-        for x in ctx.message.author.guild.roles
-        if str(x) in [y["Name"] for y in power.values()]
-    ]
-
-    logP.debug(supeList)
-    return supeList
-
-
-def lvlEqu(givVar: float = 0, inv=0) -> float:
-    if inv:
-        calVar = (20 * math.pow(givVar, 2)) / 1.25
-        logP.debug(
-            "{:0.2g} GDV is equivalent to {:,} XP".format(givVar, calVar)
-        )
-    else:
-        calVar = math.sqrt((1.25 * givVar) / 20)
-        logP.debug(
-            "{:,} XP is equivalent to {:0.2g} GDV".format(givVar, calVar)
-        )
-    return round(calVar, 2)
-
-
-def aOrAn(inp: str):
-    logP.debug(["input is: ", inp])
-    ret = "A"
-    if inp[0].lower() in "aeiou":
-        ret = "An"
-    logP.debug(["ret: ", ret])
-    return ret
-
-
-def pluralInt(val: int):
-    rtnStr = ""
-    if not val == 1:
-        rtnStr = "s"
-    return rtnStr
-
-
-def topEnh(ctx: commands.Context, enh: str) -> dict:
-
-    enhNameList = {
-        power[x]["Name"]: 0 for x in power.keys() if enh == power[x]["Type"]
-    }
-    peepDict = {}
-    for peep in ctx.message.author.guild.members:
-        if SUPEROLE not in [x.name for x in peep.roles]:
-            continue
-        for role in peep.roles:
-            if role.name in enhNameList.keys():
-                enhNameList[role.name] += 1
-                if peep not in peepDict.keys():
-                    peepDict[peep] = [
-                        power[x]["Rank"]
-                        for x in power.keys()
-                        if power[x]["Name"] == role.name
-                    ][0]
-                else:
-                    rank = [
-                        power[x]["Rank"]
-                        for x in power.keys()
-                        if power[x]["Name"] == role.name
-                    ][0]
-                    if rank > peepDict[peep]:
-                        peepDict[peep] = rank
-    return peepDict
 
 
 async def playerDuelInput(
@@ -1683,7 +1342,7 @@ def genBuild(val: int = 0, typ: str = "", iniBuild: list = []):
     testMax = True
     maxSearch = [typ + str(10)]
     while testMax:
-        maxBuild = enm.funcBuild(maxSearch)
+        maxBuild = funcBuild(maxSearch)
         if val > maxBuild[0]:
             logP.debug("with {} points {} can be maxed".format(val, typ))
             maxTyp.append(typ + str(10))
@@ -1699,8 +1358,8 @@ def genBuild(val: int = 0, typ: str = "", iniBuild: list = []):
         searchBuild.append(typ + str(checkInt))
 
     while building:
-        want = enm.funcBuild(searchBuild)
-        trimmed = enm.trim(want[1])
+        want = funcBuild(searchBuild)
+        trimmed = trim(want[1])
 
         searchBuild = []
 
@@ -1731,7 +1390,7 @@ def genBuild(val: int = 0, typ: str = "", iniBuild: list = []):
                 if secondLoop < 5:
                     secondLoop += 1
                 else:
-                    build = enm.funcBuild(prevBuild)
+                    build = funcBuild(prevBuild)
                     build = build[2]
                     building = False
             name = want[2][-nextLargest][1]
@@ -1964,27 +1623,6 @@ def highestEhn(userEhnList: list = [], belowTop: bool = True):
         ]
         topRankStr = random.choice(pickList)
     return topRankStr
-
-
-def save(key: int, value: dict, cache_file=SAVEFILE):
-    try:
-        with SqliteDict(cache_file) as mydict:
-            mydict[key] = value  # Using dict[key] to store
-            mydict.commit()  # Need to commit() to actually flush the data
-        logP.debug("saved {} of length: {}".format(key, len(value)))
-    except Exception as ex:
-        logP.warning(["Error during storing data (Possibly unsupported):", ex])
-
-
-def load(key: int, cache_file=SAVEFILE) -> dict:
-    try:
-        with SqliteDict(cache_file) as mydict:
-            # No need to use commit(), since we are only loading data!
-            value = mydict[key]
-        logP.debug("Loaded with key {} length: {}".format(key, len(value)))
-        return value
-    except Exception as ex:
-        logP.warning(["Error during loading data:", ex])
 
 
 # function to setup cog

@@ -3,7 +3,7 @@
 import discord
 from discord.ext import commands
 
-from enhancements import dupeError, getSendLoc
+from sharedFuncs import dupeError, getSendLoc
 from exceptions import notNPC, notSupeDuel
 from sharedVars import ERRORTHREAD
 
