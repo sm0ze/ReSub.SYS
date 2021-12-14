@@ -17,6 +17,8 @@ logP = log.get_logger(__name__)
 
 STRCHNL = None
 
+SLEEP = False
+
 
 # count number of unique strings in nested list
 # and return count and unnested set
@@ -443,3 +445,10 @@ def topEnh(ctx: commands.Context, enh: str) -> dict:
                     if rank > peepDict[peep]:
                         peepDict[peep] = rank
     return peepDict
+
+
+def asleep(var=None):
+    global SLEEP
+    if var:
+        SLEEP = not SLEEP
+    return SLEEP

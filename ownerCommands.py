@@ -2,7 +2,7 @@ import sys
 import typing
 from discord.ext import commands
 import git
-from sharedFuncs import dupeMes
+from sharedFuncs import asleep, dupeMes
 import log
 from power import cmdInf
 from sharedVars import HOSTNAME
@@ -39,7 +39,6 @@ class ownerCommands(
         up: typing.Optional[int] = 0,
         host: str = HOSTNAME,
     ):
-        global asleep
         logP.debug(
             "Command resume called for host: {}, to update: {}".format(
                 host, up
@@ -47,11 +46,11 @@ class ownerCommands(
         )
         if host != HOSTNAME:
             return
-        if asleep:
+        if asleep():
             await dupeMes(
                 self.bot, ctx, "Bot is now awake on {}".format(HOSTNAME)
             )
-            asleep = False
+            asleep(True)
             logP.info("Bot is now awake")
         if up:
             await ctx.invoke(self.bot.get_command("update"))
@@ -67,8 +66,7 @@ class ownerCommands(
         logP.debug("Command pause called for host: {}".format(host))
         if host != HOSTNAME:
             return
-        global asleep
-        asleep = True
+        asleep(True)
         await dupeMes(
             self.bot, ctx, "Bot is now asleep on {}".format(HOSTNAME)
         )

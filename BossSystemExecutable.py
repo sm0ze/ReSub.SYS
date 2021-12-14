@@ -5,7 +5,7 @@ from discord.ext import commands, tasks
 from discord.utils import get
 from pretty_help import DefaultMenu, PrettyHelp
 import log
-from sharedFuncs import dupeMes, nON
+from sharedFuncs import asleep, dupeMes, nON
 from power import powerTypes
 from sharedVars import (
     CMDPREFIX,
@@ -35,8 +35,6 @@ cogList = [
     "ErrorHandler.py",
 ]
 
-global asleep
-asleep = False
 
 # need all intents to properly manage user roles and fetch MEE6 level
 INTENTS = discord.Intents.all()
@@ -118,7 +116,6 @@ async def on_ready():
 
 @bot.event
 async def on_message(message: discord.Message):
-    global asleep
 
     if message.author.bot:
         # skip message if a bot posted it
@@ -130,7 +127,7 @@ async def on_message(message: discord.Message):
             await bot.process_commands(message)
             return
 
-    if asleep:
+    if asleep():
         # stop parsing the message if the bot is asleep
         return
 
