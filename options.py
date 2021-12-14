@@ -471,7 +471,10 @@ class Options(commands.Cog):
         # check to ensure user has enough enhancement points to
         # get requested additions
         if pointTot[0] < userWants[0]:
-            if specified:
+            userWantsIni = genBuild(pointTot[0], typeRank, userSpent[0][2])
+            userWants = enm.funcBuild(userWantsIni)
+            userWantsBuild = userWants[2]
+            if specified or pointTot[0] < userWants[0]:
                 await ctx.send(
                     (
                         "{} needs {} available enhancements for {} but only has {}"
@@ -483,9 +486,6 @@ class Options(commands.Cog):
                     )
                 )
                 return
-            userWantsIni = genBuild(pointTot[0], typeRank, userSpent[0][2])
-            userWants = enm.funcBuild(userWantsIni)
-            userWantsBuild = userWants[2]
 
         # the guild role names grabbed from shorthand to add to user
         addList = [
