@@ -1,4 +1,4 @@
-# options.py
+# roleCommands.py
 
 import asyncio
 import math
@@ -35,15 +35,13 @@ from sharedVars import (
     BOTTURNWAIT,
     DEFDUELOPP,
     DL_ARC_DUR,
-    ERRORTHREAD,
     GEMDIFF,
     HIDE,
     HOSTNAME,
     LEADLIMIT,
     LOWESTROLE,
     MANAGER,
-    NEWCALC,
-    PERMROLES,
+    COMMANDSROLES,
     PLAYERTURNWAIT,
     ROUNDLIMIT,
     SAVEFILE,
@@ -65,24 +63,22 @@ ENHLIST = [(x, y) for (x, y) in powerTypes.items()]
 # enhancement (type, rank) pairs for list command
 
 
-class Options(commands.Cog):
+class roleCommands(
+    commands.Cog,
+    name="{} Commands".format(SUPEROLE),
+    description=cmdInf["roleCommands"]["Description"],
+):
     def __init__(
         self, bot: typing.Union[commands.bot.Bot, commands.bot.AutoShardedBot]
     ):
         self.bot = bot
         self.grabLoop.start()
-        self._connection = bot._connection
 
     # Check if user has guild role
     async def cog_check(self, ctx: commands.Context):
-
-        logP.debug("Role check start")
-
         async def predicate(ctx: commands.Context):
-            for role in PERMROLES:
-                logP.debug("Role check {} in {}".format(role, PERMROLES))
+            for role in COMMANDSROLES:
                 chkRole = get(ctx.guild.roles, name=role)
-                logP.debug("chkRole: {}".format(chkRole))
                 if chkRole in ctx.message.author.roles:
                     return chkRole
             raise commands.CheckFailure(
@@ -90,16 +86,11 @@ class Options(commands.Cog):
                     "You do not have permission as you are missing a role in "
                     "this list: {}\nThe super command can be used to gain"
                     " the Supe role"
-                ).format(PERMROLES)
+                ).format(COMMANDSROLES)
             )
 
         # messy implementation for Supe
         return commands.check(await predicate(ctx))
-
-    @commands.Cog.listener()
-    async def on_ready(self):
-        global ERTHRD
-        ERTHRD = await enm.getSendLoc(ERRORTHREAD, self.bot, "thread")
 
     @tasks.loop(minutes=30)
     async def grabLoop(self):
@@ -108,13 +99,12 @@ class Options(commands.Cog):
         for guild in self.bot.guilds:
             roleGrab = get(guild.roles, name=SUPEROLE)
             if roleGrab:
-                for peep in roleGrab.members:
-                    await count(peep)
+                await count(roleGrab.members)
 
     @commands.command(
         enabled=COMON,
-        brief=cmdInf["trim"]["brief"],
-        description=cmdInf["trim"]["description"],
+        brief=cmdInf["trim"]["Brief"],
+        description=cmdInf["trim"]["Description"],
     )
     # command to trim command caller of extra roles. OBSOLETE due to cut call
     # after role add in add command
@@ -130,8 +120,8 @@ class Options(commands.Cog):
 
     """@commands.command(
         hidden=HIDE,
-        brief=cmdInf["trimAll"]["brief"],
-        description=cmdInf["trimAll"]["description"],
+        brief=cmdInf["trimAll"]["Brief"],
+        description=cmdInf["trimAll"]["Description"],
     )
     @commands.has_any_role(MANAGER)
     # manager command to role trim all users bot has access to
@@ -148,8 +138,8 @@ class Options(commands.Cog):
     @commands.command(
         enabled=COMON,
         hidden=HIDE,
-        brief=cmdInf["roleInf"]["brief"],
-        description=cmdInf["roleInf"]["description"],
+        brief=cmdInf["roleInf"]["Brief"],
+        description=cmdInf["roleInf"]["Description"],
     )
     @commands.has_any_role(MANAGER)
     # manager command to check if guild has role and messages
@@ -170,8 +160,8 @@ class Options(commands.Cog):
 
     @commands.command(
         enabled=COMON,
-        brief=cmdInf["convert"]["brief"],
-        description=cmdInf["convert"]["description"],
+        brief=cmdInf["convert"]["Brief"],
+        description=cmdInf["convert"]["Description"],
     )
     async def convert(
         self, ctx: commands.Context, inVar: float = 0, gdv: int = 0
@@ -189,8 +179,8 @@ class Options(commands.Cog):
     @commands.command(
         enabled=COMON,
         aliases=["t"],
-        brief=cmdInf["task"]["brief"],
-        description=cmdInf["task"]["description"],
+        brief=cmdInf["task"]["Brief"],
+        description=cmdInf["task"]["Description"],
     )
     @commands.cooldown(1, TASKCD, type=commands.BucketType.user)
     async def task(self, ctx: commands.Context):
@@ -355,7 +345,7 @@ class Options(commands.Cog):
         )
         stateG = enm.spent([ctx.message.author])
         currEnh = int(stateG[0][1])
-        logP.debug("and enhancments of number = ", currEnh)
+        logP.debug(["and enhancments of number = ", currEnh])
         logP.debug(
             "currEnh {} < currEnhP {}, {}".format(
                 currEnh, currEnhP, currEnh < currEnhP
@@ -379,7 +369,12 @@ class Options(commands.Cog):
         await ctx.message.delete(delay=1)
         return
 
-    @commands.command(enabled=COMON, aliases=["gen"])
+    @commands.command(
+        enabled=COMON,
+        aliases=["gen"],
+        brief=cmdInf["generate"]["Brief"],
+        description=cmdInf["generate"]["Description"],
+    )
     async def generate(self, ctx: commands.Context, val: int = 5, typ=""):
         if val < 0:
             await ctx.send("A positive integer is required")
@@ -413,8 +408,8 @@ class Options(commands.Cog):
     @commands.command(
         enabled=COMON,
         aliases=["a"],
-        brief=cmdInf["add"]["brief"],
-        description=cmdInf["add"]["description"],
+        brief=cmdInf["add"]["Brief"],
+        description=cmdInf["add"]["Description"],
     )
     # add role command available to all PERMROLES users
     async def add(self, ctx: commands.Context, *, typeRank=""):
@@ -434,7 +429,7 @@ class Options(commands.Cog):
             else True
         )
 
-        pointTot = await count(user, 1, 1)
+        pointTot = await count(user, 1)
         # if author did not provide an enhancement to add, return
         if not typeRank:
             buildList = [highestEhn(userEnhancements)]
@@ -552,18 +547,11 @@ class Options(commands.Cog):
             await ctx.send(sendMes)
         return
 
-    @commands.command(hidden=True)
-    @commands.has_any_role(MANAGER)
-    # TODO implementation for manager specific help command
-    async def hhelp(self, ctx: commands.Context):
-        commands.DefaultHelpCommand(no_category="Basic Options", hidden=True)
-        return
-
     @commands.command(
         enabled=COMON,
         hidden=HIDE,
-        brief=cmdInf["moveRoles"]["brief"],
-        description=cmdInf["moveRoles"]["description"],
+        brief=cmdInf["moveRoles"]["Brief"],
+        description=cmdInf["moveRoles"]["Description"],
     )
     @commands.has_any_role(MANAGER)
     # manager command to correct role position for roles that
@@ -576,8 +564,8 @@ class Options(commands.Cog):
     @commands.command(
         enabled=COMON,
         aliases=["p"],
-        brief=cmdInf["points"]["brief"],
-        description=cmdInf["points"]["description"],
+        brief=cmdInf["points"]["Brief"],
+        description=cmdInf["points"]["Description"],
     )
     # command to get author or specified user(s) enhancement total
     # and available points
@@ -612,8 +600,8 @@ class Options(commands.Cog):
     @commands.command(
         enabled=COMON,
         aliases=["l"],
-        brief=cmdInf["list"]["brief"],
-        description=cmdInf["list"]["description"],
+        brief=cmdInf["list"]["Brief"],
+        description=cmdInf["list"]["Description"],
     )
     # help level command to list the available enhancements and the
     # shorthand to use them in commands
@@ -653,8 +641,8 @@ class Options(commands.Cog):
     @commands.command(
         enabled=COMON,
         aliases=["b"],
-        brief=cmdInf["build"]["brief"],
-        description=cmdInf["build"]["description"],
+        brief=cmdInf["build"]["Brief"],
+        description=cmdInf["build"]["Description"],
     )
     # build command to theory craft and check the prereqs for differnet
     # enhancement ranks can be used in conjunction with points command to
@@ -662,11 +650,10 @@ class Options(commands.Cog):
     async def build(
         self,
         ctx: commands.Context,
-        mem: typing.Optional[discord.Member],
+        mem: typing.Optional[discord.Member] = None,
         *,
         typeRank: str = "",
     ):
-        logP.debug("Build command start")
         logP.debug(typeRank)
 
         if not mem:
@@ -704,6 +691,8 @@ class Options(commands.Cog):
 
     @commands.command(
         enabled=COMON,
+        brief=cmdInf["average"]["Brief"],
+        description=cmdInf["average"]["Description"],
     )
     @commands.has_any_role(MANAGER)
     async def average(self, ctx: commands.Context):
@@ -758,8 +747,8 @@ class Options(commands.Cog):
     @commands.command(
         enabled=COMON,
         aliases=["leaderboard"],
-        brief=cmdInf["top"]["brief"],
-        description=cmdInf["top"]["description"],
+        brief=cmdInf["top"]["Brief"],
+        description=cmdInf["top"]["Description"],
     )
     # top 10 user leaderboard for number of used enhancements
     async def top(
@@ -905,8 +894,8 @@ class Options(commands.Cog):
     @commands.command(
         enabled=COMON,
         aliases=["c", "clear"],
-        brief=cmdInf["clean"]["brief"],
-        description=cmdInf["clean"]["description"],
+        brief=cmdInf["clean"]["Brief"],
+        description=cmdInf["clean"]["Description"],
     )
     # remove unrestricted enhancements from command caller
     async def clean(self, ctx: commands.Context):
@@ -921,7 +910,12 @@ class Options(commands.Cog):
         logP.debug(toCut)
         await cut(ctx, [ctx.message.author], toCut)
 
-    @commands.command(enabled=COMON, hidden=HIDE)
+    @commands.command(
+        enabled=COMON,
+        hidden=HIDE,
+        brief=cmdInf["xpAdd"]["Brief"],
+        description=cmdInf["xpAdd"]["Description"],
+    )
     @commands.has_any_role(MANAGER)
     async def xpAdd(
         self,
@@ -953,8 +947,8 @@ class Options(commands.Cog):
         enabled=COMON,
         hidden=HIDE,
         aliases=["x"],
-        brief=cmdInf["xpGrab"]["brief"],
-        description=cmdInf["xpGrab"]["description"],
+        brief=cmdInf["xpGrab"]["Brief"],
+        description=cmdInf["xpGrab"]["Description"],
     )
     # @commands.has_any_role(MANAGER)
     @commands.cooldown(1, 1, commands.BucketType.default)
@@ -969,7 +963,7 @@ class Options(commands.Cog):
         #         tatForce = 1
         for peep in typeMem:
             mes = discord.Embed(title="{} Stats".format(enm.nON(peep)))
-            stuff = await count(peep, 1, 1)
+            stuff = await count(peep, 1)
             group = pointList[i]
             unspent = stuff[0] - group[1]
 
@@ -1023,10 +1017,8 @@ class Options(commands.Cog):
 
     @commands.command(
         enabled=COMON,
-        brief="-A command for Geminel to change thier xp total handicap.",
-        description=(
-            "-A command for Geminel to change thier xp total handicap."
-        ),
+        brief=cmdInf["diffGem"]["Brief"],
+        description=cmdInf["diffGem"]["Description"],
     )
     async def diffGem(
         self, ctx: commands.Context, var: float = float(GEMDIFF)
@@ -1058,7 +1050,12 @@ class Options(commands.Cog):
             )
         )
 
-    @commands.command(enabled=COMON, aliases=["s"])
+    @commands.command(
+        enabled=COMON,
+        aliases=["s"],
+        brief=cmdInf["stats"]["Brief"],
+        description=cmdInf["stats"]["Description"],
+    )
     async def stats(self, ctx: commands.Context, peep: discord.Member = False):
         if not peep:
             peep = ctx.author
@@ -1075,13 +1072,18 @@ class Options(commands.Cog):
 
         await ctx.send(embed=mes)
 
-    @commands.command(enabled=COMON, aliases=["d"])
+    @commands.command(
+        enabled=COMON,
+        aliases=["d"],
+        brief=cmdInf["duel"]["Brief"],
+        description=cmdInf["duel"]["Description"],
+    )
     async def duel(
         self,
         ctx: commands.Context,
         dontAsk: typing.Optional[
             typing.Union[typing.Literal[1], typing.Literal[2]]
-        ],
+        ] = None,
         opponent: typing.Union[discord.Member, str] = False,
     ):
         if not dontAsk == 2:
@@ -1136,77 +1138,9 @@ class Options(commands.Cog):
         await bat.findPlayers(dontAsk, [bat.p1, bat.p2])
         await startDuel(self, ctx, bat, opponent)
 
-    @commands.command(enabled=COMON)
-    async def emoji(self, ctx: commands.Context, idTry=""):
-        if idTry:
-            emo = await fetchEmoji(ctx, idTry)
-            if emo:
-                await ctx.send(emo)
-            else:
-                await ctx.send("Could not find emoji '{}'".format(idTry))
-        else:
-            emo = [str(m) for m in self.bot.emojis]
-            per_page = 10  # 10 members per page
-            pages = math.ceil(len(emo) / per_page)
-            cur_page = 1
-            chunk = emo[:per_page]
-            linebreak = "\n"
-            message = await ctx.send(
-                f"Page {cur_page}/{pages}:\n{linebreak.join(chunk)}"
-            )
-            await message.add_reaction("◀️")
-            await message.add_reaction("▶️")
-            active = True
-
-            def check(reaction, user):
-                return user == ctx.author and str(reaction.emoji) in [
-                    "◀️",
-                    "▶️",
-                ]
-                # or you can use unicodes, respectively: "\u25c0" or "\u25b6"
-
-            while active:
-                try:
-                    reaction, user = await self.bot.wait_for(
-                        "reaction_add", timeout=60, check=check
-                    )
-
-                    if str(reaction.emoji) == "▶️" and cur_page != pages:
-                        cur_page += 1
-                        if cur_page != pages:
-                            num = (cur_page - 1) * per_page
-                            num2 = cur_page * per_page
-                            chunk = emo[num:num2]
-                        else:
-                            num = (cur_page - 1) * per_page
-                            chunk = emo[num:]
-                        await message.edit(
-                            content="Page {}/{}:\n{}".format(
-                                cur_page, pages, linebreak.join(chunk)
-                            )
-                        )
-                        await message.remove_reaction(reaction, user)
-
-                    elif str(reaction.emoji) == "◀️" and cur_page > 1:
-                        cur_page -= 1
-                        num = (cur_page - 1) * per_page
-                        num2 = cur_page * per_page
-
-                        chunk = emo[num:num2]
-                        await message.edit(
-                            content="Page {}/{}:\n{}".format(
-                                cur_page, pages, linebreak.join(chunk)
-                            )
-                        )
-                        await message.remove_reaction(reaction, user)
-                except asyncio.TimeoutError:
-                    await message.delete()
-                    active = False
-
 
 # function to move roles to correct rank positions
 async def manageRoles(ctx: commands.Context):
-    logP.debug("ManageRoles Start")
 
     # spam message negation
     movedRoles = discord.Embed(title="Moving Roles")
@@ -1296,7 +1230,6 @@ async def manageRoles(ctx: commands.Context):
     # return moved roles as single message to function call
     if not movedRoles.fields:
         movedRoles.description = "No roles moved"
-    logP.debug("ManageRoles End")
     return movedRoles
 
 
@@ -1304,99 +1237,91 @@ async def manageRoles(ctx: commands.Context):
 
 
 async def count(
-    peep: discord.Member, typ: int = NEWCALC, tatFrc: int = 0
+    peepList: typing.Union[list[discord.Member], discord.Member],
+    tatFrc: int = 0,
 ) -> tuple[int, float, float, list[int, int, float]]:
-    logP.debug("Start count")
     global GEMDIFF
     tat = tatsu.wrapper
-    """if not typ:
-        # fetch MEE6 level
-        level = await API(peep.guild.id).levels.get_user_level(peep.id)
-        debug(level)
 
-        # Enhancement points are equivalent to MEE6 level / 5
-        if level:
-            pointTot = int(level / 5)
-        else:
-            pointTot = 0
-        debug(pointTot)
-        debug(peep.roles)
-
-        # + an enhancement point for other roles the user might have
-        for role in peep.roles:
-            debug(role)
-            if role.name in enm.patList:
-                pointTot += 1
-            debug(pointTot)
-        # return total user points to function call
-        debug("End count")
-        return [pointTot]
-    else:"""
-    if tatFrc:
-        MEE6xp = await API(peep.guild.id).levels.get_user_xp(peep.id)
-        TATSUmem = await tat.ApiWrapper(key=TATSU).get_profile(peep.id)
-    else:
-        TATSUmem = None
-        MEE6xp = int(0)
+    if isinstance(peepList, discord.Member):
+        peepList = [peepList]
 
     try:
-        pickle_file = load(peep.guild.id)
-        logP.debug("Pickle file loaded successfully")
+        pickle_file = load(peepList[0].guild.id)
     except Exception as e:
         print(e)
+        logP.debug("Pickle file load failed")
         pickle_file = {}
 
-    if pickle_file and peep.id in pickle_file.keys():
-        ReSubXP = float(pickle_file[peep.id]["invXP"][-1])
-    else:
-        ReSubXP = float(0)
-    logP.debug("ReSubXP: {}".format(ReSubXP))
+    for peep in peepList:
+        if tatFrc:
+            MEE6xp = await API(peep.guild.id).levels.get_user_xp(peep.id)
+            TATSUmem = await tat.ApiWrapper(key=TATSU).get_profile(peep.id)
+        else:
+            TATSUmem = None
+            MEE6xp = int(0)
 
-    if hasattr(TATSUmem, "xp"):
-        TATSUxp = int(TATSUmem.xp)
+        if pickle_file and peep.id in pickle_file.keys():
+            ReSubXP = float(pickle_file[peep.id]["invXP"][-1])
+        else:
+            ReSubXP = float(0)
+
+        if hasattr(TATSUmem, "xp"):
+            TATSUxp = int(TATSUmem.xp)
+            if not TATSUxp:
+                TATSUxp = int(0)
+        else:
+            TATSUxp = int(0)
+
+        if not MEE6xp:
+            MEE6xp = int(0)
+            if peep.id in pickle_file.keys():
+                if pickle_file[peep.id]["invXP"][0]:
+                    MEE6xp = int(pickle_file[peep.id]["invXP"][0])
+
         if not TATSUxp:
             TATSUxp = int(0)
-    else:
-        TATSUxp = int(0)
-    logP.debug("TATSUxp: {}".format(TATSUxp))
+            if peep.id in pickle_file.keys():
+                if pickle_file[peep.id]["invXP"][0]:
+                    TATSUxp = int(pickle_file[peep.id]["invXP"][1])
 
-    if not MEE6xp:
-        MEE6xp = int(0)
-        if peep.id in pickle_file.keys():
-            if pickle_file[peep.id]["invXP"][0]:
-                MEE6xp = int(pickle_file[peep.id]["invXP"][0])
-    logP.debug("MEE6xp: {}".format(MEE6xp))
+        if MEE6xp or TATSUxp or ReSubXP:
+            totXP = ReSubXP + MEE6xp + (TATSUxp / 2)
+        else:
+            totXP = float(0)
+        if enm.nON(peep) == "Geminel":
+            totXP = round(totXP * float(GEMDIFF), 3)
 
-    if not TATSUxp:
-        TATSUxp = int(0)
-        if peep.id in pickle_file.keys():
-            if pickle_file[peep.id]["invXP"][0]:
-                TATSUxp = int(pickle_file[peep.id]["invXP"][1])
+        gdv = lvlEqu(totXP)
 
-    if MEE6xp or TATSUxp or ReSubXP:
-        totXP = ReSubXP + MEE6xp + (TATSUxp / 2)
-    else:
-        totXP = float(0)
-    if enm.nON(peep) == "Geminel":
-        totXP = round(totXP * float(GEMDIFF), 3)
-
-    logP.debug("totXP: {}".format(totXP))
-
-    gdv = lvlEqu(totXP)
-    logP.debug("gdv: {}".format(gdv))
-
-    enhP = math.floor(gdv / 5) + 1
-    logP.debug("enhP: {}".format(enhP))
-    pickle_file[peep.id] = {
-        "Name": peep.name,
-        "enhP": enhP,
-        "gdv": gdv,
-        "totXP": totXP,
-        "invXP": [MEE6xp, TATSUxp, ReSubXP],
-    }
-    save(peep.guild.id, pickle_file)
-
-    logP.debug("End count")
+        enhP = math.floor(gdv / 5) + 1
+        logP.debug(
+            (
+                "{}-"
+                " ReSubXP: {},"
+                " TATSUxp: {},"
+                " MEE6xp: {},"
+                " totXP: {},"
+                " gdv: {},"
+                " enhP: {}"
+            ).format(
+                enm.nON(peep),
+                ReSubXP,
+                TATSUxp,
+                MEE6xp,
+                totXP,
+                gdv,
+                enhP,
+            )
+        )
+        pickle_file[peep.id] = {
+            "Name": peep.name,
+            "enhP": enhP,
+            "gdv": gdv,
+            "totXP": totXP,
+            "invXP": [MEE6xp, TATSUxp, ReSubXP],
+        }
+    save(peepList[0].guild.id, pickle_file)
 
     return enhP, gdv, totXP, [MEE6xp, TATSUxp, ReSubXP]
 
@@ -1404,13 +1329,11 @@ async def count(
 async def countOf(
     peep: discord.Member,
 ) -> tuple[int, float, float, list[int, int, float]]:
-    logP.debug("Start countOf")
     try:
         valDict = load(peep.guild.id)
         logP.debug("valDict loaded")
         shrt = valDict[peep.id]
         logP.debug("shrt: {}".format(shrt))
-        logP.debug("End countOf - succ load")
 
         invXP = [
             int(shrt["invXP"][0]),
@@ -1432,9 +1355,8 @@ async def countOf(
 
 # restrict list from members to members with SUPEROLE
 def isSuper(
-    self: Options, guildList: list[discord.User]
+    self: roleCommands, guildList: list[discord.User]
 ) -> list[discord.Member]:
-    logP.debug("Start isSuper")
     guilds = self.bot.guilds
     supeGuildList = []
     foundRole = []
@@ -1456,7 +1378,6 @@ def isSuper(
                     supeGuildList.append(member)
 
     # return reduced user list
-    logP.debug("End isSuper")
     return supeGuildList
 
 
@@ -1464,7 +1385,6 @@ def isSuper(
 async def memGrab(
     self, ctx: commands.Context, memList: str = ""
 ) -> list[typing.Union[discord.User, discord.Member]]:
-    logP.debug("Start memGrab")
     logP.debug(
         "memList: {}\nand mentions: {}".format(memList, ctx.message.mentions)
     )
@@ -1489,7 +1409,6 @@ async def memGrab(
         grabList.append(ctx.message.author)
         logP.debug("Author is: {}".format(grabList))
     logP.debug("fixed grablist: {}".format(grabList))
-    logP.debug("End memGrab")
 
     # return: mentioned users || named users || message author
     return grabList
@@ -1497,7 +1416,6 @@ async def memGrab(
 
 # get roles of a lower rank on member to remove later
 def toCut(member: discord.Member) -> list[str]:
-    logP.debug("Start toCut")
 
     # fetch unrestricted managed roles member has
     supeRoles = enm.spent([member])
@@ -1519,7 +1437,6 @@ def toCut(member: discord.Member) -> list[str]:
     logP.debug("to CUT = {}".format(toCut))
 
     # return the roles to be removed
-    logP.debug("End toCut")
     return toCut
 
 
@@ -1529,7 +1446,6 @@ async def cut(
     memberList: list[discord.Member],
     cutList: list[str] = [],
 ):
-    logP.debug("Start cut")
     # iterate through given user list
     # assumed list has already been reduced to users with SUPEROLE
     mes = discord.Embed(title="Cutting roles")
@@ -1545,11 +1461,9 @@ async def cut(
         # for each role to be cut, remove it and send message to discord
         sendMes = ""
         for role in cutting:
-            logP.debug(
-                "\t\t role to cut: {}, from peep: {}".format(role, peep)
-            )
+            logP.debug("role to cut: {}, from peep: {}".format(role, peep))
             supeRoleId = get(peep.roles, name=role)
-            logP.debug("\t\t role to cut id = {}".format(supeRoleId))
+            logP.debug("role to cut id = {}".format(supeRoleId))
             if supeRoleId in peep.roles:
                 await peep.remove_roles(supeRoleId)
                 sendMes += "Removed {}, {}\n".format(
@@ -1560,13 +1474,11 @@ async def cut(
         sendMes += "{} has been cut down to size!".format(enm.nON(peep))
         mes.add_field(name="{}".format(enm.nON(peep)), value=sendMes)
     await ctx.send(embed=mes)
-    logP.debug("End cut")
     return
 
 
 # function to fetch all guild roles that are managed by bot
 async def orderRole(self, ctx: commands.Context):
-    logP.debug("Start orderRole")
     logP.debug(power.values())
 
     supeList = [
@@ -1576,30 +1488,29 @@ async def orderRole(self, ctx: commands.Context):
     ]
 
     logP.debug(supeList)
-    logP.debug("End orderRole")
     return supeList
 
 
 def lvlEqu(givVar: float = 0, inv=0) -> float:
-    logP.debug("Start lvlEqu")
     if inv:
         calVar = (20 * math.pow(givVar, 2)) / 1.25
-        logP.debug("{} GDV is equivalent to {:,} XP".format(givVar, calVar))
+        logP.debug(
+            "{:0.2g} GDV is equivalent to {:,} XP".format(givVar, calVar)
+        )
     else:
         calVar = math.sqrt((1.25 * givVar) / 20)
-        logP.debug("{:,} XP is equivalent to {} GDV".format(givVar, calVar))
-    logP.debug("End lvlEqu")
+        logP.debug(
+            "{:,} XP is equivalent to {:0.2g} GDV".format(givVar, calVar)
+        )
     return round(calVar, 2)
 
 
 def aOrAn(inp: str):
-    logP.debug("Start aOrAn")
     logP.debug(["input is: ", inp])
     ret = "A"
     if inp[0].lower() in "aeiou":
         ret = "An"
     logP.debug(["ret: ", ret])
-    logP.debug("End aOrAn")
     return ret
 
 
@@ -1639,18 +1550,8 @@ def topEnh(ctx: commands.Context, enh: str) -> dict:
     return peepDict
 
 
-async def fetchEmoji(ctx: commands.Context, emojiStr):
-    foundEmoji = None
-    convertEmoji = await commands.EmojiConverter().convert(
-        ctx=ctx, argument=emojiStr
-    )
-    if convertEmoji:
-        foundEmoji = convertEmoji
-    return foundEmoji
-
-
 async def playerDuelInput(
-    self: Options,
+    self: roleCommands,
     ctx: commands.Context,
     totRounds: int,
     peep: player,
@@ -1720,7 +1621,14 @@ async def playerDuelInput(
                 active = False
                 break
             for move in moveList:
-
+                logP.debug(
+                    [
+                        str(moveOpt[move]["reaction"]),
+                        "==",
+                        str(reaction.emoji),
+                        str(reaction.emoji) == str(moveOpt[move]["reaction"]),
+                    ]
+                )
                 if str(reaction.emoji) == str(moveOpt[move]["reaction"]):
                     logP.debug([str(reaction.emoji), "found"])
                     chosenMove = True
@@ -1842,28 +1750,6 @@ def genBuild(val: int = 0, typ: str = "", iniBuild: list = []):
         buildFinal.append(str(shrt) + str(rank))
     return buildFinal
 
-    """while currTot < val:
-        temp = []
-        testBuild = []
-        temp, testBuild = checkAddBuild(typ, build)
-        want = enm.funcBuild(testBuild)
-        if want[0] <= val:
-            currTot = want[0]
-            build.clear()
-            for group in want[2]:
-                rank = group[0]
-                name = group[1]
-                shrt = [x for x in leader.keys() if leader[x] == name]
-                if shrt:
-                    shrt = shrt[0]
-
-                build.append(str(shrt) + str(rank))
-            typ = [highestEhn(build)]
-        else:
-
-            typ = random.choices(pickList)"""
-    return build
-
 
 def checkAddBuild(listAdd: list = [], listBase: list = []):
     enhNumList = power.keys()
@@ -1908,7 +1794,7 @@ def checkAddBuild(listAdd: list = [], listBase: list = []):
 
 
 async def startDuel(
-    self: Options,
+    self: roleCommands,
     ctx: commands.Context,
     bat: battler,
     opponent: discord.Member = None,
@@ -2081,7 +1967,6 @@ def highestEhn(userEhnList: list = [], belowTop: bool = True):
 
 
 def save(key: int, value: dict, cache_file=SAVEFILE):
-    logP.debug("Start save")
     try:
         with SqliteDict(cache_file) as mydict:
             mydict[key] = value  # Using dict[key] to store
@@ -2089,11 +1974,9 @@ def save(key: int, value: dict, cache_file=SAVEFILE):
         logP.debug("saved {} of length: {}".format(key, len(value)))
     except Exception as ex:
         logP.warning(["Error during storing data (Possibly unsupported):", ex])
-    logP.debug("End save")
 
 
 def load(key: int, cache_file=SAVEFILE) -> dict:
-    logP.debug("Start load")
     try:
         with SqliteDict(cache_file) as mydict:
             # No need to use commit(), since we are only loading data!
@@ -2102,9 +1985,8 @@ def load(key: int, cache_file=SAVEFILE) -> dict:
         return value
     except Exception as ex:
         logP.warning(["Error during loading data:", ex])
-    logP.debug("End load")
 
 
 # function to setup cog
 def setup(bot: commands.Bot):
-    bot.add_cog(Options(bot))
+    bot.add_cog(roleCommands(bot))

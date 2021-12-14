@@ -74,6 +74,12 @@ class ErrorHandler(commands.Cog):
                     title="Non Player Character",
                     description=error.__cause__.args[0],
                 )
+        elif isinstance(error, commands.CheckFailure):
+            dupeEr = False
+            mes = discord.Embed(
+                title="Role Check Error!!!",
+                description=error,
+            )
 
         if not mes:
             delaySet = 0

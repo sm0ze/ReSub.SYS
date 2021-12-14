@@ -222,211 +222,7 @@ restrictedList = ["System", "Authors"]
 freeRoles = ["Ping Unto Me My Daily Quack", "Supe"]
 
 
-cmdInf = {
-    "about": {
-        "brief": "-quick blurb for info about the bot.",
-        "description": (
-            "-quick blurb for info about the bot. Also has the "
-            "hostname of the os the bot is running on for "
-            "troubleshooting."
-        ),
-    },
-    "add": {
-        "brief": (
-            "-Allows host to add enhancements and their prereqs to themself."
-        ),
-        "description": (
-            "-Use the shorthand enhancement codes separated by "
-            "commas to add to host's build.\nExample: For a build "
-            "with Rank 4 Regeneration and Rank 4 Mental Celerity "
-            "the shorthand would be 'reg4, cel4'. The bot will "
-            "attempt to add those 2 enhancements and their "
-            "prerequisites to the host if they have enough "
-            "enhancement points."
-        ),
-    },
-    "build": {
-        "brief": "-Total points required and their prerequisite enhancements.",
-        "description": (
-            "-Use the shorthand enhancement codes separated by "
-            "commas to find a builds total enhancement cost and "
-            "prerequisites.\nExample: For a build with Rank 4 "
-            "Regeneration and Rank 4 Mental Celerity the "
-            "shorthand would be 'reg4, cel4'."
-        ),
-    },
-    "clean": {
-        "brief": (
-            "-Allows a host to reset their enhancements for " "reallocation."
-        ),
-        "description": (
-            "-This command will remove all Supe related roles "
-            "from the host so they can start a new build."
-        ),
-    },
-    "convert": {
-        "brief": "-Converts between GDV and XP values.",
-        "description": (
-            '-Converts between GDV and XP values.\n"~convert x" '
-            'will convert x from XP to GDV\n"~convert x 1" will '
-            "convert x from GDV to XP."
-        ),
-    },
-    "end": {
-        "brief": "-Kills the bot.",
-        "description": (
-            "-Kills the bot. sm0ze will have to turn it back on "
-            "again... That is why he is the only one able to use "
-            "this command :P"
-        ),
-    },
-    "list": {
-        "brief": "-Lists all available enhancements.",
-        "description": (
-            "-Lists all available enhancements. It also lets you "
-            "know how many ranks of each enhancement there are as "
-            "well as the 3 letter shorthand."
-        ),
-    },
-    "moveRoles": {
-        "brief": (
-            "-Repositions the server roles so they are in the correct "
-            "tier order."
-        ),
-        "description": (
-            "-Repositions the server roles so they are in the "
-            "correct tier order. Does not sort the roles within "
-            "the tier."
-        ),
-    },
-    "pause": {
-        "brief": "-Puts the bot to sleep, 'resume' to wake.",
-        "description": (
-            "-Puts the bot to sleep, 'resume' to wake. This "
-            "command mainly exists so that the 24/7 bot does not "
-            "need to be killed when updating/troubleshooting and "
-            "can just be restarted."
-        ),
-    },
-    "points": {
-        "brief": (
-            "-Shows target host's available and spent enhancement " "points."
-        ),
-        "description": (
-            "-Shows target host's available and spent enhancement "
-            "points.\nThis command can take multiple users as "
-            "arguments as long as they are separated by commas. "
-            "It is also possible to mention all users you wish to "
-            "get the points of.\nIf no arguments are provided the "
-            "command defaults to the command caller's points."
-        ),
-    },
-    "restart": {
-        "brief": "-Tells the bot to reboot.",
-        "description": (
-            "-Tells the bot to reboot. It will be back soon, " "do not worry."
-        ),
-    },
-    "roleInf": {
-        "brief": "-Gives role info, such as position and colour.",
-        "description": (
-            "-Gives role info, such as position and colour. Can "
-            "only take one role as an argument, requres correct "
-            "spelling and capitalisation."
-        ),
-    },
-    "role": {
-        "brief": "-Allows user to add freely available roles to themselves.",
-        "description": (
-            "-Allows user to add freely available roles to "
-            "themselves.\n Currently the list to pick "
-            "from is: {}"
-        ).format(freeRoles),
-    },
-    "run": {
-        "brief": "-tells user where the bot is running.",
-        "description": (
-            "-just the hostname of the os the bot is running on "
-            "for troubleshooting."
-        ),
-    },
-    "start": {
-        "brief": (
-            "-Use this command to get a walkthrough for host's "
-            "first enhancement."
-        ),
-        "description": (
-            "-Use this command to get a walkthrough for host's first "
-            "enhancement.\nIf you have no idea how to use the bot, this"
-            " is a good place to start."
-        ),
-    },
-    "task": {
-        "brief": "-Grants host a task to complete.",
-        "description": (
-            "-Grants host a task to complete.\nTask may be of "
-            "type minor, moderate, major or imperative. Completion of task "
-            "will grant the host 100% GDV with partial GDV given to those "
-            "that help. Different number of maximum additional helpers for "
-            "different task tiers of respectively 0, 1, 3 and All System hosts"
-        ),
-    },
-    "top": {
-        "brief": "-Shows the top hosts by their enhancements.",
-        "description": (
-            "-Shows the top hosts by their enhancements.\nA "
-            "variable 'enh' can be given if user would like to get the top "
-            "hosts of a specific enhancement."
-        ),
-    },
-    "trimAll": {
-        "brief": "-Trims excess low rank roles from all supes.",
-        "description": (
-            "-Trims excess low rank roles from all supes. Some users like the "
-            "role bloat, so do not abuse this command.",
-        ),
-    },
-    "trim": {
-        "brief": (
-            "-Allows a host to remove duplicate enhancements of a "
-            "lower rank."
-        ),
-        "description": (
-            "-Allows a host to remove duplicate enhancements of "
-            "a lower rank from themself."
-        ),
-    },
-    "update": {
-        "brief": "-Pulls the latest update from github.",
-        "description": (
-            "-Pulls the latest update from github. If you ain't "
-            "sm0ze, why do you care about this command?"
-        ),
-    },
-    "upload": {
-        "brief": "-Uploads the memberlist xp value cache.",
-        "description": (
-            "-Uploads the memberlist xp value cache. Server ID as "
-            "Key will return a dictionary with keys of different member IDs. "
-            "This makes the ReSub Bot a server specific XP bot."
-        ),
-    },
-    "uptime": {
-        "brief": "-Shows how long the bot has been online and logged in.",
-        "description": (
-            "-Shows how long the bot has been online and logged "
-            "in. Highscores are always fun!"
-        ),
-    },
-    "xpGrab": {
-        "brief": "-Shows the command callers XP total.",
-        "description": (
-            "-Shows the command callers XP total. total xp is calculated "
-            "with: MEE6 + 0.5*TATSU + ReSub. Can also be used to ensure the "
-            "python modules for getting user info is still working."
-        ),
-    },
-}
+cmdInf = {}
 
 power = {
     "sup0": {"Name": "Supe", "Type": "Supe", "Rank": 0, "Prereq": []},
@@ -608,5 +404,24 @@ for tup in frame.itertuples():
         npcDict[str(tup.ID)][loc] = getattr(tup, ite)
     logP.debug("Added NPC: {}".format(npcDict[str(tup.ID)]))
 
+
+descSheet = "BotDescriptions"
+descToken = "1Pw96S2rvfRlNuPqbSkGpHDtEkIqQlK5_QGy6lTmMexI"
+descUrl = urltoAdd.format(descToken, descSheet)
+
+try:
+    frame = None
+    frame = pd.read_csv(descUrl)
+except Exception as e:
+    print(e)
+
+for tup in frame.itertuples():
+    cmdInf[tup.Command] = {}
+    for ite in tup._fields:
+        if str(getattr(tup, ite)) == str("nan"):
+            cmdInf[tup.Command][ite] = "No Description"
+        else:
+            cmdInf[tup.Command][ite] = getattr(tup, ite)
+    logP.debug("Added Command description: {}".format(cmdInf[tup.Command]))
 
 logP.info("Finished csv download and input.")

@@ -61,7 +61,8 @@ MANAGER = "System"  # manager role name for guild
 CMDPREFIX = "~"
 STARTTIME = time.time()
 HIDE = False
-PERMROLES = [SUPEROLE]  # guild role(s) for using these bot commands
+COMMANDSROLES = [SUPEROLE]  # guild role(s) for using these bot commands
+MANAGERROLES = [MANAGER]
 
 LOWESTROLE = 2  # bot sorts roles by rank from position of int10 to LOWESTROLE
 LEADLIMIT = 12

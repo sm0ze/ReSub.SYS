@@ -12,6 +12,8 @@ from sharedVars import HOSTNAME, STARTCHANNEL
 
 logP = log.get_logger(__name__)
 
+STRCHNL = None
+
 
 # count number of unique strings in nested list
 # and return count and unnested set
@@ -204,7 +206,7 @@ def spent(
     for peep in memList:
         supeRoles = []
         logP.debug("current user is: {}".format(peep))
-        logP.debug("current user role list: {}".format(peep.roles))
+        logP.debug("current user role list length: {}".format(len(peep.roles)))
 
         # messy implementation to grab shorthand for all unrestricted bot
         # managed roles in user role list
@@ -292,9 +294,10 @@ async def getSendLoc(id, bot: commands.Bot, attr: str = "channel"):
                     sendLoc.append(y)
 
     logP.debug(
-        "searching for {} in {} or {} = {}".format(
-            id, iterList, otherOpt, sendLoc
-        )
+        (
+            "searching for {} in list of {} length or other"
+            " list of length {} = {}"
+        ).format(id, len(iterList), len(otherOpt), sendLoc)
     )
 
     if isinstance(sendLoc, list):
@@ -309,3 +312,19 @@ def nON(user: discord.Member) -> str:
         return user.nick
     else:
         return user.name
+
+
+async def dupeMes(bot, channel=None, mes: str = None):
+    global STRCHNL
+    if not STRCHNL:
+        STRCHNL = await getSendLoc(STARTCHANNEL, bot, "channel")
+    if isinstance(channel, commands.Context):
+        channel = channel.channel
+
+    if mes:
+        print(mes)
+        if STRCHNL:
+            await STRCHNL.send(mes)
+            if channel:
+                if not STRCHNL == channel:
+                    await channel.send(mes)
