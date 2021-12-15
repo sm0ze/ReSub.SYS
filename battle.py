@@ -114,22 +114,22 @@ class player:
     def iniCalc(self) -> None:
         statDict = {}
         for enhan in self.bL:
-            logP.debug("enhan: {}".format(enhan))
+            logP.debug(f"enhan: {enhan}")
             name = enhan[:3]
             rank = int(power[enhan]["Rank"])
             if name not in statDict.keys():
-                logP.debug("Add: {}, {}".format(name, rank))
+                logP.debug(f"Add: {name}, {rank}")
                 statDict[name] = rank
             elif rank > statDict[name]:
-                logP.debug("Update: {}, {}".format(name, rank))
+                logP.debug(f"Update: {name}, {rank}")
                 statDict[name] = rank
 
         for type in leader.keys():
             if type not in statDict.keys():
-                logP.debug("Added type: {}".format(type))
+                logP.debug(f"Added type: {type}")
                 statDict[type] = 0
 
-        logP.debug("{} stats are: {}".format(self.n, statDict))
+        logP.debug(f"{self.n} stats are: {statDict}")
 
         self._str = int(statDict["str"])
         self._spe = int(statDict["spe"])
@@ -154,7 +154,7 @@ class player:
         ret = int(0)
         ret += addCalc(self, statType)
         ret += addBonus(self, statType)
-        logP.debug("Adding to: {}, {}".format(statType, ret))
+        logP.debug(f"Adding to: {statType}, {ret}")
         return ret
 
     def bStat(self):
@@ -225,9 +225,10 @@ class player:
 
         logP.debug(
             (
-                "Hp render for {} is: [Blocks: {}, full: {}, "
-                "part: {}, empty: {}]"
-            ).format(self.n, blocks, fullBlocks, isPartLeft, emptyBlocks)
+                f"Hp render for {self.n} is: [Blocks: {blocks}, "
+                f"full: {fullBlocks}, part: {isPartLeft}, "
+                f"empty: {emptyBlocks}]"
+            )
         )
 
         ret += rendHP["full"] * fullBlocks
@@ -279,13 +280,9 @@ class player:
             self.defending = ""
             addOn = "no longer "
 
-        ret = ("{} is {}defending from {} attacks").format(
-            self.n, addOn, defType
-        )
+        ret = f"{self.n} is {addOn}defending from {defType} attacks"
         if not defAlr:
-            ret += " and recovers {} additional stamina.\n".format(
-                self.recSta()
-            )
+            ret += f" and recovers {self.recSta()} additional stamina.\n"
         else:
             ret += ".\n"
         return ret
@@ -346,13 +343,13 @@ class player:
             self.pd = self.pd / 2
             self.md = self.md / 2
             mes += (
-                "{} has {}% HP and has halved "
+                f"{self.n} has {self.hpPer()}% HP and has halved "
                 "defenses until their next turn.\n"
-            ).format(self.n, self.hpPer())
+            )
         else:
             self.md = self.md * 2
             self.pd = self.pd * 2
-            mes += "{} no longer has lowered defenses.\n".format(self.n)
+            mes += f"{self.n} no longer has lowered defenses.\n"
         return mes
 
     def focus(self, inc: bool = True):
@@ -411,20 +408,31 @@ class battler:
                         await peep.ask()
 
     def nextRound(self) -> list[typing.Union[player, None]]:
+        # TODO rewrite for more than 2 peeps
         p1Swi = self.p1.swiNow
         p2Swi = self.p2.swiNow
         Who2Move = [None, None]
         while p1Swi < self.totSwi and p2Swi < self.totSwi:
             p1Swi += self.p1.swi
             p2Swi += self.p2.swi
-            logP.debug("p1Swi: {}, p2Swi: {}".format(p1Swi, p2Swi))
+            logP.debug(f"p1Swi: {p1Swi}, p2Swi: {p2Swi}")
 
-        if p1Swi >= self.totSwi:
-            p1Swi -= self.totSwi
-            Who2Move[0] = self.p1
-        elif p2Swi >= self.totSwi:
-            p2Swi -= self.totSwi
-            Who2Move[1] = self.p2
+        if p1Swi == p2Swi:
+            playerSwi = random.sample(
+                [[p1Swi, 0, self.p1], [p2Swi, 1, self.p2]], k=2
+            )
+        else:
+            playerSwi = sorted(
+                [[p1Swi, 0, self.p1], [p2Swi, 1, self.p2]],
+                key=lambda x: x[0],
+                reverse=True,
+            )
+
+        for peep in playerSwi:
+            if peep[0] >= self.totSwi:
+                peep[0] -= self.totSwi
+                Who2Move[peep[1]] = peep[2]
+                break
 
         self.p1.swiNow = p1Swi
         self.p2.swiNow = p2Swi
@@ -437,7 +445,7 @@ class battler:
         p1Move: list[str] = None,
         p2Move: list[str] = None,
     ):
-        logP.debug("Who2Move: {}".format(Who2Move))
+        logP.debug(f"Who2Move: {Who2Move}")
         moves = ["Does Nothing.", "Does Nothing.", None]
         if self.p1 in Who2Move and self.p2 in Who2Move:
             if self.p1.swiNow == self.p2.swiNow:
@@ -448,12 +456,12 @@ class battler:
                 first = self.p2
 
             if first == self.p1:
-                moves[0] = "{} moves first!\n".format(self.p1.n)
+                moves[0] = f"{self.p1.n} moves first!\n"
                 moves[0] += self.turn(self.p1, self.p2, p1Move)
                 if self.p2.hp > 0 and self.p1.hp > 0:
                     moves[1] = self.turn(self.p2, self.p1, p2Move)
             else:
-                moves[1] = "{} moves first!\n".format(self.p2.n)
+                moves[1] = f"{self.p2.n} moves first!\n"
                 moves[1] += self.turn(self.p2, self.p1, p2Move)
                 if self.p2.hp > 0 and self.p1.hp > 0:
                     moves[0] = self.turn(self.p1, self.p2, p1Move)
@@ -462,14 +470,14 @@ class battler:
                 if not peep:
                     continue
                 if peep == self.p1:
-                    moves[0] = "{} moves!\n".format(self.p1.n)
+                    moves[0] = f"{self.p1.n} moves!\n"
                     moves[0] += self.turn(self.p1, self.p2, p1Move)
                 else:
-                    moves[1] = "{} moves!\n".format(self.p2.n)
+                    moves[1] = f"{self.p2.n} moves!\n"
                     moves[1] += self.turn(self.p2, self.p1, p2Move)
 
         if self.p1.hp <= 0 or self.p2.hp <= 0:
-            logP.debug("p1 Hp: {}, p2 Hp: {}".format(self.p1.hp, self.p2.hp))
+            logP.debug(f"p1 Hp: {self.p1.hp}, p2 Hp: {self.p2.hp}")
             if self.p1.hp == self.p2.hp:
                 moves[2] = "Noone"
             elif self.p1.hp > self.p2.hp:
@@ -483,11 +491,11 @@ class battler:
         mes = ""
         if peep.missTurn:
             extraSta = 1
-            mes += "{} misses this turn due to exhaustion!\n".format(peep.n)
+            mes += f"{peep.n} misses this turn due to exhaustion!\n"
             mes += (
-                "This exhaustion means {} recovers an "
-                "additional {} stamina this turn.\n"
-            ).format(peep.n, peep.recSta(extraSta))
+                f"This exhaustion means {peep.n} recovers an "
+                f"additional {peep.recSta(extraSta)} stamina this turn.\n"
+            )
         elif peep.weak:
             mes += peep.beWeak(False)
         # if peep.defending:
@@ -507,9 +515,7 @@ class battler:
         else:
             if not peep.missTurn:
                 staRec = 7
-                mes += "{} recovered this turn for {} stamina.\n".format(
-                    peep.n, staRec
-                )
+                mes += f"{peep.n} recovered this turn for {staRec} stamina.\n"
                 peep.sta += staRec
 
         if peep.focusNum and not peep.focused:
@@ -521,15 +527,14 @@ class battler:
             peep.missTurn = int(2)
             peep.tired += 1
             mes += (
-                "{} has exhausted themself ({}) and will miss a turn.\n"
-            ).format(peep.n, peep.tired)
+                f"{peep.n} has exhausted themself ({peep.tired}) "
+                "and will miss a turn.\n"
+            )
 
         mes += self.recover(peep)
 
         if peep.tired == 3:
-            mes += "{} has exhausted themself for the third time!".format(
-                peep.n
-            )
+            mes += f"{peep.n} has exhausted themself for the third time!"
             if attPeep.hp < 0:
                 peep.hp = attPeep.hp - 1
             else:
@@ -558,6 +563,17 @@ class battler:
 
         critDesp = Attack.phys + 2 * peep.pa
 
+        if Attack.ment > atk:
+            moveStr = "Mental"
+        elif Attack.ment == atk:
+            moveStr = random.choice(["Physical", "Mental"])
+
+        if moveStr == "Mental":
+            # update attack values for mental attacks
+            atk = Attack.ment
+            dAtk = Attack.ment + peep.ma
+            critDesp = Attack.ment + 2 * peep.ma
+
         # peep stamina after norm attack
         staAftA = peep.sta - normSta
 
@@ -574,31 +590,20 @@ class battler:
         nextHP = notPeep.hp + notPeep.rec
 
         # if peep at max stamina
-        maxSta = peep.sta == peep.totSta
+        maxSta = bool(peep.sta == peep.totSta)
 
         # if notPeep is one norm hit from loss
-        oneHit = notPeep.hp <= atk
+        oneHit = bool(notPeep.hp <= atk)
 
         # if notPeep is one desp hit from loss
-        oneDespHit = notPeep.hp <= dAtk
+        oneDespHit = bool(notPeep.hp <= dAtk)
 
-        canAt = staAftA >= 0
-        canDespAt = staAftD >= 0
-
-        if Attack.ment > atk:
-            moveStr = "Mental"
-        elif Attack.ment == atk:
-            moveStr = random.choice(["Physical", "Mental"])
-
-        if moveStr == "Mental":
-            # update attack values for mental attacks
-            atk = Attack.ment
-            dAtk = Attack.ment + peep.ma
-            critDesp = Attack.ment + 2 * peep.ma
+        canAt = bool(staAftA >= 0)
+        canDespAt = bool(staAftD >= 0)
 
         if Attack.hitChance <= 50:
             # lowhit func
-            logP.debug("lowHit: {}".format(Attack.hitChance))
+            logP.debug(f"lowHit: {Attack.hitChance}")
             if oneHit and Attack.hitChance + 5 * fAA > 50:
                 while Attack.hitChance < 50 and peep.sta > normSta:
                     peep.focus()
@@ -633,7 +638,7 @@ class battler:
 
         elif Attack.hitChance < 75:
             # avhit func
-            logP.debug("avHit: {}".format(Attack.hitChance))
+            logP.debug(f"avHit: {Attack.hitChance}")
             if oneHit and nextHP > atk and canAt:
                 peep.focusTill(normSta + 1)
                 # then normal attack
@@ -663,7 +668,7 @@ class battler:
 
         elif Attack.hitChance < 150:
             # highhit func
-            logP.debug("highHit: {}".format(Attack.hitChance))
+            logP.debug(f"highHit: {Attack.hitChance}")
             if oneHit and canAt:
                 peep.focusTill(normSta + 1)
                 # then normal hit
@@ -689,7 +694,7 @@ class battler:
                 typeMove = "Defend"
 
         else:
-            logP.debug("critHit: {}".format(Attack.hitChance))
+            logP.debug(f"critHit: {Attack.hitChance}")
             # crithit func
             if oneHit and canAt:
                 peep.focusTill(normSta + 1)
@@ -734,14 +739,13 @@ class battler:
         staRec = peep.recSta(peep.staR)
         if staRec:
             mes += (
-                "{} recovers {} stamina for a running total of {}.\n".format(
-                    peep.n, staRec, peep.sta
-                )
+                f"{peep.n} recovers {staRec} stamina for a "
+                f"running total of {peep.sta}.\n"
             )
 
         heal = peep.recHP(peep.rec)
         if heal:
-            mes += "{} heals for {:0.2g}.\n".format(peep.n, heal)
+            mes += f"{peep.n} heals for {heal:0.2g}.\n"
         peep.t += 1
         return mes
 
@@ -762,9 +766,7 @@ class battler:
             staCost = 2
 
         attacker.sta -= staCost
-        mes += "{} {}attacks for {} stamina.\n".format(
-            attacker.n, typeAtt, staCost
-        )
+        mes += f"{attacker.n} {typeAtt}attacks for {staCost} stamina.\n"
 
         if not attMove:
             if attacker.pa - defender.pd > attacker.ma - defender.md:
@@ -784,9 +786,7 @@ class battler:
         if attChance < 0:
             attChance = 0
         missChance = 100 - attChance
-        logP.debug(
-            "attChance: {}, missChance: {}".format(attChance, missChance)
-        )
+        logP.debug(f"attChance: {attChance}, missChance: {missChance}")
         hit = random.choices(
             ["Hit", "Missed"],
             [attChance, missChance],
@@ -798,9 +798,7 @@ class battler:
                 dblCritChance = critChance - 100
                 critChance = 100
             normChance = 100 - critChance
-            logP.debug(
-                "normChance: {}, critChance: {}".format(normChance, critChance)
-            )
+            logP.debug(f"normChance: {normChance}, critChance: {critChance}")
             hit = random.choices(
                 ["Normal", "Critical"], [normChance, critChance]
             )
@@ -812,9 +810,7 @@ class battler:
                     dblCritChance = 100
                 notDblCrit = 100 - dblCritChance
                 logP.debug(
-                    "dblCritChance: {}, notDblCrit: {}".format(
-                        dblCritChance, notDblCrit
-                    )
+                    f"dblCritChance: {dblCritChance}, notDblCrit: {notDblCrit}"
                 )
                 hit = random.choices(
                     ["Critical", "Double Critical"],
@@ -825,8 +821,9 @@ class battler:
                 else:
                     notTriCrit = 100 - triCritChance
                     logP.debug(
-                        "triCritChance: {}, notTriCrit: {}".format(
-                            triCritChance, notTriCrit
+                        (
+                            f"triCritChance: {triCritChance}, "
+                            f"notTriCrit: {notTriCrit}"
                         )
                     )
                     hit = random.choices(
@@ -837,7 +834,7 @@ class battler:
                         multi = int(3)
                     else:
                         multi = int(4)
-        mes += "{}'s attack is a {} attack.\n".format(attacker.n, hit[0])
+        mes += f"{attacker.n}'s attack is a {hit[0]} attack.\n"
 
         if attMove == "Physical":
             attDmg = attackCalc(
@@ -849,10 +846,11 @@ class battler:
             if attDmg < int(0):
                 attDmg = float(0)
             defender.hp = defender.hp - attDmg
-            mes += "{} physically attacks {} for {:0.2g} damage.\n".format(
-                attacker.n, defender.n, attDmg
+            mes += (
+                f"{attacker.n} physically attacks {defender.n} "
+                f"for {attDmg:0.2g} damage.\n"
             )
-            logP.debug("physical attack is a: {}, for: {}".format(hit, attDmg))
+            logP.debug(f"physical attack is a: {hit}, for: {attDmg}")
         if attMove == "Mental":
             attDmg = attackCalc(
                 multi,
@@ -863,12 +861,11 @@ class battler:
             if attDmg < int(0):
                 attDmg = float(0)
             defender.hp = defender.hp - attDmg
-            mes += "{} mentally attacks {} for {:0.2g} damage.\n".format(
-                attacker.n,
-                defender.n,
-                attDmg,
+            mes += (
+                f"{attacker.n} mentally attacks {defender.n} "
+                f"for {attDmg:0.2g} damage.\n"
             )
-            logP.debug("mental attack is a: {}, for: {}".format(hit, attDmg))
+            logP.debug(f"mental attack is a: {hit}, for: {attDmg}")
 
         return mes
 
@@ -906,27 +903,25 @@ def addCalc(self, statType) -> int:
     ret = int(0)
     ignore = []
     for stat in statCalcDict.keys():
-        statAm = getattr(self, "_{}".format(stat))
+        statAm = getattr(self, f"_{stat}")
         if not statAm:
             continue
         if stat in replaceDict.keys():
-            soft = getattr(self, "_{}".format(stat))
-            hard = getattr(self, "_{}".format(replaceDict[stat]))
+            soft = getattr(self, f"_{stat}")
+            hard = getattr(self, f"_{replaceDict[stat]}")
             logP.debug(
                 str(
-                    "soft {} rank {}, ".format(stat, soft)
-                    + "hard {} rank {}".format(replaceDict[stat], hard)
+                    f"soft {stat} rank {soft}, "
+                    + f"hard {replaceDict[stat]} rank {hard}"
                 )
             )
             if soft > hard:
-                logP.debug(
-                    "Adding {} to ignore List".format(replaceDict[stat])
-                )
+                logP.debug(f"Adding {replaceDict[stat]} to ignore List")
                 ignore.append(replaceDict[stat])
-    logP.debug("ignore: {}".format(ignore))
+    logP.debug(f"ignore: {ignore}")
 
     for stat in statCalcDict.keys():
-        statAm = getattr(self, "_{}".format(stat))
+        statAm = getattr(self, f"_{stat}")
         if not statAm or stat in ignore:
             continue
         try:
@@ -936,12 +931,9 @@ def addCalc(self, statType) -> int:
         if addStat:
             ret += statAm * addStat
             logP.debug(
-                "Adding rank {} {} * {} = {} to {}.".format(
-                    statAm,
-                    stat,
-                    addStat,
-                    statAm * addStat,
-                    statType,
+                (
+                    f"Adding rank {statAm} {stat} * {addStat} = "
+                    f"{statAm * addStat} to {statType}."
                 )
             )
     return ret
@@ -952,14 +944,13 @@ def addBonus(self, bonusType) -> int:
     for stat in bonusDict.keys():
         addBonus = bonusDict[stat][bonusType]
         if addBonus:
-            bonusStat = getattr(self, "_{}".format(stat))
+            bonusStat = getattr(self, f"_{stat}")
             if bonusStat == 10:
                 ret += addBonus
                 logP.debug(
-                    "Adding a bonus of {} to {} for having 10 in {}".format(
-                        addBonus,
-                        bonusType,
-                        bonusStat,
+                    (
+                        f"Adding a bonus of {addBonus} to {bonusType} "
+                        f"for having 10 in {bonusStat}"
                     )
                 )
     return ret
