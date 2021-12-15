@@ -33,8 +33,8 @@ class managerCommands(
             raise commands.CheckFailure(
                 (
                     "You do not have permission as you are missing a role in "
-                    "this list: {}"
-                ).format(MANAGERROLES)
+                    f"this list: {MANAGERROLES}"
+                )
             )
 
         # messy implementation for Supe
@@ -49,14 +49,15 @@ class managerCommands(
     async def roleInf(self, ctx: commands.Context, *, roleStr: str = SUPEROLE):
         supeGuildRoles = await orderRole(ctx)
         roleStrId = [x for x in supeGuildRoles if roleStr == x.name]
-        logP.debug("Role string ID is: {}".format(roleStrId[0].id))
+        logP.debug(f"Role string ID is: {roleStrId[0].id}")
         if roleStrId:
             roleStrId = roleStrId[0]
             await ctx.send(
                 (
-                    "{.name} has: \nposition - {.position}"
-                    "\ncolour - {.colour}"
-                ).format(roleStrId, roleStrId, roleStrId)
+                    f"{roleStrId.name} has: \n"
+                    f"position - {roleStrId.position}\n"
+                    f"colour - {roleStrId.colour}"
+                )
             )
         return
 
@@ -66,10 +67,10 @@ class managerCommands(
         description=cmdInf["restart"]["Description"],
     )
     async def restart(self, ctx: commands.Context, host: str = HOSTNAME):
-        logP.debug("Command restart called for host: {}".format(host))
+        logP.debug(f"Command restart called for host: {host}")
         if host != HOSTNAME:
             return
-        text = "Restarting bot on {}...".format(HOSTNAME)
+        text = f"Restarting bot on {HOSTNAME}..."
         await dupeMes(self.bot, ctx, text)
         logP.warning("Bot is now restarting")
         restart_bot()
@@ -84,34 +85,26 @@ class managerCommands(
         logg: typing.Optional[int] = 0,
         host: str = HOSTNAME,
     ):
-        logP.debug("Command upload called for host: {}".format(host))
+        logP.debug(f"Command upload called for host: {host}")
         if host != HOSTNAME:
             return
         currTime = time.localtime()
-        currTimeStr = "{0:04d}.{1:02d}.{2:02d}_{3:02d}.{4:02d}.{5:02d}".format(
-            currTime.tm_year,
-            currTime.tm_mon,
-            currTime.tm_mday,
-            currTime.tm_hour,
-            currTime.tm_min,
-            currTime.tm_sec,
+        currTimeStr = (
+            f"{currTime.tm_year:04d}.{currTime.tm_mon:02d}."
+            f"{currTime.tm_mday:02d}_{currTime.tm_hour:02d}."
+            f"{currTime.tm_min:02d}.{currTime.tm_sec:02d}"
         )
-        logP.debug("currTime: {}".format(currTime))
+        logP.debug(f"currTime: {currTime}")
         logP.debug("currTimeStr: " + currTimeStr)
-        nameStamp = "{}_{}".format(
-            SAVEFILE,
-            currTimeStr,
-        )
+        nameStamp = f"{SAVEFILE}_{currTimeStr}"
         if logg:
             await ctx.send(
-                "File {} from {} at: {}".format(
-                    SAVEFILE, HOSTNAME, currTimeStr
-                ),
+                f"Log File from {HOSTNAME} at: {currTimeStr}",
                 file=discord.File(log.LOG_FILE),
             )
         else:
             await ctx.send(
-                "File {} from {}".format(SAVEFILE, HOSTNAME),
+                f"File {SAVEFILE} from {HOSTNAME}",
                 file=discord.File(SAVEFILE, filename=nameStamp),
             )
         logP.debug("command upload completed")
@@ -128,9 +121,9 @@ class managerCommands(
         mem: str = "",
     ):
         val = round(val, 2)
-        logP.debug("val to add is: {}".format(val))
+        logP.debug(f"val to add is: {val}")
         memList = await memGrab(self, ctx, mem)
-        logP.debug("memList is: {}".format(memList))
+        logP.debug(f"memList is: {memList}")
         peep = memList[0]
 
         infGrab = load(peep.guild.id)
@@ -144,7 +137,7 @@ class managerCommands(
             sum = 0.0
         infGrab[peep.id]["invXP"][-1] = sum
         save(ctx.message.author.guild.id, infGrab)
-        await ctx.send("Host {}: {} -> {}".format(nON(peep), iniVal, sum))
+        await ctx.send(f"Host {nON(peep)}: {iniVal} -> {sum}")
 
     @commands.command(
         brief=cmdInf["average"]["Brief"],
@@ -156,7 +149,7 @@ class managerCommands(
         totLenPeeps = 0
         getSupe = [x for x in ctx.guild.roles if str(x.name) == SUPEROLE]
         if not getSupe:
-            await ctx.send("No users of role: {}".format(SUPEROLE))
+            await ctx.send(f"No users of role: {SUPEROLE}")
         else:
             getSupe = getSupe[0]
         for val in leader.values():
@@ -169,16 +162,11 @@ class managerCommands(
             totSumPeeps += sumPeep
 
             mes.add_field(
-                name="{}".format(val),
+                name=f"{val}",
                 value=(
-                    "{} host{} for a total of {} point{}.\n "
-                    "Serverwide average of {}."
-                ).format(
-                    lenPeep,
-                    pluralInt(lenPeep),
-                    sumPeep,
-                    pluralInt(sumPeep),
-                    avPeep,
+                    f"{lenPeep} host{pluralInt(lenPeep)} for a total of "
+                    f"{sumPeep} point{pluralInt(sumPeep)}.\n Serverwide "
+                    f"average of {avPeep}."
                 ),
             )
         totLenPeeps = len(getSupe.members)
@@ -186,14 +174,10 @@ class managerCommands(
         mes.add_field(
             name=SUPEROLE,
             value=(
-                "There is a total of {} host{} with a sum of {} "
-                "enhancement point{} spent.\n Serverwide average of {}."
-            ).format(
-                totLenPeeps,
-                pluralInt(totLenPeeps),
-                totSumPeeps,
-                pluralInt(totSumPeeps),
-                totAvPeep,
+                f"There is a total of {totLenPeeps} "
+                f"host{pluralInt(totLenPeeps)} with a sum of {totSumPeeps} "
+                f"enhancement point{pluralInt(totSumPeeps)} spent.\n "
+                f"Serverwide average of {totAvPeep}."
             ),
         )
         mes.set_footer(text=HOSTNAME, icon_url=self.bot.user.display_avatar)
@@ -255,11 +239,11 @@ async def manageRoles(ctx: commands.Context):
 
     # iterate through all guild roles
     for role in ctx.message.guild.roles:
-        logP.debug("Looking at role: {}".format(role.name))
+        logP.debug(f"Looking at role: {role.name}")
 
         # grab shorthand for enhancement
         roleShort = [x for x in power.keys() if power[x]["Name"] == role.name]
-        logP.debug("roleShort = {}".format(roleShort))
+        logP.debug(f"roleShort = {roleShort}")
 
         # check to ensure role is one overseen by this bot
         if roleShort == []:
@@ -274,7 +258,7 @@ async def manageRoles(ctx: commands.Context):
 
         # fetch enhancement rank
         roleRank = power[roleShort[0]]["Rank"]
-        logP.debug("Role rank is: {}".format(roleRank))
+        logP.debug(f"Role rank is: {roleRank}")
 
         # check for restricted roles
         if not roleRank:
@@ -291,17 +275,14 @@ async def manageRoles(ctx: commands.Context):
                 x.position
                 for x in ctx.message.guild.roles
                 if x.name
-                == "Rank {} Intelligence (only for Systems)".format(
-                    roleRank - 1
-                )
+                == f"Rank {roleRank - 1} Intelligence (only for Systems)"
             ][0]
 
         # fetch upperbound intelligence rank position
         roleRankUpper = [
             x.position
             for x in ctx.message.guild.roles
-            if x.name
-            == "Rank {} Intelligence (only for Systems)".format(roleRank)
+            if x.name == f"Rank {roleRank} Intelligence (only for Systems)"
         ][0]
 
         # roleDiff = roleRankUpper - roleRankLower
@@ -310,9 +291,7 @@ async def manageRoles(ctx: commands.Context):
         if role.position < roleRankUpper:
             if role.position >= roleRankLower:
                 logP.debug(
-                    "Role within bounds {} - {}".format(
-                        roleRankUpper, roleRankLower
-                    )
+                    f"Role within bounds {roleRankUpper} - {roleRankLower}"
                 )
                 continue
 
@@ -321,14 +300,12 @@ async def manageRoles(ctx: commands.Context):
         # ASSUMES current role position is lower than intelligence position
         # TODO remove assumption
         logP.debug(
-            "Role to be moved from {.position} to {}".format(
-                role, roleRankUpper - 1
-            )
+            f"Role to be moved from {role.position} to {roleRankUpper - 1}"
         )
 
         movedRoles.add_field(
             name=role.name,
-            value="{} -> {}".format(role.position, roleRankUpper),
+            value=f"{role.position} -> {roleRankUpper}",
         )
 
         toMove[role] = roleRankUpper

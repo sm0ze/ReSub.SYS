@@ -244,7 +244,7 @@ for sheetL in sheet_names:
     urlToken = sheetL[1]
     sheet = sheetL[0]
     url = urltoAdd.format(urlToken, sheet)
-    logP.debug("At URL: {}".format(url))
+    logP.debug(f"At URL: {url}")
     try:
         frame = None
         frame = pd.read_csv(url)
@@ -257,16 +257,14 @@ for sheetL in sheet_names:
             continue
         currList = remove_values_from_list([x for x in frame[i]], "nan")
         posTask[sheet][i] = currList
-        logP.debug(
-            "{} list of {} is of length {}".format(sheet, i, len(currList))
-        )
+        logP.debug(f"{sheet} list of {i} is of length {len(currList)}")
 
 for statsheet in statsheetNom:
     statUrlID = statsheet[1]
     statsheetName = statsheet[0]
     statUrl = urltoAdd.format(statUrlID, statsheetName)
 
-    logP.debug("At URL: {}".format(statUrl))
+    logP.debug(f"At URL: {statUrl}")
     try:
         frame = None
         frame = pd.read_csv(statUrl)
@@ -281,8 +279,8 @@ for statsheet in statsheetNom:
         for i in range(1, 11):
             enhNum = str(shrt) + str(i)
             power[enhNum] = {
-                "Name": "Rank {} {}".format(i, tup.Role),
-                "Type": "{}".format(tup.Role),
+                "Name": f"Rank {i} {tup.Role}",
+                "Type": f"{tup.Role}",
                 "Rank": i,
                 "Prereq": [],
             }
@@ -350,9 +348,7 @@ for url, dic, dicName in urlList:
             dic[shrt] = {}
             for name, value in tup._asdict().items():
                 logP.debug(
-                    "To: {}, adding: [{}][{}] = {}".format(
-                        dicName, shrt, name, value
-                    )
+                    f"To: {dicName}, adding: [{shrt}][{name}] = {value}"
                 )
                 dic[shrt][name] = value
 
@@ -369,7 +365,7 @@ for tup in frame.itertuples():
         shrt2 = [x[0] for x in leader.items() if x[1] == tup.ReplaceWith]
         if shrt2:
             shrt2 = shrt2[0]
-            logP.debug("replace '{}' with '{}'".format(shrt, shrt2))
+            logP.debug(f"replace '{shrt}' with '{shrt2}'")
             replaceDict[shrt] = shrt2
 
 try:
@@ -380,9 +376,7 @@ except Exception as e:
 
 for tup in frame.itertuples():
     baseDict[tup.Constant] = tup.BaseStat
-    logP.debug(
-        "Adding Base: {} of {}, to dict".format(tup.Constant, tup.BaseStat)
-    )
+    logP.debug(f"Adding Base: {tup.Constant} of {tup.BaseStat}, to dict")
 
 npcDict = {}
 npcSheet = "NPC"
@@ -402,7 +396,7 @@ for tup in frame.itertuples():
         if str(getattr(tup, ite)) == str("nan"):
             continue
         npcDict[str(tup.ID)][loc] = getattr(tup, ite)
-    logP.debug("Added NPC: {}".format(npcDict[str(tup.ID)]))
+    logP.debug(f"Added NPC: {npcDict[str(tup.ID)]}")
 
 
 descSheet = "BotDescriptions"
@@ -422,6 +416,6 @@ for tup in frame.itertuples():
             cmdInf[tup.Command][ite] = "No Description"
         else:
             cmdInf[tup.Command][ite] = getattr(tup, ite)
-    logP.debug("Added Command description: {}".format(cmdInf[tup.Command]))
+    logP.debug(f"Added Command description: {cmdInf[tup.Command]}")
 
 logP.info("Finished csv download and input.")

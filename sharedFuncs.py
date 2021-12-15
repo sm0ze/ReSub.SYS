@@ -26,7 +26,7 @@ SLEEP = False
 def eleCountUniStr(varList, reqursion: bool = False):
     uniList = []
     if not reqursion:
-        logP.debug("List of {} elements to make unique".format(len(varList)))
+        logP.debug(f"List of {len(varList)} elements to make unique")
     for ele in varList:
         if isinstance(ele, list):
             if ele:
@@ -38,7 +38,7 @@ def eleCountUniStr(varList, reqursion: bool = False):
             if ele and ele not in uniList:
                 uniList.append(ele)
     if not reqursion:
-        logP.debug("List of {} elements to return".format(len(uniList)))
+        logP.debug(f"List of {len(uniList)} elements to return")
     return len(uniList), uniList
 
 
@@ -46,9 +46,7 @@ def eleCountUniStr(varList, reqursion: bool = False):
 def cost(inName: str, inDict: dict = power):
     required = []
 
-    logP.debug(
-        "{} has requisites: {}".format(inName, inDict[inName]["Prereq"])
-    )
+    logP.debug(f"{inName} has requisites: {inDict[inName]['Prereq']}")
 
     # for each prereq given enhancement has
     for req in inDict[inName]["Prereq"]:
@@ -70,7 +68,7 @@ def cost(inName: str, inDict: dict = power):
 
     # trim list of prereqs to remove duplicates
     ans = eleCountUniStr(required)
-    logP.debug("ans before restricted list length: {}".format(len(ans)))
+    logP.debug(f"ans before restricted list length: {len(ans)}")
 
     # total cost of given enhancement
     ansTot = ans[0]
@@ -84,7 +82,7 @@ def trim(pList, inDict=power):
     logP.debug("Start of trim function")
     tierDict = {}
     trimList = []
-    logP.debug("list of length {} to trim".format(len(pList)))
+    logP.debug(f"list of length {len(pList)} to trim")
 
     # iterate thorugh list of given enhancements
     for pow in pList:
@@ -99,22 +97,18 @@ def trim(pList, inDict=power):
             for x in inDict.keys()
             if inDict[x]["Name"] == pow
         ][0]
-        logP.debug(
-            "Enhancement: {}, Type: {}, Rank: {}".format(pow, powType, powRank)
-        )
+        logP.debug(f"Enhancement: {pow}, Type: {powType}, Rank: {powRank}")
 
         # if enhancement not already counted, add it to dictionary
         if powType not in tierDict.keys():
             tierDict[powType] = powRank
-            logP.debug("{} of rank {} added to dict".format(powType, powRank))
+            logP.debug(f"{powType} of rank {powRank} added to dict")
 
         # else if enhancment greater in rank than already counted enhancement
         # edit dictionary
         elif powRank > tierDict[powType]:
             logP.debug(
-                "{} of rank {} increased to {}".format(
-                    powType, tierDict[powType], powRank
-                )
+                f"{powType} of rank {tierDict[powType]} increased to {powRank}"
             )
             tierDict[powType] = powRank
 
@@ -123,15 +117,15 @@ def trim(pList, inDict=power):
         trimList.append([val, key])
 
     # return sorted trimmed list of highest ranked enhancements, descending
-    logP.debug("dict tierDict: {}".format(tierDict))
-    logP.debug("trimList: {}".format(trimList))
+    logP.debug(f"dict tierDict: {tierDict}")
+    logP.debug(f"trimList: {trimList}")
     return sorted(trimList, reverse=True, key=lambda x: x[0])
 
 
 # function to turn given list of [rank, enhancment]
 # into str for discord message
 def reqEnd(endList):
-    logP.debug("{}".format(endList))
+    logP.debug(f"{endList}")
 
     # check for no prereqs
     if len(endList[1]) == 0:
@@ -139,11 +133,11 @@ def reqEnd(endList):
 
     # otherwise add prereqs to message
     else:
-        logP.debug("{}".format(endList[1]))
+        logP.debug(f"{endList[1]}")
         reqStr = ""
         for req in endList[1]:
             reqName = power[toType(req[1]) + str(req[0])]["Name"]
-            reqStr += "{}\n".format(reqName)
+            reqStr += f"{reqName}\n"
 
     # return message
     return reqStr
@@ -151,7 +145,7 @@ def reqEnd(endList):
 
 def toType(role: str):
     thing = [x for x in leader.keys() if role == leader[x]][0]
-    logP.debug("Convert: {}, to: {}".format(role, thing))
+    logP.debug(f"Convert: {role}, to: {thing}")
     return thing
 
 
@@ -162,14 +156,14 @@ def funcBuild(
 ) -> tuple[int, list[str], list]:
     reqList = []
     nameList = []
-    logP.debug("Build command buildList has length: {}".format(len(buildList)))
+    logP.debug(f"Build command buildList has length: {len(buildList)}")
 
     # iterate through shorthand enhancements
     for item in buildList:
-        logP.debug("Build command item: {}".format(item))
+        logP.debug(f"Build command item: {item}")
         # fetch enhancement prereqs and cost
         temCost = cost(item)
-        logP.debug("Build command prereq cost length: {}".format(len(temCost)))
+        logP.debug(f"Build command prereq cost length: {len(temCost)}")
 
         # add this enhancement's prereqs to list
         reqList.append(temCost[2])
@@ -180,21 +174,21 @@ def funcBuild(
         # add enhancement full name to lists
         reqList.append(tempName)
         nameList.append(tempName)
-    logP.debug("Build command reqList is of length: {}".format(len(reqList)))
+    logP.debug(f"Build command reqList is of length: {len(reqList)}")
 
     # restrict nested prereq list to a set of prereqs
     temp = eleCountUniStr(reqList)
 
     # fetch highest ranked prereqs of each type in list
     reqList = trim([x for x in temp[1]])
-    logP.debug("reqList len = {}".format(len(reqList)))
+    logP.debug(f"reqList len = {len(reqList)}")
 
     # sum cost of build from prereqs
     costTot = 0
     for group in reqList:
         costTot += group[0]
 
-    logP.debug("Total cost of build is: {}".format(costTot))
+    logP.debug(f"Total cost of build is: {costTot}")
     # return cost of build, role names and prerequisite roles
     return costTot, nameList, reqList
 
@@ -205,13 +199,13 @@ def spent(
     memList: list[discord.Member],
 ) -> list[list[discord.Member, int, list[str]]]:
     retList = []
-    logP.debug("memList is: {}".format(memList))
+    logP.debug(f"memList is: {memList}")
 
     # iterate thorugh given list of users
     for peep in memList:
         supeRoles = []
-        logP.debug("current user is: {}".format(peep))
-        logP.debug("current user role list length: {}".format(len(peep.roles)))
+        logP.debug(f"current user is: {peep}")
+        logP.debug(f"current user role list length: {len(peep.roles)}")
 
         # messy implementation to grab shorthand for all unrestricted bot
         # managed roles in user role list
@@ -226,7 +220,7 @@ def spent(
                         if power[x]["Name"] == roles.name
                     ][0]
                 )
-        logP.debug("Supe roles: {}".format(supeRoles))
+        logP.debug(f"Supe roles: {supeRoles}")
 
         # fetch point cost (including prereqs) of enhancements
         if supeRoles:
@@ -238,7 +232,7 @@ def spent(
         # to list to return
         retList.append([peep, pointCount, supeRoles])
 
-    logP.debug("retlist is: {}".format(retList))
+    logP.debug(f"retlist is: {retList}")
     return retList
 
 
@@ -250,17 +244,15 @@ async def dupeError(
     author = nON(ctx.author)
     autID = ctx.author.id
     currTime = time.localtime()
-    currTimeStr = "{0:04d}.{1:02d}.{2:02d}_{3:02d}.{4:02d}.{5:02d}".format(
-        currTime.tm_year,
-        currTime.tm_mon,
-        currTime.tm_mday,
-        currTime.tm_hour,
-        currTime.tm_min,
-        currTime.tm_sec,
+    currTimeStr = (
+        f"{currTime.tm_year:04d}.{currTime.tm_mon:02d}."
+        f"{currTime.tm_mday:02d}_{currTime.tm_hour:02d}."
+        f"{currTime.tm_min:02d}.{currTime.tm_sec:02d}"
     )
 
-    errMes = "At {}, {} ({}) produced this error on {}: ".format(
-        currTimeStr, author, autID, HOSTNAME
+    errMes = (
+        f"At {currTimeStr}, {author} ({autID}) "
+        f"produced this error on {HOSTNAME}: "
     )
     logP.warning(errMes + str(mes.to_dict()["description"]))
 
@@ -280,7 +272,7 @@ async def dupeError(
 
 async def getSendLoc(id, bot: commands.Bot, attr: str = "channel"):
     otherOpt = []
-    iterList = [x for y in bot.guilds for x in getattr(y, "{}s".format(attr))]
+    iterList = [x for y in bot.guilds for x in getattr(y, f"{attr}s")]
     sendLoc = [x for x in iterList if int(x.id) == int(id)]
 
     if attr == "thread":
@@ -300,9 +292,9 @@ async def getSendLoc(id, bot: commands.Bot, attr: str = "channel"):
 
     logP.debug(
         (
-            "searching for {} in list of {} length or other"
-            " list of length {} = {}"
-        ).format(id, len(iterList), len(otherOpt), sendLoc)
+            f"searching for {id} in list of {len(iterList)} length or other"
+            f" list of length {len(otherOpt)} = {sendLoc}"
+        )
     )
 
     if isinstance(sendLoc, list):
@@ -338,19 +330,17 @@ async def dupeMes(bot, channel=None, mes: str = None):
 async def memGrab(
     self, ctx: commands.Context, memList: str = ""
 ) -> list[typing.Union[discord.User, discord.Member]]:
-    logP.debug(
-        "memList: {}\nand mentions: {}".format(memList, ctx.message.mentions)
-    )
+    logP.debug(f"memList: {memList}\nand mentions: {ctx.message.mentions}")
     grabList = []
     # first check for users mentioned in message
     if ctx.message.mentions:
         grabList = ctx.message.mentions
-        logP.debug("Message mentions: {}".format(grabList))
+        logP.debug(f"Message mentions: {grabList}")
 
     # else check for users named by command caller
     elif memList:
         strMemList = memList.split(", ")
-        logP.debug("split grablist: {}".format(strMemList))
+        logP.debug(f"split grablist: {strMemList}")
         for posMem in strMemList:
             logP.debug(["trying to find: ", posMem])
             grabMem = await MemberConverter().convert(ctx, posMem)
@@ -360,8 +350,8 @@ async def memGrab(
     # else use the command caller themself
     else:
         grabList.append(ctx.message.author)
-        logP.debug("Author is: {}".format(grabList))
-    logP.debug("fixed grablist: {}".format(grabList))
+        logP.debug(f"Author is: {grabList}")
+    logP.debug(f"fixed grablist: {grabList}")
 
     # return: mentioned users || named users || message author
     return grabList
@@ -372,7 +362,7 @@ def save(key: int, value: dict, cache_file=SAVEFILE):
         with SqliteDict(cache_file) as mydict:
             mydict[key] = value  # Using dict[key] to store
             mydict.commit()  # Need to commit() to actually flush the data
-        logP.debug("saved {} of length: {}".format(key, len(value)))
+        logP.debug(f"saved {key} of length: {len(value)}")
     except Exception as ex:
         logP.warning(["Error during storing data (Possibly unsupported):", ex])
 
@@ -382,7 +372,7 @@ def load(key: int, cache_file=SAVEFILE) -> dict:
         with SqliteDict(cache_file) as mydict:
             # No need to use commit(), since we are only loading data!
             value = mydict[key]
-        logP.debug("Loaded with key {} length: {}".format(key, len(value)))
+        logP.debug(f"Loaded with key {key} length: {len(value)}")
         return value
     except Exception as ex:
         logP.warning(["Error during loading data:", ex])
@@ -391,14 +381,10 @@ def load(key: int, cache_file=SAVEFILE) -> dict:
 def lvlEqu(givVar: float = 0, inv=0) -> float:
     if inv:
         calVar = (20 * math.pow(givVar, 2)) / 1.25
-        logP.debug(
-            "{:0.2g} GDV is equivalent to {:,} XP".format(givVar, calVar)
-        )
+        logP.debug(f"{givVar:0.2g} GDV is equivalent to {calVar:,} XP")
     else:
         calVar = math.sqrt((1.25 * givVar) / 20)
-        logP.debug(
-            "{:,} XP is equivalent to {:0.2g} GDV".format(givVar, calVar)
-        )
+        logP.debug(f"{givVar:,} XP is equivalent to {calVar:0.2g} GDV")
     return round(calVar, 2)
 
 

@@ -19,13 +19,11 @@ logP = log.get_logger(__name__)
 
 runBot = True
 logP.info(
-    "Bot will attempt to connect to discord on host: {}, {}".format(
-        HOSTNAME, runBot
-    )
+    f"Bot will attempt to connect to discord on host: {HOSTNAME}, {runBot}"
 )
 
 
-logP.debug("Bot start time set as: {}".format(STARTTIME))
+logP.debug(f"Bot start time set as: {STARTTIME}")
 
 cogList = [
     "defaultCommands.py",
@@ -83,12 +81,13 @@ async def on_ready():
     channelList = [x for y in bot.guilds for x in y.channels]
     threadList = [x for y in bot.guilds for x in y.threads]
     logP.debug(
-        "Bot has access to {} servers, {} channels and {} threads.".format(
-            len(bot.guilds), len(channelList), len(threadList)
+        (
+            f"Bot has access to {len(bot.guilds)} servers, {len(channelList)}"
+            f" channels and {len(threadList)} threads."
         )
     )
 
-    strtMes = "Bot has logged in as {} on {}".format(bot.user, HOSTNAME)
+    strtMes = f"Bot has logged in as {bot.user} on {HOSTNAME}"
     logP.info(strtMes)
 
     await dupeMes(bot, None, strtMes)
@@ -107,8 +106,9 @@ async def on_ready():
             if perm[1]:
                 i += 1
         logP.debug(
-            "Bot: {}, in guild: {}, has {}/{} permissions".format(
-                nON(botMember), guild.name, i, len(permList)
+            (
+                f"Bot: {nON(botMember)}, in guild: {guild.name}, "
+                f"has {i}/{len(permList)} permissions"
             )
         )
     logP.info("Bot is now waiting for commands")
@@ -122,7 +122,7 @@ async def on_message(message: discord.Message):
         return
 
     if message.author.id == bot.owner_id:
-        if message.content.startswith("{}resume".format(CMDPREFIX)):
+        if message.content.startswith(f"{CMDPREFIX}resume"):
             # wake up the bot if it is asleep
             await bot.process_commands(message)
             return
@@ -131,7 +131,7 @@ async def on_message(message: discord.Message):
         # stop parsing the message if the bot is asleep
         return
 
-    if message.content.startswith("{}{}".format(CMDPREFIX, CMDPREFIX)):
+    if message.content.startswith(f"{CMDPREFIX}{CMDPREFIX}"):
         return
 
     # # begining implementation for ~start
@@ -187,9 +187,7 @@ async def update_presence():
     members = sum(
         [len(x.members) for x in [get(y.roles, name=SUPEROLE) for y in guilds]]
     )
-    nameSet = "{} users with {} enhancements".format(
-        members, len(powerTypes.keys())
-    )
+    nameSet = f"{members} users with {len(powerTypes.keys())} enhancements"
 
     await bot.change_presence(
         activity=discord.Activity(
@@ -239,7 +237,7 @@ if __name__ == "__main__":
     # discord.py cog importing
     for filename in cogList:
         if filename.endswith(".py"):
-            logP.debug("Loading Cog: {}".format(filename))
+            logP.debug(f"Loading Cog: {filename}")
             bot.load_extension(f"{filename[:-3]}")
 
         # general exception for excluding __pycache__

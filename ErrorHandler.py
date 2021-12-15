@@ -40,8 +40,8 @@ class ErrorHandler(commands.Cog):
             dupeEr = False
             mes = discord.Embed(
                 title="KeyError",
-                description="{} is not a recognised option".format(
-                    error.__cause__.args[0]
+                description=(
+                    f"{error.__cause__.args[0]} is not a recognised option"
                 ),
             )
         elif isinstance(error, commands.CommandOnCooldown):
@@ -52,15 +52,17 @@ class ErrorHandler(commands.Cog):
                     title="No Tasks",
                     description=(
                         "You have no available tasks at this time. "
-                        "Please search again in {} minutes or {} seconds."
-                    ).format(round(cdTime / 60, 2), cdTime),
+                        f"Please search again in {round(cdTime / 60, 2)} "
+                        f"minutes or {cdTime} seconds."
+                    ),
                 )
             else:
                 mes = discord.Embed(
                     title="Error!!!",
                     description=(
-                        "Command: {}, on cooldown for {} minutes or {} seconds"
-                    ).format(str(command), round(cdTime / 60, 2), cdTime),
+                        f"Command: {str(command)}, on cooldown for "
+                        f"{round(cdTime / 60, 2)} minutes or {cdTime} seconds"
+                    ),
                 )
         elif isinstance(error, commands.CommandInvokeError):
             if isinstance(error.__cause__, notSupeDuel):
@@ -84,7 +86,7 @@ class ErrorHandler(commands.Cog):
         if not mes:
             delaySet = 0
             mes = discord.Embed(
-                title="{} Error!!!".format(str(command)), description=error
+                title=f"{str(command)} Error!!!", description=error
             )
 
         if delaySet:

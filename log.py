@@ -18,7 +18,7 @@ def get_console_handler():
 
 def get_file_handler():
     file_handler = TimedRotatingFileHandler(
-        LOG_FILE, when="H", interval=6, encoding="UTF-8"
+        LOG_FILE, when="H", interval=8, encoding="UTF-8"
     )
     file_handler.setFormatter(FORMATTER)
     return file_handler

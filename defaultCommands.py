@@ -17,7 +17,7 @@ logP = log.get_logger(__name__)
 global loginTime
 loginTime = time.time()
 
-logP.debug("Bot last login time set as: {}".format(loginTime))
+logP.debug(f"Bot last login time set as: {loginTime}")
 
 
 class defaultCommands(
@@ -35,7 +35,7 @@ class defaultCommands(
         global loginTime
         loginTime = time.time()
 
-        logP.debug("Bot last login time set as: {}".format(loginTime))
+        logP.debug(f"Bot last login time set as: {loginTime}")
 
     @commands.command(
         brief=cmdInf["emoji"]["Brief"],
@@ -47,7 +47,7 @@ class defaultCommands(
             if emo:
                 await ctx.send(emo)
             else:
-                await ctx.send("Could not find emoji '{}'".format(idTry))
+                await ctx.send(f"Could not find emoji '{idTry}'")
         else:
             emo = [str(m) for m in self.bot.emojis]
             per_page = 10  # 10 members per page
@@ -85,8 +85,9 @@ class defaultCommands(
                             num = (cur_page - 1) * per_page
                             chunk = emo[num:]
                         await message.edit(
-                            content="Page {}/{}:\n{}".format(
-                                cur_page, pages, linebreak.join(chunk)
+                            content=(
+                                f"Page {cur_page}/{pages}:\n"
+                                f"{linebreak.join(chunk)}"
                             )
                         )
                         await message.remove_reaction(reaction, user)
@@ -98,8 +99,9 @@ class defaultCommands(
 
                         chunk = emo[num:num2]
                         await message.edit(
-                            content="Page {}/{}:\n{}".format(
-                                cur_page, pages, linebreak.join(chunk)
+                            content=(
+                                f"Page {cur_page}/{pages}:\n"
+                                f"{linebreak.join(chunk)}"
                             )
                         )
                         await message.remove_reaction(reaction, user)
@@ -117,9 +119,7 @@ class defaultCommands(
             "for Geminel#1890's novel. At the time Admins were manually "
             "calculating enhancement points and adding roles."
         )
-        mes = discord.Embed(
-            title="About {}".format(self.bot.user.display_name)
-        )
+        mes = discord.Embed(title=f"About {self.bot.user.display_name}")
         mes.set_author(
             name="Creator: sm0ze#3542",
             icon_url="https://avatars.githubusercontent.com/u/31851788",
@@ -145,8 +145,9 @@ class defaultCommands(
             ),
         )
         mes.set_footer(
-            text="{} is currently running on {}.".format(
-                self.bot.user.display_name, HOSTNAME
+            text=(
+                f"{self.bot.user.display_name} is currently "
+                f"running on {HOSTNAME}."
             )
         )
         mes.set_thumbnail(url=self.bot.user.display_avatar)
@@ -157,7 +158,7 @@ class defaultCommands(
         description=cmdInf["run"]["Description"],
     )
     async def run(self, ctx: commands.Context):
-        await ctx.send("Bot is running on {}".format(HOSTNAME))
+        await ctx.send(f"Bot is running on {HOSTNAME}")
 
     @commands.command(
         aliases=["r", "roles"],
@@ -171,25 +172,19 @@ class defaultCommands(
         member = ctx.message.author
         sendMes = ""
         logP.debug(
-            "Trying to toggle the role: {}, for: {}".format(
-                roleToAdd, nON(member)
-            )
+            f"Trying to toggle the role: {roleToAdd}, for: {nON(member)}"
         )
         roleAdd = get(member.guild.roles, name=roleToAdd)
         if not roleAdd:
-            sendMes = "'{}' is not a valid role.".format(roleToAdd)
+            sendMes = f"'{roleToAdd}' is not a valid role."
         elif roleAdd.name not in freeRoles:
             sendMes = "That is not a role you can add with this command!"
         elif roleAdd not in member.roles:
             await member.add_roles(roleAdd)
-            sendMes = "{} is granted the role: '{}'!".format(
-                nON(member), roleAdd
-            )
+            sendMes = f"{nON(member)} is granted the role: '{roleAdd}'!"
         else:
             await member.remove_roles(roleAdd)
-            sendMes = "{} no longer has the role: '{}'!".format(
-                nON(member), roleAdd
-            )
+            sendMes = f"{nON(member)} no longer has the role: '{roleAdd}'!"
         await ctx.send(sendMes)
         logP.debug("command role resolution: " + sendMes)
 
@@ -210,19 +205,19 @@ class defaultCommands(
         mes.add_field(name=uptimeLogin, value="Time since last login.")
         mes.add_field(name=uptimeStartup, value="Time since bot startup.")
         mes.set_footer(
-            text="{} is currently running on {}.".format(
-                self.bot.user.display_name, HOSTNAME
+            text=(
+                f"{self.bot.user.display_name} is "
+                f"currently running on {HOSTNAME}."
             )
         )
         mes.set_thumbnail(url=self.bot.user.display_avatar)
         await ctx.send(embed=mes)
         logP.debug(
-            "Bot has been logged in for: {}, and powered up for: {}".format(
-                uptimeLogin, uptimeStartup
+            (
+                f"Bot has been logged in for: {uptimeLogin}, "
+                f"and powered up for: {uptimeStartup}"
             )
         )
-        # "{} has been logged in for {}\nand powered up for {}"
-        # .format(bot.user.name, uptimeLogin, uptimeStartup)
         logP.debug("command uptime completed")
 
 

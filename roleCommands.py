@@ -74,7 +74,7 @@ ENHLIST = [(x, y) for (x, y) in powerTypes.items()]
 
 class roleCommands(
     commands.Cog,
-    name="{} Commands".format(SUPEROLE),
+    name=f"{SUPEROLE} Commands",
     description=cmdInf["roleCommands"]["Description"],
 ):
     def __init__(
@@ -93,9 +93,9 @@ class roleCommands(
             raise commands.CheckFailure(
                 (
                     "You do not have permission as you are missing a role in "
-                    "this list: {}\nThe super command can be used to gain"
-                    " the Supe role"
-                ).format(COMMANDSROLES)
+                    f"this list: {COMMANDSROLES}\nThe super command can be "
+                    "used to gain the Supe role"
+                )
             )
 
         # messy implementation for Supe
@@ -121,7 +121,7 @@ class roleCommands(
         logP.debug("funcTrim START")
 
         memberList = await memGrab(self, ctx, "")  # member)
-        logP.debug("memberlist = {}".format(memberList))
+        logP.debug(f"memberlist = {memberList}")
 
         await cut(ctx, memberList)
         logP.debug("funcTrim END")
@@ -137,13 +137,9 @@ class roleCommands(
     ):
         feedback = lvlEqu(inVar, gdv)
         if gdv:
-            await ctx.send(
-                "{} GDV is equivalent to {:,} XP".format(inVar, feedback)
-            )
+            await ctx.send(f"{inVar} GDV is equivalent to {feedback:,} XP")
         else:
-            await ctx.send(
-                "{:,} XP is equivalent to {} GDV".format(inVar, feedback)
-            )
+            await ctx.send(f"{inVar:,} XP is equivalent to {feedback} GDV")
 
     @commands.command(
         enabled=COMON,
@@ -166,23 +162,21 @@ class roleCommands(
         )
         taskShrt = posTask[taskType[0]]
         taskWorth = taskShrt["Worth"]
-        logP.debug("Task is worth {}".format(taskWorth))
+        logP.debug(f"Task is worth {taskWorth}")
         taskAdd = taskShrt["Add"]
-        logP.debug("Task can have additional {} peeps".format(taskAdd))
+        logP.debug(f"Task can have additional {taskAdd} peeps")
 
         if taskAdd:
-            logP.debug(
-                "Guild has {} roles".format(len(ctx.message.guild.roles))
-            )
+            logP.debug(f"Guild has {len(ctx.message.guild.roles)} roles")
             peepToAdd = get(ctx.message.guild.roles, name=SUPEROLE)
-            logP.debug("{}, {}".format(peepToAdd.id, peepToAdd.name))
+            logP.debug(f"{peepToAdd.id}, {peepToAdd.name}")
             if taskAdd == -1:
                 addPeeps = peepToAdd.members
                 addPeeps.remove(ctx.message.author)
                 # addNames = "every host of the Superhero Enhancement System!"
             else:
                 addPeeps = random.sample(peepToAdd.members, k=taskAdd + 1)
-                logP.debug("peeps list is: {}".format(addPeeps))
+                logP.debug(f"peeps list is: {addPeeps}")
                 if ctx.message.author in addPeeps:
                     addPeeps.remove(ctx.message.author)
             xpList = [[x, taskShrt["Aid"]] for x in addPeeps[:taskAdd]]
@@ -191,40 +185,32 @@ class roleCommands(
             addPeeps = ""
             xpList = [[ctx.message.author, 1]]
         logP.debug("xpList = ", xpList)
-        logP.debug(
-            "{}\nTask XP: {}\n10 XP in GDV: {}".format(
-                taskType, lvlEqu(taskWorth[0], 1), lvlEqu(10)
-            )
-        )
+        logP.debug(f"{taskType}\nTask XP: {lvlEqu(taskWorth[0], 1)}")
         emptMes = discord.Embed(
-            title="Alert, {}!".format(nON(ctx.message.author)),
-            description=("A new {} GDV task " "has been assigned.").format(
-                taskType[0]
-            ),
+            title=f"Alert, {nON(ctx.message.author)}!",
+            description=f"A new {taskType[0]} GDV task has been assigned.",
         )
 
-        logP.debug(
-            "Possible Adjectives: {}".format(len(taskShrt["Adjective"]))
-        )
+        logP.debug(f"Possible Adjectives: {len(taskShrt['Adjective'])}")
         selAdj = random.choice(taskShrt["Adjective"])
-        logP.debug("Selected Adjective: {}".format(selAdj))
+        logP.debug(f"Selected Adjective: {selAdj}")
 
-        logP.debug("Possible People: {}".format(len(taskShrt["People"])))
+        logP.debug(f"Possible People: {len(taskShrt['People'])}")
         selPeep = random.choice(taskShrt["People"])
-        logP.debug("Selected People: {}".format(selPeep))
+        logP.debug(f"Selected People: {selPeep}")
 
-        logP.debug("Possible Action: {}".format(len(taskShrt["Action"])))
+        logP.debug(f"Possible Action: {len(taskShrt['Action'])}")
         selAct = random.choice(taskShrt["Action"])
-        logP.debug("Selected Action: {}".format(selAct))
+        logP.debug(f"Selected Action: {selAct}")
 
-        logP.debug("Possible Location: {}".format(len(taskShrt["Location"])))
+        logP.debug(f"Possible Location: {len(taskShrt['Location'])}")
         selPlace = random.choice(taskShrt["Location"])
-        logP.debug("Selected Location: {}".format(selPlace))
+        logP.debug(f"Selected Location: {selPlace}")
 
         taskGrant = random.randrange(taskWorth[0], taskWorth[1] + 1)
-        logP.debug("task Grant: {}".format(taskGrant))
+        logP.debug(f"task Grant: {taskGrant}")
         taskDiff = taskWorth[1] - taskWorth[0]
-        logP.debug("task diff: {}".format(taskDiff))
+        logP.debug(f"task diff: {taskDiff}")
 
         selResult = round(
             ((taskGrant - taskWorth[0]) / (2 * taskDiff)) + 0.5, 3
@@ -232,11 +218,8 @@ class roleCommands(
 
         logP.debug("selected result: ", selResult)
         logP.debug(
-            "{}{}, {}".format(
-                "int(selResult * 100): ",
-                int(selResult * 100),
-                [[x, rsltDict[x]] for x in rsltDict.keys()],
-            )
+            f"int(selResult * 100): {int(selResult * 100)}, "
+            f"{[[x, rsltDict[x]] for x in rsltDict.keys()]}"
         )
 
         selRsltWrd = [
@@ -245,25 +228,20 @@ class roleCommands(
             if int(selResult * 100)
             in range(int(100 * rsltDict[x][0]), int(100 * rsltDict[x][1]))
         ]
-        logP.debug("selected resulting word: {}".format(selRsltWrd))
+        logP.debug(f"selected resulting word: {selRsltWrd}")
         if selRsltWrd:
             selRsltWrd = selRsltWrd[0]
 
         elif taskWorth[1] == taskGrant:
             selRsltWrd = "flawless"
-        logP.debug(
-            "taskWorth[1] == taskGrant: {}, {}".format(taskWorth[1], taskGrant)
-        )
-
-        # if addPeeps:
-        #     emptMes += ("Due to the task difficulty, assistance has been "
-        #                 "provided by {}").format(addNames)
+        logP.debug(f"taskWorth[1] == taskGrant: {taskWorth[1]}, {taskGrant}")
 
         emptMes.add_field(
             inline=False,
-            name="{} Task".format(taskType[0]),
-            value="Please prevent the {} {} from {} {}.".format(
-                selAdj, selPeep, selAct, selPlace
+            name=f"{taskType[0]} Task",
+            value=(
+                f"Please prevent the {selAdj} {selPeep} from "
+                f"{selAct} {selPlace}."
             ),
         )
 
@@ -271,9 +249,9 @@ class roleCommands(
             inline=False,
             name="Success!",
             value=(
-                "Congratulations on completing your {} GDV task. You accomp"
-                "lished {} results in your endeavors."
-            ).format(taskType[0], selRsltWrd),
+                f"Congratulations on completing your {taskType[0]} GDV task. "
+                f"You accomplished {selRsltWrd} results in your endeavors."
+            ),
         )
 
         try:
@@ -284,7 +262,7 @@ class roleCommands(
             authInf = {}
 
         for peep in reversed(xpList):
-            logP.debug("peep is: {}".format(peep))
+            logP.debug(f"peep is: {peep}")
             if peep[0].id in authInf.keys():
                 authInf[peep[0].id]["invXP"][-1] += taskGrant * peep[1]
             else:
@@ -293,38 +271,34 @@ class roleCommands(
 
             if peep[0].id == ctx.message.author.id or taskAdd != -1:
                 emptMes.add_field(
-                    name="{} Earns".format(nON(peep[0])),
-                    value="{:,} GDV XP\nTotal of {:,} XP".format(
-                        taskGrant * peep[1], authInf[peep[0].id]["invXP"][-1]
+                    name=f"{nON(peep[0])} Earns",
+                    value=(
+                        f"{taskGrant * peep[1]:,} GDV XP\nTotal of "
+                        f"{authInf[peep[0].id]['invXP'][-1]:,} XP"
                     ),
                 )
         if taskAdd == -1:
             emptMes.add_field(
                 name="Everyone Else",
-                value="Earns {} GDV XP".format(taskGrant * taskShrt["Aid"]),
+                value=f"Earns {taskGrant * taskShrt['Aid']} GDV XP",
             )
 
         save(ctx.message.author.guild.id, authInf)
         stateL = await countOf(ctx.message.author)
         currEnhP = stateL[0]
         logP.debug(
-            "{} has {} available enhancements".format(
-                nON(ctx.message.author), currEnhP
-            )
+            f"{nON(ctx.message.author)} has {currEnhP} available enhancements"
         )
         stateG = spent([ctx.message.author])
         currEnh = int(stateG[0][1])
         logP.debug(["and enhancments of number = ", currEnh])
         logP.debug(
-            "currEnh {} < currEnhP {}, {}".format(
-                currEnh, currEnhP, currEnh < currEnhP
-            )
+            f"currEnh {currEnh} < currEnhP {currEnhP}, {currEnh < currEnhP}"
         )
         if currEnh < currEnhP:
-            val = "{} has {} unspent enhancement point{}.".format(
-                nON(ctx.message.author),
-                currEnhP - currEnh,
-                pluralInt(currEnhP - currEnh),
+            val = (
+                f"{nON(ctx.message.author)} has {currEnhP - currEnh} unspent"
+                f" enhancement point{pluralInt(currEnhP - currEnh)}."
             )
 
             emptMes.add_field(name="Unspent Alert", value=val)
@@ -356,7 +330,7 @@ class roleCommands(
             else:
                 typ = ""
         build = genBuild(val, typ)
-        logP.debug("For {} points build {} was generated".format(val, build))
+        logP.debug(f"For {val} points build {build} was generated")
         mes = discord.Embed(title="Generated Build")
         if build:
             costBuild = funcBuild(build)
@@ -367,10 +341,10 @@ class roleCommands(
             buildNames = [power[x]["Name"] for x in build]
             buildStr = ""
             for x in buildNames:
-                buildStr += "{} \n".format(x)
+                buildStr += f"{x} \n"
             mes.add_field(
-                name="{} build for {} points".format(top, costBuild[0]),
-                value="{}".format(buildStr),
+                name=f"{top} build for {costBuild[0]} points",
+                value=f"{buildStr}",
             )
             await ctx.send(embed=mes)
 
@@ -422,14 +396,8 @@ class roleCommands(
         userWantsBuild = userWants[2]
 
         logP.debug(
-            "{} with point total {} has {} {} and wants {} {}".format(
-                user,
-                pointTot[0],
-                userHas[0],
-                userHasBuild,
-                userWantsCost,
-                userWantsBuild,
-            )
+            f"{user} with point total {pointTot[0]} has {userHas[0]} "
+            f"{userHasBuild} and wants {userWantsCost} {userWantsBuild}"
         )
 
         # check to ensure user has enough enhancement points to
@@ -441,13 +409,10 @@ class roleCommands(
             if specified or pointTot[0] < userWants[0]:
                 await ctx.send(
                     (
-                        "{} needs {} available enhancements "
-                        "for {} but only has {}"
-                    ).format(
-                        nON(user),
-                        userWantsCost,
-                        [power[x]["Name"] for x in buildList],
-                        pointTot[0],
+                        f"{nON(user)} needs {userWantsCost} available "
+                        f"enhancements for "
+                        f"{[power[x]['Name'] for x in buildList]} "
+                        f"but only has {pointTot[0]}"
                     )
                 )
                 return
@@ -456,19 +421,20 @@ class roleCommands(
         addList = [
             power[toType(x[1]) + str(x[0])]["Name"] for x in userWantsBuild
         ]
-        logP.debug("Add list = {}".format(addList))
+        logP.debug(f"Add list = {addList}")
 
         # restricted roles the user does not have that the build requires
         cantAdd = [x for x in restrictedList if x in addList]
         cantAdd = [x for x in cantAdd if x not in [y.name for y in user.roles]]
-        logP.debug("Cant add = {}".format(cantAdd))
+        logP.debug(f"Cant add = {cantAdd}")
 
         # check to ensure user has restricted roles already,
         # if required for build
         if cantAdd:
             await ctx.send(
-                ("Cannot add enhancements as {} does not have {}").format(
-                    nON(user), cantAdd
+                (
+                    f"Cannot add enhancements as {nON(user)} "
+                    f"does not have {cantAdd}"
                 )
             )
             return
@@ -479,33 +445,27 @@ class roleCommands(
         # iterate through roles to add to user
         sendMes = ""
         for role in addList:
-            logP.debug("Trying to add role: {}".format(role))
+            logP.debug(f"Trying to add role: {role}")
 
             # check for if user has enhancement role already
             roleId = get(guildRoles, name=role)
             if roleId in user.roles:
-                logP.debug(
-                    "{} already has the role {}".format(nON(user), roleId)
-                )
-                # sendMes += ("{} already has the role {}\n"
-                #               ).format(nON(user), roleId))
+                logP.debug(f"{nON(user)} already has the role {roleId}")
                 continue
 
             # role names to add will have format "Rank *Rank* *Type*"
             roleRank = role.split()[1]
-            logP.debug("{}, {}".format(roleId, roleRank))
+            logP.debug(f"{roleId}, {roleRank}")
 
             # check for role already in guild role list, create it if required
             if not roleId:
                 colour = rankColour[int(roleRank)]
-                logP.debug(
-                    "colour for rank {} is: {}".format(roleRank, colour)
-                )
+                logP.debug(f"colour for rank {roleRank} is: {colour}")
                 roleId = await user.guild.create_role(name=role, color=colour)
 
             # add requested role to user
             await user.add_roles(roleId)
-            sendMes += "{} now has {}!\n".format(nON(user), roleId)
+            sendMes += f"{nON(user)} now has {roleId}!\n"
 
         # trim the user of excess roles
         # debug("TO CUT")
@@ -529,7 +489,7 @@ class roleCommands(
         # restrict user list to those with SUPEROLE
         supeUsers = isSuper(self, users)
         if not supeUsers:  # if no SUPEROLE users in list
-            await ctx.send("Your list contains no {}'s".format(SUPEROLE))
+            await ctx.send(f"Your list contains no {SUPEROLE}'s")
             return
 
         # fetch points of each SUPEROLE user
@@ -537,18 +497,14 @@ class roleCommands(
 
         # return result
         for group in pointList:
-            logP.debug("group in level is: {}".format(group))
+            logP.debug(f"group in level is: {group}")
             pointTot = await countOf(group[0])
             await ctx.send(
                 (
-                    "{} has {} enhancement{} active out of {} enhancement{} "
+                    f"{nON(group[0])} has {group[1]} "
+                    f"enhancement{pluralInt(group[1])} active out of "
+                    f"{pointTot[0]} enhancement{pluralInt(pointTot[0])} "
                     "available."
-                ).format(
-                    nON(group[0]),
-                    group[1],
-                    pluralInt(group[1]),
-                    pointTot[0],
-                    pluralInt(pointTot[0]),
                 )
             )
 
@@ -583,8 +539,9 @@ class roleCommands(
 
             mes.add_field(
                 name=group[0],
-                value="{} of {} rank{}".format(
-                    shorthand.lower(), group[1], pluralInt(group[1])
+                value=(
+                    f"{shorthand.lower()} of {group[1]} "
+                    f"rank{pluralInt(group[1])}"
                 ),
             )
 
@@ -622,7 +579,7 @@ class roleCommands(
             buildList = [x.strip() for x in fixArg.split(",") if x.strip()]
         else:
             buildList = spent([mem])[0][2]
-        logP.debug("buildList = {}".format(buildList))
+        logP.debug(f"buildList = {buildList}")
 
         # fetch cost and requisite list for build
         buildTot = funcBuild(buildList)
@@ -630,8 +587,9 @@ class roleCommands(
         # return build to command caller
         mes = discord.Embed(
             title="Enhancement Build",
-            description="This build requires {} enhancement point{}.".format(
-                buildTot[0], pluralInt(buildTot[0])
+            description=(
+                f"This build requires {buildTot[0]} enhancement "
+                f"point{pluralInt(buildTot[0])}."
             ),
         )
         mes.add_field(
@@ -687,17 +645,13 @@ class roleCommands(
                 ]
             pointList = sorted(resubXPList, key=lambda x: x[1], reverse=True)
 
-            blankMessage = discord.Embed(
-                title="{} Leaderboard".format(enh.upper())
-            )
+            blankMessage = discord.Embed(title=f"{enh.upper()} Leaderboard")
 
         elif enh:
             if enh not in leader.keys():
                 if enh not in leader.values():
                     await ctx.send(
-                        ("No enhancement could be found for type: {}").format(
-                            enh
-                        )
+                        (f"No enhancement could be found for type: {enh}")
                     )
                     return
             else:
@@ -709,18 +663,12 @@ class roleCommands(
             avPeep = round(sumPeep / lenPeep, 2)
 
             blankMessage = discord.Embed(
-                title="{} Enhancement Leaderboard".format(enh),
+                title=f"{enh} Enhancement Leaderboard",
                 description=(
-                    "{} is being used by {} host{} for a total of {} "
-                    "enhancement point{} spent.\nFor an average of "
-                    "{}."
-                ).format(
-                    enh,
-                    lenPeep,
-                    pluralInt(lenPeep),
-                    sumPeep,
-                    pluralInt(sumPeep),
-                    avPeep,
+                    f"{enh} is being used by {lenPeep} "
+                    f"host{pluralInt(lenPeep)} for a total of {sumPeep} "
+                    f"enhancement point{pluralInt(sumPeep)} spent.\nFor an "
+                    f"average of {avPeep}."
                 ),
             )
 
@@ -729,11 +677,11 @@ class roleCommands(
         else:
             # list of users bot has access to
             guildList = self.bot.users
-            logP.debug("Guild list is of length: {}".format(len(guildList)))
+            logP.debug(f"Guild list is of length: {len(guildList)}")
 
             # restrict list to those with SUPEROLE
             supeList = isSuper(self, guildList)
-            logP.debug("Supe list is of length: {}".format(len(supeList)))
+            logP.debug(f"Supe list is of length: {len(supeList)}")
 
             # fetch points of each SUPEROLE user
             pointList = spent(supeList)
@@ -751,10 +699,9 @@ class roleCommands(
             )
             totPoints = sum([x[1] for x in pointList])
             desc = (
-                "There is a total of {} host{} with a sum of {} "
-                "enhancement point{} spent."
-            ).format(
-                totHosts, pluralInt(totHosts), totPoints, pluralInt(totPoints)
+                f"There is a total of {totHosts} host{pluralInt(totHosts)} "
+                f"with a sum of {totPoints} enhancement "
+                f"point{pluralInt(totPoints)} spent."
             )
 
             blankMessage = discord.Embed(
@@ -767,21 +714,21 @@ class roleCommands(
             if not enh:
                 blankMessage.add_field(
                     inline=True,
-                    name="**{}** - {}".format(i, nON(group[0])),
-                    value="\t{} enhancements".format(group[1]),
+                    name=f"**{i}** - {nON(group[0])}",
+                    value=f"\t{group[1]} enhancements",
                 )
             else:
                 if not enh.lower() in xpKey:
                     blankMessage.add_field(
                         inline=True,
-                        name="**{}** - {}".format(i, nON(group[0])),
-                        value="\tRank {} {}".format(group[1], enh),
+                        name=f"**{i}** - {nON(group[0])}",
+                        value=f"\tRank {group[1]} {enh}",
                     )
                 else:
                     blankMessage.add_field(
                         inline=True,
-                        name="**{}** - {}".format(i, nON(group[0])),
-                        value="\t{:,} {}".format(group[1], enh.upper()),
+                        name=f"**{i}** - {nON(group[0])}",
+                        value=f"\t{group[1]:,} {enh.upper()}",
                     )
             i += 1
 
@@ -824,21 +771,21 @@ class roleCommands(
         pointList = spent(typeMem)
         i = 0
         for peep in typeMem:
-            mes = discord.Embed(title="{} Stats".format(nON(peep)))
+            mes = discord.Embed(title=f"{nON(peep)} Stats")
             stuff = await count(peep, 1)
             group = pointList[i]
             unspent = stuff[0] - group[1]
 
             mes.set_thumbnail(url=peep.display_avatar)
 
-            mes.add_field(name="MEE6 xp", value="{:,}".format(stuff[3][0]))
-            mes.add_field(name="TATSU xp", value="{:,}".format(stuff[3][1]))
-            mes.add_field(name="GDV xp", value="{:,}".format(stuff[3][-1]))
-            mes.add_field(name="Total xp", value="{:,}".format(stuff[2]))
-            mes.add_field(name="GDV", value="{}".format(round(stuff[1], 2)))
+            mes.add_field(name="MEE6 xp", value=f"{stuff[3][0]:,}")
+            mes.add_field(name="TATSU xp", value=f"{stuff[3][1]:,}")
+            mes.add_field(name="GDV xp", value=f"{stuff[3][-1]:,}")
+            mes.add_field(name="Total xp", value=f"{stuff[2]:,}")
+            mes.add_field(name="GDV", value=f"{round(stuff[1], 2)}")
             mes.add_field(
-                name="Enhancement Point{}".format(pluralInt(stuff[0])),
-                value="{}".format(stuff[0]),
+                name=f"Enhancement Point{pluralInt(stuff[0])}",
+                value=f"{stuff[0]}",
             )
 
             nextGDV = int(stuff[1]) + 1
@@ -848,7 +795,7 @@ class roleCommands(
             mes.add_field(
                 inline=False,
                 name="XP to next GDV",
-                value="{:,}".format(round(nextGDVneedXP, 3)),
+                value=f"{round(nextGDVneedXP, 3):,}",
             )
 
             nextEnhP = int(5 * (int(stuff[1] / 5) + 1))
@@ -858,19 +805,17 @@ class roleCommands(
             mes.add_field(
                 inline=False,
                 name="XP to next Enhancement Point",
-                value="{:,}".format(round(nextEnhPneedXP, 3)),
+                value=f"{round(nextEnhPneedXP, 3):,}",
             )
 
             mes.add_field(
                 inline=False,
-                name="Unspent Enhancement Point{}".format(pluralInt(unspent)),
+                name=f"Unspent Enhancement Point{pluralInt(unspent)}",
                 value=unspent,
             )
 
             mes.set_footer(
-                text="{}#{} - {}".format(
-                    peep.name, peep.discriminator, HOSTNAME
-                ),
+                text=f"{peep.name}#{peep.discriminator} - {HOSTNAME}",
                 icon_url=peep.avatar,
             )
 
@@ -907,9 +852,7 @@ class roleCommands(
         setGemDiff(var)
 
         await ctx.send(
-            "Gem diff is now {} times total XP or {}%".format(
-                GEMDIFF, 100 * GEMDIFF
-            )
+            f"Gem diff is now {GEMDIFF} times total XP or {100 * GEMDIFF}%"
         )
 
     @commands.command(
@@ -923,12 +866,12 @@ class roleCommands(
             peep = ctx.author
         p = player(peep, self.bot)
         mes = discord.Embed(
-            title="{} Stats".format(p.n),
+            title=f"{p.n} Stats",
             description=p.statMessage(),
         )
         mes.set_thumbnail(url=p.p.display_avatar)
         mes.set_footer(
-            text="{}#{} - {}".format(p.p.name, p.p.discriminator, HOSTNAME),
+            text=f"{p.p.name}#{p.p.discriminator} - {HOSTNAME}",
             icon_url=p.p.avatar,
         )
 
@@ -955,7 +898,7 @@ class roleCommands(
                 else:
                     raise notSupeDuel("Not a supe.")
             elif str(SUPEROLE) not in [x.name for x in opponent.roles]:
-                raise notSupeDuel("{} is not a {}.".format(opponent, SUPEROLE))
+                raise notSupeDuel(f"{opponent} is not a {SUPEROLE}.")
             bat = battler(self.bot, ctx.author, opponent)
 
         else:
@@ -970,7 +913,7 @@ class roleCommands(
                 if picVar not in npcPlayer.keys():
                     npcPlayer[picVar] = self.bot.user.display_avatar
                 npcEnh = [
-                    "{}{}".format(x, npcPlayer[x])
+                    f"{x}{npcPlayer[x]}"
                     for x in npcPlayer.keys()
                     if x not in ["name", "id", "index", picVar]
                 ]
@@ -978,17 +921,8 @@ class roleCommands(
                 npcWant = funcBuild(npcEnhTrim)
                 npcBuildStr = ""
                 for x in npcWant[1]:
-                    npcBuildStr += "{}\n".format(x)
-                logP.debug("Found npc: {}".format(npcPlayer))
-                """await ctx.send(
-                    (
-                        "If sm0ze could figure out how to code this, you "
-                        "would be fighting {} with the enhancements: \n{}"
-                    ).format(
-                        npcPlayer["name"],
-                        npcBuildStr,
-                    )
-                )"""
+                    npcBuildStr += f"{x}\n"
+                logP.debug(f"Found npc: {npcPlayer}")
 
                 bat = battler(
                     self.bot,
@@ -996,7 +930,7 @@ class roleCommands(
                     [npcPlayer["name"], npcPlayer[picVar], npcEnhTrim],
                 )
             else:
-                raise notNPC("{} is not an NPC".format(opponent))
+                raise notNPC(f"{opponent} is not an NPC")
         await bat.findPlayers(dontAsk, [bat.p1, bat.p2])
         await startDuel(self, ctx, bat, opponent)
 
@@ -1063,21 +997,13 @@ async def count(
         enhP = math.floor(gdv / 5) + 1
         logP.debug(
             (
-                "{}-"
-                " ReSubXP: {},"
-                " TATSUxp: {},"
-                " MEE6xp: {},"
-                " totXP: {},"
-                " gdv: {},"
-                " enhP: {}"
-            ).format(
-                nON(peep),
-                ReSubXP,
-                TATSUxp,
-                MEE6xp,
-                totXP,
-                gdv,
-                enhP,
+                f"{nON(peep)}-"
+                f" ReSubXP: {ReSubXP},"
+                f" TATSUxp: {TATSUxp},"
+                f" MEE6xp: {MEE6xp},"
+                f" totXP: {totXP},"
+                f" gdv: {gdv},"
+                f" enhP: {enhP}"
             )
         )
         pickle_file[peep.id] = {
@@ -1099,7 +1025,7 @@ async def countOf(
         valDict = load(peep.guild.id)
         logP.debug("valDict loaded")
         shrt = valDict[peep.id]
-        logP.debug("shrt: {}".format(shrt))
+        logP.debug(f"shrt: {shrt}")
 
         invXP = [
             int(shrt["invXP"][0]),
@@ -1127,10 +1053,10 @@ def isSuper(
     supeGuildList = []
     foundRole = []
 
-    logP.debug("Guild list is: {}".format(guilds))
+    logP.debug(f"Guild list is: {guilds}")
 
     for guild in guilds:
-        logP.debug("iter through: {}".format(guild))
+        logP.debug(f"iter through: {guild}")
         posRole = get(guild.roles, name=SUPEROLE)
         if posRole:
             logP.debug(["found role:", posRole])
@@ -1152,21 +1078,21 @@ def toCut(member: discord.Member) -> list[str]:
 
     # fetch unrestricted managed roles member has
     supeRoles = spent([member])
-    logP.debug("supeRoles = {}".format(supeRoles[0][2]))
+    logP.debug(f"supeRoles = {supeRoles[0][2]}")
 
     # fetch build of member
     supeBuild = funcBuild(supeRoles[0][2])
-    logP.debug("supeBuild = {}".format(supeBuild[1]))
+    logP.debug(f"supeBuild = {supeBuild[1]}")
 
     # fetch trimmed build of user
     supeTrim = [
         power[toType(x[1]) + str(x[0])]["Name"] for x in trim(supeBuild[1])
     ]
-    logP.debug("supeTrim = {}".format(supeTrim))
+    logP.debug(f"supeTrim = {supeTrim}")
 
     # fetch extra roles user has that are to be removed
     toCut = [x for x in supeBuild[1] if x not in supeTrim]
-    logP.debug("to CUT = {}".format(toCut))
+    logP.debug(f"to CUT = {toCut}")
 
     # return the roles to be removed
     return toCut
@@ -1193,18 +1119,16 @@ async def cut(
         # for each role to be cut, remove it and send message to discord
         sendMes = ""
         for role in cutting:
-            logP.debug("role to cut: {}, from peep: {}".format(role, peep))
+            logP.debug(f"role to cut: {role}, from peep: {peep}")
             supeRoleId = get(peep.roles, name=role)
-            logP.debug("role to cut id = {}".format(supeRoleId))
+            logP.debug(f"role to cut id = {supeRoleId}")
             if supeRoleId in peep.roles:
                 await peep.remove_roles(supeRoleId)
-                sendMes += "Removed {}, {}\n".format(
-                    supeRoleId, random.choice(remList)
-                )
+                sendMes += f"Removed {supeRoleId}, {random.choice(remList)}\n"
 
         # notify current user has been finished with to discord
-        sendMes += "{} has been cut down to size!".format(nON(peep))
-        mes.add_field(name="{}".format(nON(peep)), value=sendMes)
+        sendMes += f"{nON(peep)} has been cut down to size!"
+        mes.add_field(name=f"{nON(peep)}", value=sendMes)
     await ctx.send(embed=mes)
     return
 
@@ -1231,15 +1155,13 @@ async def playerDuelInput(
         moveCost = moveOpt[key]["cost"]
         if moveCost <= peep.sta:
             react = moveOpt[key]["reaction"]
-            moveStr += "{}: ({}) {}\n".format(
-                react, moveCost, moveOpt[key]["name"]
-            )
+            moveStr += f"{react}: ({moveCost}) {moveOpt[key]['name']}\n"
             moveList.append(key)
             reactionList.append(react)
 
     mes = discord.Embed(
         title="Game Stats",
-        description="{}/{} Total Rounds".format(totRounds, ROUNDLIMIT),
+        description=f"{totRounds}/{ROUNDLIMIT} Total Rounds",
     )
     mes.add_field(name="Your Current", value=statsMes)
     mes.add_field(name="Opponent", value=stats2Mes)
@@ -1248,7 +1170,7 @@ async def playerDuelInput(
         moveStr = "You are exhausted."
     mes.add_field(
         inline=False,
-        name="Available Moves ({} Stamina)".format(peep.sta),
+        name=f"Available Moves ({peep.sta} Stamina)",
         value=moveStr,
     )
 
@@ -1326,7 +1248,7 @@ def genBuild(val: int = 0, typ: str = "", iniBuild: list = []):
             typ = random.choice(pickList)
             pickList.remove(typ)
 
-    logP.debug("Building a build of {} for {}".format(val, typ))
+    logP.debug(f"Building a build of {val} for {typ}")
 
     checkInt = 1
     building = True
@@ -1344,13 +1266,13 @@ def genBuild(val: int = 0, typ: str = "", iniBuild: list = []):
     while testMax:
         maxBuild = funcBuild(maxSearch)
         if val > maxBuild[0]:
-            logP.debug("with {} points {} can be maxed".format(val, typ))
+            logP.debug(f"with {val} points {typ} can be maxed")
             maxTyp.append(typ + str(10))
             build = maxBuild[2]
             typ = random.choice(pickList)
             pickList.remove(typ)
             maxSearch.append(typ + str(10))
-            logP.debug("new max list is {}".format(maxSearch))
+            logP.debug(f"new max list is {maxSearch}")
         else:
             testMax = False
     if maxTyp:
@@ -1371,9 +1293,7 @@ def genBuild(val: int = 0, typ: str = "", iniBuild: list = []):
                 shrt = shrt[0]
             searchBuild.append(str(shrt) + str(rank))
 
-        logP.debug(
-            "Testing {} build: {}, {}".format(want[0], searchBuild, want[2])
-        )
+        logP.debug(f"Testing {want[0]} build: {searchBuild}, {want[2]}")
         if want[0] < val:
             checkInt += 1
             if checkInt > 10:
@@ -1419,7 +1339,7 @@ def checkAddBuild(listAdd: list = [], listBase: list = []):
     for item in listBaseNew:
         typ = item[:3]
         typRank = int(item[3:])
-        logP.debug("Splitting {} into {} and {}".format(item, typ, typRank))
+        logP.debug(f"Splitting {item} into {typ} and {typRank}")
         userKeyList[typ] = typRank
 
     for item in listAdd:
@@ -1428,7 +1348,7 @@ def checkAddBuild(listAdd: list = [], listBase: list = []):
         elif item in enhNumList:
             listBaseNew.append(item)
             listRet.append(item)
-            logP.debug("Adding {} to listBase".format(item))
+            logP.debug(f"Adding {item} to listBase")
             continue
         elif item in leader.values():
             for shrt in leader.keys():
@@ -1440,12 +1360,12 @@ def checkAddBuild(listAdd: list = [], listBase: list = []):
 
             if item in userKeyList.keys():
                 strAdd = str(item) + str(userKeyList[item] + 1)
-                logP.debug("Adding {} to listBase".format(strAdd))
+                logP.debug(f"Adding {strAdd} to listBase")
                 listBaseNew.append(strAdd)
                 listRet.append(strAdd)
             else:
                 strAdd = str(item) + str(1)
-                logP.debug("Adding {} to listBase".format(strAdd))
+                logP.debug(f"Adding {strAdd} to listBase")
                 listBaseNew.append(strAdd)
                 listRet.append(strAdd)
 
@@ -1459,8 +1379,9 @@ async def startDuel(
     opponent: discord.Member = None,
 ):
     mes = discord.Embed(
-        title="{}: {} Vs. {}: {}".format(
-            bat.n1, bat.isPlay(bat.p1), bat.n2, bat.isPlay(bat.p2)
+        title=(
+            f"{bat.n1}: {bat.isPlay(bat.p1)} Vs. "
+            f"{bat.n2}: {bat.isPlay(bat.p2)}"
         ),
     )
 
@@ -1471,12 +1392,12 @@ async def startDuel(
     p2Adp = bat.adpStatMessage(bat.p2, bat.p1)
 
     mes.add_field(
-        name="{}".format(bat.n1),
-        value="{}{}".format(p1Stats, p1Adp),
+        name=f"{bat.n1}",
+        value=f"{p1Stats}{p1Adp}",
     )
     mes.add_field(
-        name="{}".format(bat.n2),
-        value="{}{}".format(p2Stats, p2Adp),
+        name=f"{bat.n2}",
+        value=f"{p2Stats}{p2Adp}",
     )
     mes.set_footer(text=HOSTNAME, icon_url=self.bot.user.display_avatar)
 
@@ -1498,7 +1419,7 @@ async def startDuel(
     winner = None
     mes.add_field(
         inline=False,
-        name="{} Move".format(bat.n1),
+        name=f"{bat.n1} Move",
         value="Does Nothing.",
     )
     totRounds = int(0)
@@ -1539,29 +1460,29 @@ async def startDuel(
 
         mes.set_field_at(
             0,
-            name="{}".format(bat.n1),
-            value="{}{}".format(p1Stats, p1Adp),
+            name=f"{bat.n1}",
+            value=f"{p1Stats}{p1Adp}",
         )
         mes.set_field_at(
             1,
-            name="{}".format(bat.n2),
-            value="{}{}".format(p2Stats, p2Adp),
+            name=f"{bat.n2}",
+            value=f"{p2Stats}{p2Adp}",
         )
         if bat.p1 in Who2Move:
             moveTxt = iniMove + moves[0]
             mes.set_field_at(
                 2,
                 inline=False,
-                name="{} Move #{} ".format(bat.n1, bat.p1.t),
-                value="{}".format(moveTxt),
+                name=f"{bat.n1} Move #{bat.p1.t} ",
+                value=f"{moveTxt}",
             )
         elif bat.p2 in Who2Move:
             moveTxt = iniMove + moves[1]
             mes.set_field_at(
                 2,
                 inline=False,
-                name="{} Move #{} ".format(bat.n2, bat.p2.t),
-                value="{}".format(moveTxt),
+                name=f"{bat.n2} Move #{bat.p2.t} ",
+                value=f"{moveTxt}",
             )
         else:
             mes.set_field_at(
@@ -1571,7 +1492,7 @@ async def startDuel(
                 value="At all.",
             )
         winner = moves[2]
-        mes.description = "{}/{} Total Rounds".format(totRounds, ROUNDLIMIT)
+        mes.description = f"{totRounds}/{ROUNDLIMIT} Total Rounds"
         await bat.echoMes(mes, thrd)
         if not winner and totRounds > ROUNDLIMIT:
             winner = "exhaustion"
@@ -1581,17 +1502,16 @@ async def startDuel(
 
     mes.clear_fields()
     mes.add_field(
-        name="Winner is {} after {} move{}.".format(
-            winner,
-            totRounds,
-            pluralInt(2 if len(str(totRounds)) > 3 else totRounds),
+        name=(
+            f"Winner is {winner} after {totRounds} "
+            f"move{pluralInt(2 if len(str(totRounds)) > 3 else totRounds)}."
         ),
         value="Prize to be implemented.",
     )
     if not winner == "exhaustion":
         mes.set_thumbnail(url=(bat.p1.pic if winner == bat.n1 else bat.p2.pic))
     await bat.echoMes(mes, thrd)
-    await bat.echoMes("<#{}>".format(ctx.channel.id), thrd, False)
+    await bat.echoMes(f"<#{ctx.channel.id}>", thrd, False)
     await thrd.edit(archived=1)
     await ctx.send(embed=mes)
 

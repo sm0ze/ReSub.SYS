@@ -12,14 +12,14 @@ logP = log.get_logger(__name__)
 # function to grab a discord bot token
 # from user if one is not found in the .env
 def askToken(var: str) -> str:
-    tempToken = input("Enter your {}: ".format(var))
-    with open(".env", "a+") as f:
-        f.write("{}={}\n".format(var, tempToken))
+    tempToken = input(f"Enter your {var}: ")
+    with open(".env", "a+") as j:
+        j.write(f"{var}={tempToken}\n")
     return tempToken
 
 
 HOSTNAME = socket.gethostname()
-logP.info("Name of host for program is: {}".format(HOSTNAME))
+logP.info(f"Name of host for program is: {HOSTNAME}")
 
 
 # .env variables that are not shared with github and other users.
