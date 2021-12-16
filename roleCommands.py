@@ -816,7 +816,7 @@ class roleCommands(
 
             mes.set_footer(
                 text=f"{peep.name}#{peep.discriminator} - {HOSTNAME}",
-                icon_url=peep.avatar,
+                icon_url=peep.display_avatar,
             )
 
             await ctx.send(embed=mes)
@@ -872,7 +872,7 @@ class roleCommands(
         mes.set_thumbnail(url=p.p.display_avatar)
         mes.set_footer(
             text=f"{p.p.name}#{p.p.discriminator} - {HOSTNAME}",
-            icon_url=p.p.avatar,
+            icon_url=p.pic,
         )
 
         await ctx.send(embed=mes)
