@@ -342,7 +342,7 @@ async def memGrab(
         strMemList = memList.split(", ")
         logP.debug(f"split grablist: {strMemList}")
         for posMem in strMemList:
-            logP.debug(["trying to find: ", posMem])
+            logP.debug("trying to find: {posMem}")
             grabMem = await MemberConverter().convert(ctx, posMem)
             if grabMem:
                 grabList.append(grabMem)
@@ -389,11 +389,11 @@ def lvlEqu(givVar: float = 0, inv=0) -> float:
 
 
 def aOrAn(inp: str):
-    logP.debug(["input is: ", inp])
+    logP.debug(f"input is: {inp}")
     ret = "A"
     if inp[0].lower() in "aeiou":
         ret = "An"
-    logP.debug(["ret: ", ret])
+    logP.debug(f"ret: {ret}")
     return ret
 
 

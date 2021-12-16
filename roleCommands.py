@@ -291,7 +291,7 @@ class roleCommands(
         )
         stateG = spent([ctx.message.author])
         currEnh = int(stateG[0][1])
-        logP.debug(["and enhancments of number = ", currEnh])
+        logP.debug(f"and enhancments of number = {currEnh}")
         logP.debug(
             f"currEnh {currEnh} < currEnhP {currEnhP}, {currEnh < currEnhP}"
         )
@@ -932,7 +932,7 @@ class roleCommands(
             else:
                 raise notNPC(f"{opponent} is not an NPC")
         await bat.findPlayers(dontAsk, [bat.p1, bat.p2])
-        await startDuel(self, ctx, bat, opponent)
+        await startDuel(self, ctx, bat, [ctx.author, opponent])
 
 
 # function to get specified user's enhancement points
@@ -1059,14 +1059,14 @@ def isSuper(
         logP.debug(f"iter through: {guild}")
         posRole = get(guild.roles, name=SUPEROLE)
         if posRole:
-            logP.debug(["found role:", posRole])
+            logP.debug(f"found role: {posRole}")
             foundRole.append(posRole)
     if foundRole:
         for role in foundRole:
-            logP.debug(["iter through:", role])
+            logP.debug(f"iter through: {role}")
             for member in role.members:
                 if member in guildList:
-                    logP.debug(["appending:", member])
+                    logP.debug(f"appending: {member}")
                     supeGuildList.append(member)
 
     # return reduced user list
@@ -1196,7 +1196,7 @@ async def playerDuelInput(
             reaction, user = await self.bot.wait_for(
                 "reaction_add", timeout=timeOut, check=check
             )
-            logP.debug(["reaction", reaction, "user", user])
+            logP.debug(f"reaction: {reaction}, user: {user}")
             if str(reaction.emoji) == str(moveOpt["quit"]["reaction"]):
                 peep.play = False
                 active = False
@@ -1211,7 +1211,7 @@ async def playerDuelInput(
                     ]
                 )
                 if str(reaction.emoji) == str(moveOpt[move]["reaction"]):
-                    logP.debug([str(reaction.emoji), "found"])
+                    logP.debug(f"{reaction.emoji} found")
                     chosenMove = True
                     desperate = moveOpt[move]["desperate"]
                     typeMove = moveOpt[move]["type"]
@@ -1376,7 +1376,7 @@ async def startDuel(
     self: roleCommands,
     ctx: commands.Context,
     bat: battler,
-    opponent: discord.Member = None,
+    peepList: list[discord.Member] = None,
 ):
     mes = discord.Embed(
         title=(
@@ -1411,10 +1411,9 @@ async def startDuel(
         auto_archive_duration=DL_ARC_DUR,
         reason=mes.title,
     )
-    if bat.p1.play:
-        await thrd.add_user(ctx.author)
-    if bat.p2.play:
-        await thrd.add_user(opponent)
+    for peep in peepList:
+        if peep.play:
+            await thrd.add_user(peep)
 
     winner = None
     mes.add_field(
@@ -1425,7 +1424,7 @@ async def startDuel(
     totRounds = int(0)
     while not winner:
         totRounds += 1
-        Who2Move = bat.nextRound()
+        Who2Move = bat.nextRound([bat.p1, bat.p2])
         iniMove = ""
         for peep in range(2):
             move = None

@@ -407,9 +407,11 @@ class battler:
                     if not dontAsk == 1:
                         await peep.ask()
 
-    def nextRound(self) -> list[typing.Union[player, None]]:
+    def nextRound(
+        self, playerList: list[player]
+    ) -> list[typing.Union[player, None]]:
         # TODO rewrite for more than 2 peeps
-        p1Swi = self.p1.swiNow
+        """p1Swi = self.p1.swiNow
         p2Swi = self.p2.swiNow
         Who2Move = [None, None]
         while p1Swi < self.totSwi and p2Swi < self.totSwi:
@@ -435,7 +437,36 @@ class battler:
                 break
 
         self.p1.swiNow = p1Swi
-        self.p2.swiNow = p2Swi
+        self.p2.swiNow = p2Swi"""
+        looping = True
+        Who2Move = [None] * len(playerList)
+        playerUpList = []
+        for count, peep in enumerate(playerList):
+            if peep.swiNow > self.totSwi:
+                playerUpList.append([peep, count])
+                looping = False
+
+        while looping:
+            for count, peep in enumerate(playerList):
+                peep.swiNow += peep.swi
+                if peep.swiNow > self.totSwi:
+                    playerUpList.append([peep, count])
+                    looping = False
+
+        pickList = [
+            x
+            for x in playerUpList
+            if x and isinstance(x[0], player) and x[0].swiNow > self.totSwi
+        ]
+
+        if pickList:
+            if len(pickList) > 1:
+                pick = random.choice(pickList)
+                Who2Move[pick[1]] = pick[0]
+                pick[0].swiNow = pick[0].swiNow - self.totSwi
+            else:
+                Who2Move[pickList[0][1]] = pickList[0][0]
+                pickList[0][0].swiNow = pickList[0][0].swiNow - self.totSwi
 
         return Who2Move
 
