@@ -9,7 +9,7 @@ from discord.utils import get
 from sharedFuncs import nON
 import log
 from power import cmdInf, freeRoles
-from sharedVars import HOSTNAME, STARTTIME
+from sharedVars import COMON, HOSTNAME, STARTTIME
 
 logP = log.get_logger(__name__)
 
@@ -38,6 +38,7 @@ class defaultCommands(
         logP.debug(f"Bot last login time set as: {loginTime}")
 
     @commands.command(
+        enabled=COMON,
         brief=cmdInf["emoji"]["Brief"],
         description=cmdInf["emoji"]["Description"],
     )
@@ -110,6 +111,7 @@ class defaultCommands(
                     active = False
 
     @commands.command(
+        enabled=COMON,
         brief=cmdInf["about"]["Brief"],
         description=cmdInf["about"]["Description"],
     )
@@ -154,6 +156,7 @@ class defaultCommands(
         await ctx.send(embed=mes)
 
     @commands.command(
+        enabled=COMON,
         brief=cmdInf["run"]["Brief"],
         description=cmdInf["run"]["Description"],
     )
@@ -161,6 +164,7 @@ class defaultCommands(
         await ctx.send(f"Bot is running on {HOSTNAME}")
 
     @commands.command(
+        enabled=COMON,
         aliases=["r", "roles"],
         brief=cmdInf["role"]["Brief"],
         description=cmdInf["role"]["Description"],
@@ -189,6 +193,7 @@ class defaultCommands(
         logP.debug("command role resolution: " + sendMes)
 
     @commands.command(
+        enabled=COMON,
         aliases=["u"],
         brief=cmdInf["uptime"]["Brief"],
         description=cmdInf["uptime"]["Description"],

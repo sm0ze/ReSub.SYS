@@ -7,7 +7,14 @@ from discord.ext import commands
 from sharedFuncs import dupeMes, load, memGrab, nON, pluralInt, save, topEnh
 import log
 from power import cmdInf, power, leader
-from sharedVars import HOSTNAME, LOWESTROLE, MANAGERROLES, SAVEFILE, SUPEROLE
+from sharedVars import (
+    COMON,
+    HOSTNAME,
+    LOWESTROLE,
+    MANAGERROLES,
+    SAVEFILE,
+    SUPEROLE,
+)
 from discord.utils import get
 
 logP = log.get_logger(__name__)
@@ -41,6 +48,7 @@ class managerCommands(
         return commands.check(await predicate(ctx))
 
     @commands.command(
+        enabled=COMON,
         brief=cmdInf["roleInf"]["Brief"],
         description=cmdInf["roleInf"]["Description"],
     )
@@ -76,6 +84,7 @@ class managerCommands(
         restart_bot()
 
     @commands.command(
+        enabled=COMON,
         brief=cmdInf["upload"]["Brief"],
         description=cmdInf["upload"]["Description"],
     )
@@ -110,6 +119,7 @@ class managerCommands(
         logP.debug("command upload completed")
 
     @commands.command(
+        enabled=COMON,
         brief=cmdInf["xpAdd"]["Brief"],
         description=cmdInf["xpAdd"]["Description"],
     )
@@ -140,6 +150,7 @@ class managerCommands(
         await ctx.send(f"Host {nON(peep)}: {iniVal} -> {sum}")
 
     @commands.command(
+        enabled=COMON,
         brief=cmdInf["average"]["Brief"],
         description=cmdInf["average"]["Description"],
     )
@@ -184,6 +195,7 @@ class managerCommands(
         await ctx.send(embed=mes)
 
     @commands.command(
+        enabled=COMON,
         brief=cmdInf["moveRoles"]["Brief"],
         description=cmdInf["moveRoles"]["Description"],
     )

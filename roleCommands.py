@@ -44,6 +44,7 @@ from power import (
 )
 from sharedVars import (
     BOTTURNWAIT,
+    COMON,
     DEFDUELOPP,
     DL_ARC_DUR,
     GEMDIFF,
@@ -61,8 +62,6 @@ from sharedVars import (
 )
 
 logP = log.get_logger(__name__)
-
-COMON = True
 
 
 ENHLIST = [(x, y) for (x, y) in powerTypes.items()]
@@ -1411,7 +1410,7 @@ async def startDuel(
         auto_archive_duration=DL_ARC_DUR,
         reason=mes.title,
     )
-    for peep in peepList:
+    for peep in bat.playList:
         if peep.play:
             await thrd.add_user(peep)
 

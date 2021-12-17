@@ -5,7 +5,7 @@ import git
 from sharedFuncs import asleep, dupeMes
 import log
 from power import cmdInf
-from sharedVars import HOSTNAME
+from sharedVars import COMON, HOSTNAME
 
 logP = log.get_logger(__name__)
 
@@ -123,6 +123,7 @@ class ownerCommands(
             await dupeMes(self.bot, ctx, f"Command '{mes}' was not found.")
 
     @commands.command(
+        enabled=COMON,
         brief=cmdInf["testAll"]["Brief"],
         description=cmdInf["testAll"]["Description"],
     )

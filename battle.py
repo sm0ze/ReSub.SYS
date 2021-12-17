@@ -379,6 +379,8 @@ class battler:
         self.p2 = player(member2, bot)
         self.n2 = self.p2.n
 
+        self.playList = [self.p1, self.p2]
+
         self.totSwi = int(baseDict["SWITOT"])
 
     async def echoMes(self, mes, thrd, toThrd: bool = True):
