@@ -1412,7 +1412,7 @@ async def startDuel(
     )
     for peep in bat.playList:
         if peep.play:
-            await thrd.add_user(peep)
+            await thrd.add_user(peep.p)
 
     winner = None
     mes.add_field(

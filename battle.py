@@ -460,10 +460,26 @@ class battler:
             for x in playerUpList
             if x and isinstance(x[0], player) and x[0].swiNow > self.totSwi
         ]
-
+        pickList.sort(reverse=True, key=lambda x: x[0].swiNow)
+        logP.debug(f"Picklist is of length: {len(pickList)}")
         if pickList:
             if len(pickList) > 1:
-                pick = random.choice(pickList)
+                pick = (
+                    pickList[0]
+                    if pickList[0][0].swiNow > pickList[1][0].swiNow
+                    else "Multiple Choice"
+                )
+                if pick == "Multiple Choice":
+                    largestSwi = 0
+                    randList = []
+                    for x in pickList:
+                        if x[0].swiNow > largestSwi:
+                            randList.clear()
+                            randList.append(x)
+                            largestSwi = x[0].swiNow
+                        elif x[0].swiNow == largestSwi:
+                            randList.append(x)
+                    pick = random.choice(randList)
                 Who2Move[pick[1]] = pick[0]
                 pick[0].swiNow = pick[0].swiNow - self.totSwi
             else:
