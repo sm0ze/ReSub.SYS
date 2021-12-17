@@ -8,3 +8,11 @@ class notSupeDuel(Error):
 
 class notNPC(Error):
     pass
+
+
+class notADuel(Error):
+    pass
+
+
+class noFields(Error):
+    pass

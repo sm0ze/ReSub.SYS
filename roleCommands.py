@@ -26,8 +26,8 @@ from sharedFuncs import (
     trim,
 )
 import log
-from battle import battler, player
-from exceptions import notNPC, notSupeDuel
+from battle import NPC, battler, player
+from exceptions import noFields, notADuel, notNPC, notSupeDuel
 from power import (
     cmdInf,
     leader,
@@ -898,7 +898,7 @@ class roleCommands(
                     raise notSupeDuel("Not a supe.")
             elif str(SUPEROLE) not in [x.name for x in opponent.roles]:
                 raise notSupeDuel(f"{opponent} is not a {SUPEROLE}.")
-            bat = battler(self.bot, ctx.author, opponent)
+            bat = battler(self.bot, [ctx.author, opponent])
 
         else:
             npcPlayer = [
@@ -907,31 +907,20 @@ class roleCommands(
                 if str(opponent) == npcDict[x]["name"] or str(opponent) == x
             ]
             if npcPlayer:
-                picVar = "avatar"
                 npcPlayer = npcPlayer[0]
-                if picVar not in npcPlayer.keys():
-                    npcPlayer[picVar] = self.bot.user.display_avatar
-                npcEnh = [
-                    f"{x}{npcPlayer[x]}"
-                    for x in npcPlayer.keys()
-                    if x not in ["name", "id", "index", picVar]
-                ]
-                npcEnhTrim = [x for x in npcEnh if int(x[3:])]
-                npcWant = funcBuild(npcEnhTrim)
-                npcBuildStr = ""
-                for x in npcWant[1]:
-                    npcBuildStr += f"{x}\n"
+
                 logP.debug(f"Found npc: {npcPlayer}")
+
+                npcOpp = NPC(self.bot, npcPlayer)
 
                 bat = battler(
                     self.bot,
-                    ctx.author,
-                    [npcPlayer["name"], npcPlayer[picVar], npcEnhTrim],
+                    [ctx.author, npcOpp],
                 )
             else:
                 raise notNPC(f"{opponent} is not an NPC")
-        await bat.findPlayers(dontAsk, [bat.p1, bat.p2])
-        await startDuel(self, ctx, bat, [ctx.author, opponent])
+        await bat.findPlayers(dontAsk)
+        await startDuel(self, ctx, bat)
 
 
 # function to get specified user's enhancement points
@@ -1137,9 +1126,17 @@ async def playerDuelInput(
     ctx: commands.Context,
     totRounds: int,
     peep: player,
-    notPeep: player,
     battle: battler,
 ):
+    if len(battle.playerList) == 2:
+        if peep is battle.playerList[0]:
+            notPeep = battle.playerList[1]
+        else:
+            notPeep = battle.playerList[0]
+    else:
+        raise notADuel(
+            f"Expected a Duel with 2 players not {len(battle.playerList)}"
+        )
     statsMes = peep.statMessage()
     statsMes += battle.adpStatMessage(peep, notPeep)
     stats2Mes = notPeep.statMessage()
@@ -1225,11 +1222,11 @@ async def playerDuelInput(
         if "Focus" == moveString:
             peep.focus()
             desperate, typeMove, moveString = await playerDuelInput(
-                self, ctx, totRounds, peep, notPeep, battle
+                self, ctx, totRounds, peep, battle
             )
     else:
         desperate, typeMove, moveString = battle.moveSelf(peep, notPeep)
-    return desperate, typeMove, moveString
+    return [desperate, typeMove, moveString], notPeep
 
 
 def genBuild(val: int = 0, typ: str = "", iniBuild: list = []):
@@ -1375,29 +1372,23 @@ async def startDuel(
     self: roleCommands,
     ctx: commands.Context,
     bat: battler,
-    peepList: list[discord.Member] = None,
 ):
-    mes = discord.Embed(
-        title=(
-            f"{bat.n1}: {bat.isPlay(bat.p1)} Vs. "
-            f"{bat.n2}: {bat.isPlay(bat.p2)}"
-        ),
-    )
+    titleString = ""
+    for peep in bat.playerList:
+        titleString += f"{peep.n}: {bat.isPlay(peep)} Vs. "
+    titleString = titleString[:-5]
 
-    p1Stats = bat.p1.statMessage()
-    p2Stats = bat.p2.statMessage()
+    mes = discord.Embed(title=titleString)
 
-    p1Adp = bat.adpStatMessage(bat.p1, bat.p2)
-    p2Adp = bat.adpStatMessage(bat.p2, bat.p1)
+    for peep in bat.playerList:
+        stats = peep.statMessage()
+        adpStats = bat.adpList(peep)
 
-    mes.add_field(
-        name=f"{bat.n1}",
-        value=f"{p1Stats}{p1Adp}",
-    )
-    mes.add_field(
-        name=f"{bat.n2}",
-        value=f"{p2Stats}{p2Adp}",
-    )
+        mes.add_field(
+            name=f"{peep.n}",
+            value=f"{stats}\n\n{adpStats}",
+        )
+
     mes.set_footer(text=HOSTNAME, icon_url=self.bot.user.display_avatar)
 
     sentMes = await ctx.send(
@@ -1410,104 +1401,86 @@ async def startDuel(
         auto_archive_duration=DL_ARC_DUR,
         reason=mes.title,
     )
-    for peep in bat.playList:
+    for peep in bat.playerList:
         if peep.play:
             await thrd.add_user(peep.p)
 
     winner = None
     mes.add_field(
         inline=False,
-        name=f"{bat.n1} Move",
+        name="TBD Move",
         value="Does Nothing.",
     )
     totRounds = int(0)
     while not winner:
         totRounds += 1
-        Who2Move = bat.nextRound([bat.p1, bat.p2])
+        Who2Move = bat.nextRound()
         iniMove = ""
-        for peep in range(2):
-            move = None
-            play = Who2Move[peep]
-            if play == bat.p1:
-                notPlay = bat.p2
-            else:
-                notPlay = bat.p1
 
-            if isinstance(play, player):
+        move = None
+        defPeep = None
 
-                if play.defending:
-                    iniMove = play.defend()
-                if play.play:
-                    move = await playerDuelInput(
-                        self, ctx, totRounds, play, notPlay, bat
-                    )
-                else:
-                    move = bat.moveSelf(play, notPlay)
-            # peep will be either 0 or 1
-            if peep:
-                p2Move = move
-            else:
-                p1Move = move
-
-        moves = bat.move(Who2Move, p1Move, p2Move)
-        p1Stats = bat.p1.statMessage()
-        p2Stats = bat.p2.statMessage()
-
-        p1Adp = bat.adpStatMessage(bat.p1, bat.p2)
-        p2Adp = bat.adpStatMessage(bat.p2, bat.p1)
-
-        mes.set_field_at(
-            0,
-            name=f"{bat.n1}",
-            value=f"{p1Stats}{p1Adp}",
-        )
-        mes.set_field_at(
-            1,
-            name=f"{bat.n2}",
-            value=f"{p2Stats}{p2Adp}",
-        )
-        if bat.p1 in Who2Move:
-            moveTxt = iniMove + moves[0]
-            mes.set_field_at(
-                2,
-                inline=False,
-                name=f"{bat.n1} Move #{bat.p1.t} ",
-                value=f"{moveTxt}",
-            )
-        elif bat.p2 in Who2Move:
-            moveTxt = iniMove + moves[1]
-            mes.set_field_at(
-                2,
-                inline=False,
-                name=f"{bat.n2} Move #{bat.p2.t} ",
-                value=f"{moveTxt}",
+        if Who2Move.defending:
+            iniMove = Who2Move.defend()
+        if Who2Move.play:
+            move, defPeep = await playerDuelInput(
+                self, ctx, totRounds, Who2Move, bat
             )
         else:
+
+            if len(bat.playerList) == 2:
+                if Who2Move is bat.playerList[0]:
+                    defPeep = bat.playerList[1]
+                else:
+                    defPeep = bat.playerList[0]
+            else:
+                raise notADuel(
+                    f"Expected a Duel with 2 players not {len(bat.playerList)}"
+                )
+            move = bat.moveSelf(Who2Move, defPeep)
+
+        moveStr, winner = bat.move(Who2Move, defPeep, move)
+
+        for i, peep in enumerate(bat.playerList):
+            stats = peep.statMessage()
+            adpStats = bat.adpList(peep)
+
             mes.set_field_at(
-                2,
-                inline=False,
-                name="No moves",
-                value="At all.",
+                i,
+                name=f"{peep.n}",
+                value=f"{stats}\n\n{adpStats}",
             )
-        winner = moves[2]
+
+        numFields = len(mes.fields)
+        if not numFields:
+            raise noFields()
+
+        moveTxt = iniMove + moveStr
+        mes.set_field_at(
+            numFields - 1,
+            inline=False,
+            name=f"{Who2Move.t} Move #{Who2Move.t} ",
+            value=f"{moveTxt}",
+        )
+
         mes.description = f"{totRounds}/{ROUNDLIMIT} Total Rounds"
         await bat.echoMes(mes, thrd)
-        if not winner and totRounds > ROUNDLIMIT:
+        if not winner and totRounds >= ROUNDLIMIT:
             winner = "exhaustion"
-            totRounds = "too many"
         elif winner:
-            totRounds = bat.p1.t if winner == bat.p1.n else bat.p2.t
+            if not winner == "Noone":
+                totRounds = winner.t
 
     mes.clear_fields()
     mes.add_field(
         name=(
-            f"Winner is {winner} after {totRounds} "
-            f"move{pluralInt(2 if len(str(totRounds)) > 3 else totRounds)}."
+            f"Winner is {winner.n if isinstance(winner, player) else winner}"
+            f" after {totRounds} move{pluralInt(totRounds)}."
         ),
         value="Prize to be implemented.",
     )
     if not winner == "exhaustion":
-        mes.set_thumbnail(url=(bat.p1.pic if winner == bat.n1 else bat.p2.pic))
+        mes.set_thumbnail(url=winner.pic)
     await bat.echoMes(mes, thrd)
     await bat.echoMes(f"<#{ctx.channel.id}>", thrd, False)
     await thrd.edit(archived=1)

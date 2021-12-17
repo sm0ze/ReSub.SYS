@@ -6,6 +6,7 @@ import typing
 from collections import namedtuple
 
 import discord
+from discord.ext import commands
 
 import log
 from sharedFuncs import funcBuild, nON, spent
@@ -22,7 +23,7 @@ from power import (
 logP = log.get_logger(__name__)
 
 statMes = """{17}
-HP:\t{0:0.2g}/{9:0.2g} (**{13}%**) + {5} ({18}%)
+HP: {0:0.2g}/{9:0.2g} (**{13}%**) + {5} ({18}%)
 Sta: **{10}**/{12} +{11}
 P: {1}A/{2:0.2g}D
 M: {3}A/{4:0.2g}D
@@ -30,11 +31,10 @@ Acc/Eva({16}): {6}/{7}
 Swi: {14}/{15} +{8}"""
 
 
-adpMes = """
-
-**Adapted Stats**
-Hit%: PA/MA
-{2}%: {0:0.2g}/{1:0.2g}"""
+adpMes = """Acc%: PA🗡️/MA😠, Want > 0
+{}%: {:0.2g}/{:0.2g}
+Eva%: PD🛡️/MD😎, Want < 0
+{}%: {:0.2g}/{:0.2g}"""
 
 DELIM = 16
 
@@ -46,10 +46,33 @@ rendHP = {
 }
 
 
+class NPC:
+    def __init__(
+        self,
+        bot: typing.Union[commands.bot.Bot, commands.bot.AutoShardedBot],
+        npcDict: dict,
+    ) -> None:
+        self.bot = bot
+        picVar = "avatar"
+
+        if picVar not in npcDict.keys():
+            npcDict[picVar] = self.bot.user.display_avatar
+
+        npcEhn = [
+            f"{x}{npcDict[x]}"
+            for x in npcDict.keys()
+            if x not in ["name", "id", "index", picVar]
+        ]
+
+        self.n = str(npcDict["name"])
+        self.pic = npcDict[picVar]
+        self.bL = [x for x in npcEhn if int(x[3:])]
+
+
 class player:
     def __init__(
         self,
-        member,
+        member: typing.Union[discord.Member, NPC],
         bot,
     ) -> None:
         self.bot = bot
@@ -61,13 +84,13 @@ class player:
             self.bL = self.sG[0][2]
             self.npc = False
             self.pic = self.p.display_avatar
-        else:
+        elif isinstance(member, NPC):
             self.p = None
-            self.n = member[0]
+            self.n = member.n
             self.sG = None
-            self.bL = member[-1]
+            self.bL = member.bL
             self.npc = True
-            self.pic = member[1]
+            self.pic = member.pic
 
         self.fB = funcBuild(self.bL)
         self.stats = self.fB[2]
@@ -372,169 +395,109 @@ class player:
 
 
 class battler:
-    def __init__(self, bot, member1: discord.Member, member2) -> None:
-        self.p1 = player(member1, bot)
-        self.n1 = self.p1.n
+    def __init__(
+        self,
+        bot,
+        memberList: list[typing.Union[discord.Member, NPC]],
+    ) -> None:
 
-        self.p2 = player(member2, bot)
-        self.n2 = self.p2.n
-
-        self.playList = [self.p1, self.p2]
-
+        self.playerList = []
         self.totSwi = int(baseDict["SWITOT"])
+        for peep in memberList:
+            self.playerList.append(player(peep, bot))
 
     async def echoMes(self, mes, thrd, toThrd: bool = True):
         if isinstance(mes, discord.Embed):
-            if self.p1.play:
-                await self.p1.p.send(embed=mes)
-            if self.p2.play:
-                await self.p2.p.send(embed=mes)
+            for peep in self.playerList:
+                if peep.play:
+                    await peep.p.send(embed=mes)
             if toThrd:
                 await thrd.send(embed=mes)
         elif isinstance(mes, str):
-            if self.p1.play:
-                await self.p1.p.send(mes)
-            if self.p2.play:
-                await self.p2.p.send(mes)
+            for peep in self.playerList:
+                if peep.play:
+                    await peep.p.send(mes)
             if toThrd:
                 await thrd.send(mes)
 
-    async def findPlayers(self, dontAsk, playList: list[player] = None):
-        if not playList:
-            playList = [self.p1, self.p2]
-
-        for peep in playList:
+    async def findPlayers(self, dontAsk):
+        for peep in self.playerList:
             if not peep.npc:
                 if not peep.p.bot:
                     if not dontAsk == 1:
                         await peep.ask()
 
-    def nextRound(
-        self, playerList: list[player]
-    ) -> list[typing.Union[player, None]]:
-        # TODO rewrite for more than 2 peeps
-        """p1Swi = self.p1.swiNow
-        p2Swi = self.p2.swiNow
-        Who2Move = [None, None]
-        while p1Swi < self.totSwi and p2Swi < self.totSwi:
-            p1Swi += self.p1.swi
-            p2Swi += self.p2.swi
-            logP.debug(f"p1Swi: {p1Swi}, p2Swi: {p2Swi}")
-
-        if p1Swi == p2Swi:
-            playerSwi = random.sample(
-                [[p1Swi, 0, self.p1], [p2Swi, 1, self.p2]], k=2
-            )
-        else:
-            playerSwi = sorted(
-                [[p1Swi, 0, self.p1], [p2Swi, 1, self.p2]],
-                key=lambda x: x[0],
-                reverse=True,
-            )
-
-        for peep in playerSwi:
-            if peep[0] >= self.totSwi:
-                peep[0] -= self.totSwi
-                Who2Move[peep[1]] = peep[2]
-                break
-
-        self.p1.swiNow = p1Swi
-        self.p2.swiNow = p2Swi"""
+    def nextRound(self) -> player:
         looping = True
-        Who2Move = [None] * len(playerList)
+        Who2Move = None
         playerUpList = []
-        for count, peep in enumerate(playerList):
+        for peep in self.playerList:
             if peep.swiNow > self.totSwi:
-                playerUpList.append([peep, count])
+                playerUpList.append(peep)
                 looping = False
 
         while looping:
-            for count, peep in enumerate(playerList):
+            for peep in self.playerList:
                 peep.swiNow += peep.swi
                 if peep.swiNow > self.totSwi:
-                    playerUpList.append([peep, count])
+                    playerUpList.append(peep)
                     looping = False
 
         pickList = [
             x
             for x in playerUpList
-            if x and isinstance(x[0], player) and x[0].swiNow > self.totSwi
+            if x and isinstance(x, player) and x.swiNow > self.totSwi
         ]
-        pickList.sort(reverse=True, key=lambda x: x[0].swiNow)
+
+        pickList.sort(reverse=True, key=lambda x: x.swiNow)
         logP.debug(f"Picklist is of length: {len(pickList)}")
-        if pickList:
-            if len(pickList) > 1:
-                pick = (
-                    pickList[0]
-                    if pickList[0][0].swiNow > pickList[1][0].swiNow
-                    else "Multiple Choice"
-                )
-                if pick == "Multiple Choice":
-                    largestSwi = 0
-                    randList = []
-                    for x in pickList:
-                        if x[0].swiNow > largestSwi:
-                            randList.clear()
-                            randList.append(x)
-                            largestSwi = x[0].swiNow
-                        elif x[0].swiNow == largestSwi:
-                            randList.append(x)
-                    pick = random.choice(randList)
-                Who2Move[pick[1]] = pick[0]
-                pick[0].swiNow = pick[0].swiNow - self.totSwi
-            else:
-                Who2Move[pickList[0][1]] = pickList[0][0]
-                pickList[0][0].swiNow = pickList[0][0].swiNow - self.totSwi
+
+        if len(pickList) > 1:
+            pick = (
+                pickList[0]
+                if pickList[0].swiNow > pickList[1].swiNow
+                else "Multiple Choice"
+            )
+            if pick == "Multiple Choice":
+                largestSwi = 0
+                randList = []
+                for x in pickList:
+                    if x.swiNow > largestSwi:
+                        randList.clear()
+                        randList.append(x)
+                        largestSwi = x.swiNow
+                    elif x.swiNow == largestSwi:
+                        randList.append(x)
+                pick = random.choice(randList)
+            Who2Move = pick
+        else:
+            Who2Move = pickList[0]
+
+        Who2Move.swiNow = Who2Move.swiNow - self.totSwi
 
         return Who2Move
 
     def move(
         self,
-        Who2Move: list[player],
-        p1Move: list[str] = None,
-        p2Move: list[str] = None,
-    ):
-        logP.debug(f"Who2Move: {Who2Move}")
-        moves = ["Does Nothing.", "Does Nothing.", None]
-        if self.p1 in Who2Move and self.p2 in Who2Move:
-            if self.p1.swiNow == self.p2.swiNow:
-                first = random.choice(Who2Move)
-            elif self.p1.swiNow > self.p2.swiNow:
-                first = self.p1
-            else:
-                first = self.p2
+        peep: player,
+        defPeep: player,
+        move: list[str] = None,
+    ) -> tuple[str, typing.Union[player, None]]:
+        logP.debug(f"Who2Move: {peep.n}")
 
-            if first == self.p1:
-                moves[0] = f"{self.p1.n} moves first!\n"
-                moves[0] += self.turn(self.p1, self.p2, p1Move)
-                if self.p2.hp > 0 and self.p1.hp > 0:
-                    moves[1] = self.turn(self.p2, self.p1, p2Move)
-            else:
-                moves[1] = f"{self.p2.n} moves first!\n"
-                moves[1] += self.turn(self.p2, self.p1, p2Move)
-                if self.p2.hp > 0 and self.p1.hp > 0:
-                    moves[0] = self.turn(self.p1, self.p2, p1Move)
-        else:
-            for peep in Who2Move:
-                if not peep:
-                    continue
-                if peep == self.p1:
-                    moves[0] = f"{self.p1.n} moves!\n"
-                    moves[0] += self.turn(self.p1, self.p2, p1Move)
-                else:
-                    moves[1] = f"{self.p2.n} moves!\n"
-                    moves[1] += self.turn(self.p2, self.p1, p2Move)
+        moveStr = self.turn(peep, defPeep, move)
+        winner = None
 
-        if self.p1.hp <= 0 or self.p2.hp <= 0:
-            logP.debug(f"p1 Hp: {self.p1.hp}, p2 Hp: {self.p2.hp}")
-            if self.p1.hp == self.p2.hp:
-                moves[2] = "Noone"
-            elif self.p1.hp > self.p2.hp:
-                moves[2] = self.p1.n
+        if peep.hp <= 0 or defPeep.hp <= 0:
+            logP.debug(f"attPeep Hp: {peep.hp}, defPeep Hp: {defPeep.hp}")
+            if peep.hp == defPeep.hp:
+                winner = "Noone"
+            elif peep.hp > defPeep.hp:
+                winner = peep
             else:
-                moves[2] = self.p2.n
+                winner = defPeep
 
-        return moves
+        return moveStr, winner
 
     def turn(self, peep: player, attPeep: player, move: list[str]) -> str:
         mes = ""
@@ -549,9 +512,6 @@ class battler:
             mes += peep.beWeak(False)
         # if peep.defending:
         #     mes += peep.defend()
-
-        if not move:
-            move = self.moveSelf(peep, attPeep)
 
         desperate = move[0]
         typeMove = move[1]
@@ -585,7 +545,7 @@ class battler:
         if peep.tired == 3:
             mes += f"{peep.n} has exhausted themself for the third time!"
             if attPeep.hp < 0:
-                peep.hp = attPeep.hp - 1
+                peep.hp = attPeep.hp
             else:
                 peep.hp = float(0)
 
@@ -593,7 +553,7 @@ class battler:
             peep.missTurn -= 1
         return mes
 
-    def moveSelf(self, peep: player, notPeep: player):
+    def moveSelf(self, peep: player, notPeep):
         moveStr = "Physical"
         desperate = 0
         typeMove = "Attack"
@@ -919,18 +879,36 @@ class battler:
         return mes
 
     def adp(self, at1: player, at2: player):
-        adpStats = namedtuple("adpStats", ["phys", "ment", "hitChance"])
+        adpStats = namedtuple("adpStats", ["hitChance", "phys", "ment"])
         phys = at1.pa - at2.pd
         ment = at1.ma - at2.md
         hitChance = at1.acc - at2.eva
 
-        ret = adpStats(phys, ment, hitChance)
+        ret = adpStats(hitChance, phys, ment)
         return ret
 
     def adpStatMessage(self, at1: player, at2: player):
+        adaptedAtt = self.adp(at1, at2)
+        adaptedDef = self.adp(at2, at1)
 
-        adaptedStats = self.adp(at1, at2)
-        return adpMes.format(*adaptedStats)
+        retList = [
+            adaptedAtt.hitChance,
+            adaptedAtt.phys,
+            adaptedAtt.ment,
+            adaptedDef.hitChance,
+            adaptedDef.phys,
+            adaptedDef.ment,
+        ]
+        ret = f"{at1.n} Vs. {at2.n}\n{adpMes.format(*retList)}\n"
+        return ret
+
+    def adpList(self, statsFor: player) -> str:
+        ret = "**Adapted Stats**"
+        for peep in self.playerList:
+            if statsFor is peep:
+                continue
+            ret += f"\n{self.adpStatMessage(statsFor, peep)}"
+        return ret
 
     def isPlay(self, peep: player):
         return "Playing" if peep.play else "NPC" if peep.npc else "Bot"
