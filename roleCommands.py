@@ -33,7 +33,7 @@ from power import (
     leader,
     moveOpt,
     posTask,
-    power,
+    masterEhnDict,
     powerTypes,
     rankColour,
     remList,
@@ -337,7 +337,7 @@ class roleCommands(
                 top = leader[highestEhn(build, False)]
             else:
                 top = leader[typ]
-            buildNames = [power[x]["Name"] for x in build]
+            buildNames = [masterEhnDict[x]["Name"] for x in build]
             buildStr = ""
             for x in buildNames:
                 buildStr += f"{x} \n"
@@ -410,7 +410,7 @@ class roleCommands(
                     (
                         f"{nON(user)} needs {userWantsCost} available "
                         f"enhancements for "
-                        f"{[power[x]['Name'] for x in buildList]} "
+                        f"{[masterEhnDict[x]['Name'] for x in buildList]} "
                         f"but only has {pointTot[0]}"
                     )
                 )
@@ -418,7 +418,8 @@ class roleCommands(
 
         # the guild role names grabbed from shorthand to add to user
         addList = [
-            power[toType(x[1]) + str(x[0])]["Name"] for x in userWantsBuild
+            masterEhnDict[toType(x[1]) + str(x[0])]["Name"]
+            for x in userWantsBuild
         ]
         logP.debug(f"Add list = {addList}")
 
@@ -751,7 +752,11 @@ class roleCommands(
             x.name
             for x in ctx.message.author.roles
             if x.name
-            in [power[y]["Name"] for y in power.keys() if power[y]["Rank"] > 0]
+            in [
+                masterEhnDict[y]["Name"]
+                for y in masterEhnDict.keys()
+                if masterEhnDict[y]["Rank"] > 0
+            ]
         ]
         logP.debug(toCut)
         await cut(ctx, [ctx.message.author], toCut)
@@ -1074,7 +1079,8 @@ def toCut(member: discord.Member) -> list[str]:
 
     # fetch trimmed build of user
     supeTrim = [
-        power[toType(x[1]) + str(x[0])]["Name"] for x in trim(supeBuild[1])
+        masterEhnDict[toType(x[1]) + str(x[0])]["Name"]
+        for x in trim(supeBuild[1])
     ]
     logP.debug(f"supeTrim = {supeTrim}")
 
@@ -1221,7 +1227,7 @@ async def playerDuelInput(
     if chosenMove:
         if "Focus" == moveString:
             peep.focus()
-            desperate, typeMove, moveString = await playerDuelInput(
+            [desperate, typeMove, moveString], notPeep = await playerDuelInput(
                 self, ctx, totRounds, peep, battle
             )
     else:
@@ -1327,7 +1333,7 @@ def genBuild(val: int = 0, typ: str = "", iniBuild: list = []):
 
 
 def checkAddBuild(listAdd: list = [], listBase: list = []):
-    enhNumList = power.keys()
+    enhNumList = masterEhnDict.keys()
     userKeyList = {}
     listRet = []
     listBaseNew = listBase.copy()

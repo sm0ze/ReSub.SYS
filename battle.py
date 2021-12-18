@@ -13,7 +13,7 @@ from sharedFuncs import funcBuild, nON, spent
 from power import (
     leader,
     moveOpt,
-    power,
+    masterEhnDict,
     baseDict,
     statCalcDict,
     replaceDict,
@@ -139,7 +139,7 @@ class player:
         for enhan in self.bL:
             logP.debug(f"enhan: {enhan}")
             name = enhan[:3]
-            rank = int(power[enhan]["Rank"])
+            rank = int(masterEhnDict[enhan]["Rank"])
             if name not in statDict.keys():
                 logP.debug(f"Add: {name}, {rank}")
                 statDict[name] = rank
@@ -942,9 +942,13 @@ def addCalc(self, statType) -> int:
                     + f"hard {replaceDict[stat]} rank {hard}"
                 )
             )
-            if soft > hard:
+            if soft >= hard:
                 logP.debug(f"Adding {replaceDict[stat]} to ignore List")
                 ignore.append(replaceDict[stat])
+            else:
+                logP.debug(f"Adding {stat} to ignore List")
+                ignore.append(stat)
+
     logP.debug(f"ignore: {ignore}")
 
     for stat in statCalcDict.keys():

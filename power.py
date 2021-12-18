@@ -224,7 +224,7 @@ freeRoles = ["Ping Unto Me My Daily Quack", "Supe"]
 
 cmdInf = {}
 
-power = {
+masterEhnDict = {
     "sup0": {"Name": "Supe", "Type": "Supe", "Rank": 0, "Prereq": []},
     "sys0": {"Name": "System", "Type": "System", "Rank": 0, "Prereq": []},
     "aut0": {"Name": "Authors", "Type": "Authors", "Rank": 0, "Prereq": []},
@@ -278,35 +278,35 @@ for statsheet in statsheetNom:
             shrt = shrt[0]
         for i in range(1, 11):
             enhNum = str(shrt) + str(i)
-            power[enhNum] = {
+            masterEhnDict[enhNum] = {
                 "Name": f"Rank {i} {tup.Role}",
                 "Type": f"{tup.Role}",
                 "Rank": i,
                 "Prereq": [],
             }
-            if power[enhNum]["Type"] == "Intelligence":
-                power[enhNum]["Name"] += " (only for Systems)"
+            if masterEhnDict[enhNum]["Type"] == "Intelligence":
+                masterEhnDict[enhNum]["Name"] += " (only for Systems)"
             if i > 1:
-                power[enhNum]["Prereq"].append(str(shrt) + str(i - 1))
+                masterEhnDict[enhNum]["Prereq"].append(str(shrt) + str(i - 1))
         for ite in tup._fields:
             if str(getattr(tup, ite)) == str("nan"):
                 continue
             if str(ite).lower().startswith("three"):
-                power[str(shrt) + str(4)]["Prereq"].append(
+                masterEhnDict[str(shrt) + str(4)]["Prereq"].append(
                     str(getattr(tup, ite)).lower()
                 )
             elif str(ite).lower().startswith("six"):
-                power[str(shrt) + str(7)]["Prereq"].append(
+                masterEhnDict[str(shrt) + str(7)]["Prereq"].append(
                     str(getattr(tup, ite)).lower()
                 )
             elif str(ite).lower().startswith("nine"):
-                power[str(shrt) + str(10)]["Prereq"].append(
+                masterEhnDict[str(shrt) + str(10)]["Prereq"].append(
                     str(getattr(tup, ite)).lower()
                 )
-    power["omn1"]["Prereq"].append("aut0")
-    power["int1"]["Prereq"].append("sys0")
-    power["4th1"]["Prereq"].append("aut0")
-    for sett in power.items():
+    masterEhnDict["omn1"]["Prereq"].append("aut0")
+    masterEhnDict["int1"]["Prereq"].append("sys0")
+    masterEhnDict["4th1"]["Prereq"].append("aut0")
+    for sett in masterEhnDict.items():
         logP.debug(sett)
 
 

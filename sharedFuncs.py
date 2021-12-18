@@ -10,7 +10,7 @@ from discord.ext.commands.converter import MemberConverter
 from sqlitedict import SqliteDict
 
 import log
-from power import leader, power
+from power import leader, masterEhnDict
 from sharedVars import HOSTNAME, SAVEFILE, STARTCHANNEL, SUPEROLE
 
 logP = log.get_logger(__name__)
@@ -43,7 +43,7 @@ def eleCountUniStr(varList, reqursion: bool = False):
 
 
 # calculate number of prerequisites +1 to get cost of enhancement
-def cost(inName: str, inDict: dict = power):
+def cost(inName: str, inDict: dict = masterEhnDict):
     required = []
 
     logP.debug(f"{inName} has requisites: {inDict[inName]['Prereq']}")
@@ -78,7 +78,7 @@ def cost(inName: str, inDict: dict = power):
 
 
 # function to remove lower ranked enhancements from the list
-def trim(pList, inDict=power):
+def trim(pList, inDict=masterEhnDict):
     logP.debug("Start of trim function")
     tierDict = {}
     trimList = []
@@ -136,7 +136,7 @@ def reqEnd(endList):
         logP.debug(f"{endList[1]}")
         reqStr = ""
         for req in endList[1]:
-            reqName = power[toType(req[1]) + str(req[0])]["Name"]
+            reqName = masterEhnDict[toType(req[1]) + str(req[0])]["Name"]
             reqStr += f"{reqName}\n"
 
     # return message
@@ -169,7 +169,7 @@ def funcBuild(
         reqList.append(temCost[2])
 
         # fetch full name for enhancement from shorthand
-        tempName = power[item]["Name"]
+        tempName = masterEhnDict[item]["Name"]
 
         # add enhancement full name to lists
         reqList.append(tempName)
@@ -211,13 +211,15 @@ def spent(
         # managed roles in user role list
         for roles in peep.roles:
             if roles.name in [
-                power[x]["Name"] for x in power.keys() if power[x]["Rank"] > 0
+                masterEhnDict[x]["Name"]
+                for x in masterEhnDict.keys()
+                if masterEhnDict[x]["Rank"] > 0
             ]:
                 supeRoles.append(
                     [
                         x
-                        for x in power.keys()
-                        if power[x]["Name"] == roles.name
+                        for x in masterEhnDict.keys()
+                        if masterEhnDict[x]["Name"] == roles.name
                     ][0]
                 )
         logP.debug(f"Supe roles: {supeRoles}")
@@ -407,7 +409,9 @@ def pluralInt(val: int):
 def topEnh(ctx: commands.Context, enh: str) -> dict:
 
     enhNameList = {
-        power[x]["Name"]: 0 for x in power.keys() if enh == power[x]["Type"]
+        masterEhnDict[x]["Name"]: 0
+        for x in masterEhnDict.keys()
+        if enh == masterEhnDict[x]["Type"]
     }
     peepDict = {}
     for peep in ctx.message.author.guild.members:
@@ -418,15 +422,15 @@ def topEnh(ctx: commands.Context, enh: str) -> dict:
                 enhNameList[role.name] += 1
                 if peep not in peepDict.keys():
                     peepDict[peep] = [
-                        power[x]["Rank"]
-                        for x in power.keys()
-                        if power[x]["Name"] == role.name
+                        masterEhnDict[x]["Rank"]
+                        for x in masterEhnDict.keys()
+                        if masterEhnDict[x]["Name"] == role.name
                     ][0]
                 else:
                     rank = [
-                        power[x]["Rank"]
-                        for x in power.keys()
-                        if power[x]["Name"] == role.name
+                        masterEhnDict[x]["Rank"]
+                        for x in masterEhnDict.keys()
+                        if masterEhnDict[x]["Name"] == role.name
                     ][0]
                     if rank > peepDict[peep]:
                         peepDict[peep] = rank

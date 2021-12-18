@@ -6,7 +6,7 @@ import discord
 from discord.ext import commands
 from sharedFuncs import dupeMes, load, memGrab, nON, pluralInt, save, topEnh
 import log
-from power import cmdInf, power, leader
+from power import cmdInf, masterEhnDict, leader
 from sharedVars import (
     COMON,
     HOSTNAME,
@@ -230,12 +230,12 @@ def restart_bot() -> None:
 
 # function to fetch all guild roles that are managed by bot
 async def orderRole(ctx: commands.Context):
-    logP.debug(power.values())
+    logP.debug(masterEhnDict.values())
 
     supeList = [
         x
         for x in ctx.message.author.guild.roles
-        if str(x) in [y["Name"] for y in power.values()]
+        if str(x) in [y["Name"] for y in masterEhnDict.values()]
     ]
 
     logP.debug(supeList)
@@ -254,7 +254,11 @@ async def manageRoles(ctx: commands.Context):
         logP.debug(f"Looking at role: {role.name}")
 
         # grab shorthand for enhancement
-        roleShort = [x for x in power.keys() if power[x]["Name"] == role.name]
+        roleShort = [
+            x
+            for x in masterEhnDict.keys()
+            if masterEhnDict[x]["Name"] == role.name
+        ]
         logP.debug(f"roleShort = {roleShort}")
 
         # check to ensure role is one overseen by this bot
@@ -264,12 +268,12 @@ async def manageRoles(ctx: commands.Context):
 
         # check for intelligence roles as they are the rank position constants
         # and should not be changed by this command
-        elif "Intelligence" == power[roleShort[0]]["Type"]:
+        elif "Intelligence" == masterEhnDict[roleShort[0]]["Type"]:
             logP.debug("Role type intelligence")
             continue
 
         # fetch enhancement rank
-        roleRank = power[roleShort[0]]["Rank"]
+        roleRank = masterEhnDict[roleShort[0]]["Rank"]
         logP.debug(f"Role rank is: {roleRank}")
 
         # check for restricted roles
