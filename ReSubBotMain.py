@@ -1,19 +1,14 @@
-# BossSystemExecutable.py
+# ReSubBotMain.py
 
 import discord
 from discord.ext import commands, tasks
 from discord.utils import get
 from pretty_help import DefaultMenu, PrettyHelp
+
 import log
+from sharedDicts import powerTypes
 from sharedFuncs import asleep, dupeMes, nON
-from power import powerTypes
-from sharedVars import (
-    CMDPREFIX,
-    HOSTNAME,
-    STARTTIME,
-    SUPEROLE,
-    TOKEN,
-)
+from sharedVars import CMDPREFIX, HOSTNAME, STARTTIME, SUPEROLE, TOKEN
 
 logP = log.get_logger(__name__)
 
@@ -31,6 +26,7 @@ cogList = [
     "managerCommands.py",
     "ownerCommands.py",
     "ErrorHandler.py",
+    "authorCommands.py",
 ]
 
 
@@ -187,7 +183,7 @@ async def update_presence():
     members = sum(
         [len(x.members) for x in [get(y.roles, name=SUPEROLE) for y in guilds]]
     )
-    nameSet = f"{members} users with {len(powerTypes.keys())} enhancements"
+    nameSet = f"{members} users with {len(powerTypes.keys())} " "enhancements"
 
     await bot.change_presence(
         activity=discord.Activity(

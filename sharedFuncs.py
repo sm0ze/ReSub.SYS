@@ -1,4 +1,4 @@
-# sharedFuncs.py
+# py
 
 import math
 import time
@@ -10,7 +10,7 @@ from discord.ext.commands.converter import MemberConverter
 from sqlitedict import SqliteDict
 
 import log
-from power import leader, masterEhnDict
+from sharedDicts import leader, masterEhnDict
 from sharedVars import HOSTNAME, SAVEFILE, STARTCHANNEL, SUPEROLE
 
 logP = log.get_logger(__name__)

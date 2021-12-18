@@ -1,10 +1,12 @@
 import sys
 import typing
-from discord.ext import commands
+
 import git
-from sharedFuncs import asleep, dupeMes
+from discord.ext import commands
+
 import log
-from power import cmdInf
+from sharedDicts import cmdInf
+from sharedFuncs import asleep, dupeMes
 from sharedVars import COMON, HOSTNAME
 
 logP = log.get_logger(__name__)

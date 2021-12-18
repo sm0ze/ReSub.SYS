@@ -11,6 +11,23 @@ from discord.ext import commands, tasks
 from discord.utils import get
 from mee6_py_api import API
 
+import log
+from battle import NPC, battler, player
+from exceptions import noFields, notADuel, notNPC, notSupeDuel
+from sharedDicts import (
+    cmdInf,
+    leader,
+    masterEhnDict,
+    moveOpt,
+    npcDict,
+    posTask,
+    powerTypes,
+    rankColour,
+    remList,
+    restrictedList,
+    rsltDict,
+    taskVar,
+)
 from sharedFuncs import (
     funcBuild,
     load,
@@ -21,29 +38,13 @@ from sharedFuncs import (
     reqEnd,
     save,
     spent,
-    toType,
     topEnh,
+    toType,
     trim,
-)
-import log
-from battle import NPC, battler, player
-from exceptions import noFields, notADuel, notNPC, notSupeDuel
-from power import (
-    cmdInf,
-    leader,
-    moveOpt,
-    posTask,
-    masterEhnDict,
-    powerTypes,
-    rankColour,
-    remList,
-    restrictedList,
-    rsltDict,
-    taskVar,
-    npcDict,
 )
 from sharedVars import (
     BOTTURNWAIT,
+    COMMANDSROLES,
     COMON,
     DEFDUELOPP,
     DL_ARC_DUR,
@@ -52,13 +53,11 @@ from sharedVars import (
     HOSTNAME,
     LEADLIMIT,
     MANAGER,
-    COMMANDSROLES,
     PLAYERTURNWAIT,
     ROUNDLIMIT,
     SUPEROLE,
     TASKCD,
     TATSU,
-    setGemDiff,
 )
 
 logP = log.get_logger(__name__)
@@ -157,7 +156,8 @@ class roleCommands(
         """
 
         taskType = random.choices(
-            taskVar["taskOpt"][0], cum_weights=taskVar["taskWeight"]
+            taskVar["taskOpt"][0],
+            cum_weights=taskVar["taskWeight"],
         )
         taskShrt = posTask[taskType[0]]
         taskWorth = taskShrt["Worth"]
@@ -216,16 +216,20 @@ class roleCommands(
         )
 
         logP.debug("selected result: ", selResult)
+        varList = rsltDict.keys()
         logP.debug(
             f"int(selResult * 100): {int(selResult * 100)}, "
-            f"{[[x, rsltDict[x]] for x in rsltDict.keys()]}"
+            f"{[[x, rsltDict[x]] for x in varList]}"
         )
 
         selRsltWrd = [
             x
             for x in rsltDict.keys()
             if int(selResult * 100)
-            in range(int(100 * rsltDict[x][0]), int(100 * rsltDict[x][1]))
+            in range(
+                int(100 * rsltDict[x][0]),
+                int(100 * rsltDict[x][1]),
+            )
         ]
         logP.debug(f"selected resulting word: {selRsltWrd}")
         if selRsltWrd:
@@ -286,7 +290,8 @@ class roleCommands(
         stateL = await countOf(ctx.message.author)
         currEnhP = stateL[0]
         logP.debug(
-            f"{nON(ctx.message.author)} has {currEnhP} available enhancements"
+            f"{nON(ctx.message.author)} has {currEnhP} available"
+            " enhancements"
         )
         stateG = spent([ctx.message.author])
         currEnh = int(stateG[0][1])
@@ -296,8 +301,9 @@ class roleCommands(
         )
         if currEnh < currEnhP:
             val = (
-                f"{nON(ctx.message.author)} has {currEnhP - currEnh} unspent"
-                f" enhancement point{pluralInt(currEnhP - currEnh)}."
+                f"{nON(ctx.message.author)} has "
+                f"{currEnhP - currEnh} unspent enhancement "
+                f"point{pluralInt(currEnhP - currEnh)}."
             )
 
             emptMes.add_field(name="Unspent Alert", value=val)
@@ -406,11 +412,12 @@ class roleCommands(
             userWants = funcBuild(userWantsIni)
             userWantsBuild = userWants[2]
             if specified or pointTot[0] < userWants[0]:
+                useDict = masterEhnDict
                 await ctx.send(
                     (
-                        f"{nON(user)} needs {userWantsCost} available "
-                        f"enhancements for "
-                        f"{[masterEhnDict[x]['Name'] for x in buildList]} "
+                        f"{nON(user)} needs {userWantsCost} "
+                        "available enhancements for "
+                        f"{[useDict[x]['Name'] for x in buildList]} "
                         f"but only has {pointTot[0]}"
                     )
                 )
@@ -502,8 +509,9 @@ class roleCommands(
             await ctx.send(
                 (
                     f"{nON(group[0])} has {group[1]} "
-                    f"enhancement{pluralInt(group[1])} active out of "
-                    f"{pointTot[0]} enhancement{pluralInt(pointTot[0])} "
+                    f"enhancement{pluralInt(group[1])} active out "
+                    f"of {pointTot[0]} "
+                    f"enhancement{pluralInt(pointTot[0])} "
                     "available."
                 )
             )
@@ -666,8 +674,9 @@ class roleCommands(
                 title=f"{enh} Enhancement Leaderboard",
                 description=(
                     f"{enh} is being used by {lenPeep} "
-                    f"host{pluralInt(lenPeep)} for a total of {sumPeep} "
-                    f"enhancement point{pluralInt(sumPeep)} spent.\nFor an "
+                    f"host{pluralInt(lenPeep)} for a total of "
+                    f"{sumPeep} enhancement "
+                    f"point{pluralInt(sumPeep)} spent.\nFor an "
                     f"average of {avPeep}."
                 ),
             )
@@ -699,8 +708,9 @@ class roleCommands(
             )
             totPoints = sum([x[1] for x in pointList])
             desc = (
-                f"There is a total of {totHosts} host{pluralInt(totHosts)} "
-                f"with a sum of {totPoints} enhancement "
+                f"There is a total of {totHosts} "
+                f"host{pluralInt(totHosts)} with a sum of "
+                f"{totPoints} enhancement "
                 f"point{pluralInt(totPoints)} spent."
             )
 
@@ -814,7 +824,7 @@ class roleCommands(
 
             mes.add_field(
                 inline=False,
-                name=f"Unspent Enhancement Point{pluralInt(unspent)}",
+                name=(f"Unspent Enhancement Point{pluralInt(unspent)}"),
                 value=unspent,
             )
 
@@ -825,39 +835,6 @@ class roleCommands(
 
             await ctx.send(embed=mes)
             i += 1
-
-    @commands.command(
-        enabled=COMON,
-        brief=cmdInf["diffGem"]["Brief"],
-        description=cmdInf["diffGem"]["Description"],
-    )
-    async def diffGem(
-        self, ctx: commands.Context, var: float = float(GEMDIFF)
-    ):
-        if int(ctx.message.author.id) not in [
-            213090220147605506,
-            277041901776142337,
-        ]:
-            mes = discord.Embed(title="You have no power here.")
-            mes.set_image(
-                url=(
-                    "https://www.greatmanagers.com.au/wp-content/"
-                    "uploads/2018/03/talktohand_trans.png"
-                )
-            )
-            await ctx.send(embed=mes)
-            return
-        global GEMDIFF
-        if var < 0.0:
-            var = 0.0
-        if var > 1.0:
-            var = 1.0
-        GEMDIFF = var
-        setGemDiff(var)
-
-        await ctx.send(
-            f"Gem diff is now {GEMDIFF} times total XP or {100 * GEMDIFF}%"
-        )
 
     @commands.command(
         enabled=COMON,
@@ -933,7 +910,6 @@ async def count(
     peepList: typing.Union[list[discord.Member], discord.Member],
     tatFrc: int = 0,
 ) -> tuple[int, float, float, list[int, int, float]]:
-    global GEMDIFF
     tat = tatsu.wrapper
 
     if isinstance(peepList, discord.Member):

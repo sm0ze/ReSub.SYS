@@ -3,12 +3,14 @@ import datetime
 import math
 import time
 import typing
+
 import discord
 from discord.ext import commands
 from discord.utils import get
-from sharedFuncs import nON
+
 import log
-from power import cmdInf, freeRoles
+from sharedDicts import cmdInf, freeRoles
+from sharedFuncs import nON
 from sharedVars import COMON, HOSTNAME, STARTTIME
 
 logP = log.get_logger(__name__)

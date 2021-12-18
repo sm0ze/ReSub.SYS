@@ -3,8 +3,8 @@
 import discord
 from discord.ext import commands
 
-from sharedFuncs import dupeError, getSendLoc
 from exceptions import notNPC, notSupeDuel
+from sharedFuncs import dupeError, getSendLoc
 from sharedVars import ERRORTHREAD
 
 
@@ -82,11 +82,25 @@ class ErrorHandler(commands.Cog):
                 title="Role Check Error!!!",
                 description=error,
             )
+        elif isinstance(error, commands.BadUnionArgument):
+            dupeEr = False
+            delaySet = 20
+            mes = discord.Embed(
+                title="Bad Argument Error!!!",
+                description=(
+                    "Incorrect Input, \nparamater:"
+                    f" {error.param}, \n{error.args}, \n"
+                    f"Expected: {command.clean_params}"
+                ),
+            )
 
         if not mes:
             delaySet = 0
             mes = discord.Embed(
-                title=f"{str(command)} Error!!!", description=error
+                title=f"{str(command)} Error!!!",
+                description=(
+                    f"Error of type: {type(error)},{error.__cause__}\n{error}"
+                ),
             )
 
         if delaySet:

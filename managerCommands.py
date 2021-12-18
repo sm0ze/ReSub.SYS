@@ -2,11 +2,14 @@ import os
 import sys
 import time
 import typing
+
 import discord
 from discord.ext import commands
-from sharedFuncs import dupeMes, load, memGrab, nON, pluralInt, save, topEnh
+from discord.utils import get
+
 import log
-from power import cmdInf, masterEhnDict, leader
+from sharedDicts import cmdInf, leader, masterEhnDict
+from sharedFuncs import dupeMes, load, memGrab, nON, pluralInt, save, topEnh
 from sharedVars import (
     COMON,
     HOSTNAME,
@@ -15,7 +18,6 @@ from sharedVars import (
     SAVEFILE,
     SUPEROLE,
 )
-from discord.utils import get
 
 logP = log.get_logger(__name__)
 
@@ -175,9 +177,9 @@ class managerCommands(
             mes.add_field(
                 name=f"{val}",
                 value=(
-                    f"{lenPeep} host{pluralInt(lenPeep)} for a total of "
-                    f"{sumPeep} point{pluralInt(sumPeep)}.\n Serverwide "
-                    f"average of {avPeep}."
+                    f"{lenPeep} host{pluralInt(lenPeep)} for a "
+                    f"total of {sumPeep} point{pluralInt(sumPeep)}"
+                    f".\n Serverwide average of {avPeep}."
                 ),
             )
         totLenPeeps = len(getSupe.members)
@@ -186,9 +188,10 @@ class managerCommands(
             name=SUPEROLE,
             value=(
                 f"There is a total of {totLenPeeps} "
-                f"host{pluralInt(totLenPeeps)} with a sum of {totSumPeeps} "
-                f"enhancement point{pluralInt(totSumPeeps)} spent.\n "
-                f"Serverwide average of {totAvPeep}."
+                f"host{pluralInt(totLenPeeps)} with a sum of "
+                f"{totSumPeeps} enhancement "
+                f"point{pluralInt(totSumPeeps)} spent."
+                f"\n Serverwide average of {totAvPeep}."
             ),
         )
         mes.set_footer(text=HOSTNAME, icon_url=self.bot.user.display_avatar)

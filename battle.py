@@ -10,7 +10,7 @@ from discord.ext import commands
 
 import log
 from sharedFuncs import funcBuild, nON, spent
-from power import (
+from sharedDicts import (
     leader,
     moveOpt,
     masterEhnDict,

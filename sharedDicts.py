@@ -2,8 +2,8 @@
 # this file is a dictionary and other lengthy constant variables dump
 
 import pandas as pd
-import log
 
+import log
 
 logP = log.get_logger(__name__)
 
