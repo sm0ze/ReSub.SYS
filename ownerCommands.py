@@ -5,8 +5,7 @@ import git
 from discord.ext import commands
 
 import log
-from sharedDicts import cmdInf
-from sharedFuncs import asleep, dupeMes
+from sharedFuncs import asleep, dupeMes, getBrief, getDesc
 from sharedVars import COMON, HOSTNAME
 
 logP = log.get_logger(__name__)
@@ -15,7 +14,7 @@ logP = log.get_logger(__name__)
 class ownerCommands(
     commands.Cog,
     name="Owner Commands",
-    description=cmdInf["ownerCommands"]["Description"],
+    description=getDesc("ownerCommands"),
 ):
     def __init__(
         self, bot: typing.Union[commands.bot.Bot, commands.bot.AutoShardedBot]
@@ -32,8 +31,8 @@ class ownerCommands(
         return commands.check(await predicate(ctx))
 
     @commands.command(
-        brief=cmdInf["resume"]["Brief"],
-        description=cmdInf["resume"]["Description"],
+        brief=getBrief("resume"),
+        description=getDesc("resume"),
     )
     async def resume(
         self,
@@ -55,8 +54,8 @@ class ownerCommands(
 
     @commands.command(
         aliases=["sleep"],
-        brief=cmdInf["pause"]["Brief"],
-        description=cmdInf["pause"]["Description"],
+        brief=getBrief("pause"),
+        description=getDesc("pause"),
     )
     async def pause(self, ctx: commands.Context, host: str = HOSTNAME):
         logP.debug(f"Command pause called for host: {host}")
@@ -68,8 +67,8 @@ class ownerCommands(
 
     @commands.command(
         aliases=["up"],
-        brief=cmdInf["update"]["Brief"],
-        description=cmdInf["update"]["Description"],
+        brief=getBrief("update"),
+        description=getDesc("update"),
     )
     async def update(self, ctx: commands.Context, host: str = HOSTNAME):
         logP.debug(f"Command update called for host: {host}")
@@ -86,8 +85,8 @@ class ownerCommands(
         logP.info("Command update completed")
 
     @commands.command(
-        brief=cmdInf["end"]["Brief"],
-        description=cmdInf["end"]["Description"],
+        brief=getBrief("end"),
+        description=getDesc("end"),
     )
     async def end(self, ctx: commands.Context, host: str = HOSTNAME):
         logP.debug(f"Command end called for host: {host}")
@@ -101,8 +100,8 @@ class ownerCommands(
 
     @commands.command(
         aliases=["tog"],
-        brief=cmdInf["toggle"]["Brief"],
-        description=cmdInf["toggle"]["Description"],
+        brief=getBrief("toggle"),
+        description=getDesc("toggle"),
     )
     async def toggle(self, ctx: commands.Context, mes="t", host=HOSTNAME):
         logP.debug(f"command toggle called for host: {host}")
@@ -126,8 +125,8 @@ class ownerCommands(
 
     @commands.command(
         enabled=COMON,
-        brief=cmdInf["testAll"]["Brief"],
-        description=cmdInf["testAll"]["Description"],
+        brief=getBrief("testAll"),
+        description=getDesc("testAll"),
     )
     async def testAll(self, ctx: commands.Context, host: str = HOSTNAME):
         logP.debug(f"command testAll called for host: {host}")

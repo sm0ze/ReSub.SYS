@@ -413,7 +413,7 @@ for tup in frame.itertuples():
     cmdInf[tup.Command] = {}
     for ite in tup._fields:
         if str(getattr(tup, ite)) == str("nan"):
-            cmdInf[tup.Command][ite] = "No Description"
+            cmdInf[tup.Command][ite] = ""
         else:
             cmdInf[tup.Command][ite] = getattr(tup, ite)
     logP.debug(f"Added Command description: {cmdInf[tup.Command]}")

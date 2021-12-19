@@ -5,7 +5,7 @@ import discord
 from discord.ext import commands
 
 import log
-from sharedDicts import cmdInf
+from sharedFuncs import getBrief, getDesc
 from sharedVars import COMON, GEMDIFF, setGemDiff
 
 logP = log.get_logger(__name__)
@@ -14,7 +14,7 @@ logP = log.get_logger(__name__)
 class authorCommands(
     commands.Cog,
     name="Author Commands",
-    description=cmdInf["authorCommands"]["Description"],
+    description=getDesc("authorCommands"),
 ):
     def __init__(
         self, bot: typing.Union[commands.bot.Bot, commands.bot.AutoShardedBot]
@@ -45,8 +45,8 @@ class authorCommands(
 
     @commands.command(
         enabled=COMON,
-        brief=cmdInf["diffGem"]["Brief"],
-        description=cmdInf["diffGem"]["Description"],
+        brief=getBrief("diffGem"),
+        description=getDesc("diffGem"),
     )
     async def diffGem(
         self, ctx: commands.Context, var: float = float(GEMDIFF)

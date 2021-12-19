@@ -9,8 +9,8 @@ from discord.ext import commands
 from discord.utils import get
 
 import log
-from sharedDicts import cmdInf, freeRoles
-from sharedFuncs import nON
+from sharedDicts import freeRoles
+from sharedFuncs import getBrief, getDesc, nON
 from sharedVars import COMON, HOSTNAME, STARTTIME
 
 logP = log.get_logger(__name__)
@@ -25,7 +25,7 @@ logP.debug(f"Bot last login time set as: {loginTime}")
 class defaultCommands(
     commands.Cog,
     name="Default Commands",
-    description=cmdInf["defaultCommands"]["Description"],
+    description=getDesc("defaultCommands"),
 ):
     def __init__(
         self, bot: typing.Union[commands.bot.Bot, commands.bot.AutoShardedBot]
@@ -41,8 +41,8 @@ class defaultCommands(
 
     @commands.command(
         enabled=COMON,
-        brief=cmdInf["emoji"]["Brief"],
-        description=cmdInf["emoji"]["Description"],
+        brief=getBrief("emoji"),
+        description=getDesc("emoji"),
     )
     async def emoji(self, ctx: commands.Context, idTry=""):
         if idTry:
@@ -114,8 +114,8 @@ class defaultCommands(
 
     @commands.command(
         enabled=COMON,
-        brief=cmdInf["about"]["Brief"],
-        description=cmdInf["about"]["Description"],
+        brief=getBrief("about"),
+        description=getDesc("about"),
     )
     async def about(self, ctx: commands.Context):
         desc = (
@@ -159,8 +159,8 @@ class defaultCommands(
 
     @commands.command(
         enabled=COMON,
-        brief=cmdInf["run"]["Brief"],
-        description=cmdInf["run"]["Description"],
+        brief=getBrief("run"),
+        description=getDesc("run"),
     )
     async def run(self, ctx: commands.Context):
         await ctx.send(f"Bot is running on {HOSTNAME}")
@@ -168,8 +168,8 @@ class defaultCommands(
     @commands.command(
         enabled=COMON,
         aliases=["r", "roles"],
-        brief=cmdInf["role"]["Brief"],
-        description=cmdInf["role"]["Description"],
+        brief=getBrief("role"),
+        description=getDesc("role"),
     )
     # gives requested role to command caller if it is in freeRoles
     async def role(
@@ -197,8 +197,8 @@ class defaultCommands(
     @commands.command(
         enabled=COMON,
         aliases=["u"],
-        brief=cmdInf["uptime"]["Brief"],
-        description=cmdInf["uptime"]["Description"],
+        brief=getBrief("uptime"),
+        description=getDesc("uptime"),
     )
     async def uptime(self, ctx: commands.Context):
         logP.debug("command uptime called")

@@ -12,7 +12,6 @@ import log
 from battle import NPC, battler, player
 from exceptions import noFields, notADuel, notNPC, notSupeDuel
 from sharedDicts import (
-    cmdInf,
     leader,
     masterEhnDict,
     moveOpt,
@@ -28,6 +27,8 @@ from sharedFuncs import (
     countOf,
     cut,
     funcBuild,
+    getBrief,
+    getDesc,
     load,
     lvlEqu,
     memGrab,
@@ -70,7 +71,7 @@ ENHLIST = [(x, y) for (x, y) in powerTypes.items()]
 class roleCommands(
     commands.Cog,
     name=f"{SUPEROLE} Commands",
-    description=cmdInf["roleCommands"]["Description"],
+    description=getDesc("roleCommands"),
 ):
     def __init__(
         self, bot: typing.Union[commands.bot.Bot, commands.bot.AutoShardedBot]
@@ -107,8 +108,8 @@ class roleCommands(
 
     @commands.command(
         enabled=COMON,
-        brief=cmdInf["trim"]["Brief"],
-        description=cmdInf["trim"]["Description"],
+        brief=getBrief("trim"),
+        description=getDesc("trim"),
     )
     # command to trim command caller of extra roles. OBSOLETE due to cut call
     # after role add in add command
@@ -124,8 +125,8 @@ class roleCommands(
 
     @commands.command(
         enabled=COMON,
-        brief=cmdInf["convert"]["Brief"],
-        description=cmdInf["convert"]["Description"],
+        brief=getBrief("convert"),
+        description=getDesc("convert"),
     )
     async def convert(
         self, ctx: commands.Context, inVar: float = 0, gdv: int = 0
@@ -139,8 +140,8 @@ class roleCommands(
     @commands.command(
         enabled=COMON,
         aliases=["t"],
-        brief=cmdInf["task"]["Brief"],
-        description=cmdInf["task"]["Description"],
+        brief=getBrief("task"),
+        description=getDesc("task"),
     )
     @commands.cooldown(1, TASKCD, type=commands.BucketType.user)
     async def task(self, ctx: commands.Context):
@@ -317,8 +318,8 @@ class roleCommands(
     @commands.command(
         enabled=COMON,
         aliases=["gen"],
-        brief=cmdInf["generate"]["Brief"],
-        description=cmdInf["generate"]["Description"],
+        brief=getBrief("generate"),
+        description=getDesc("generate"),
     )
     async def generate(self, ctx: commands.Context, val: int = 5, typ=""):
         if val < 0:
@@ -353,8 +354,8 @@ class roleCommands(
     @commands.command(
         enabled=COMON,
         aliases=["a"],
-        brief=cmdInf["add"]["Brief"],
-        description=cmdInf["add"]["Description"],
+        brief=getBrief("add"),
+        description=getDesc("add"),
     )
     # add role command available to all PERMROLES users
     async def add(self, ctx: commands.Context, *, typeRank=""):
@@ -424,8 +425,8 @@ class roleCommands(
     @commands.command(
         enabled=COMON,
         aliases=["p"],
-        brief=cmdInf["points"]["Brief"],
-        description=cmdInf["points"]["Description"],
+        brief=getBrief("points"),
+        description=getDesc("points"),
     )
     # command to get author or specified user(s) enhancement total
     # and available points
@@ -441,8 +442,8 @@ class roleCommands(
     @commands.command(
         enabled=COMON,
         aliases=["l"],
-        brief=cmdInf["list"]["Brief"],
-        description=cmdInf["list"]["Description"],
+        brief=getBrief("list"),
+        description=getDesc("list"),
     )
     # help level command to list the available enhancements and the
     # shorthand to use them in commands
@@ -483,8 +484,8 @@ class roleCommands(
     @commands.command(
         enabled=COMON,
         aliases=["b"],
-        brief=cmdInf["build"]["Brief"],
-        description=cmdInf["build"]["Description"],
+        brief=getBrief("build"),
+        description=getDesc("build"),
     )
     # build command to theory craft and check the prereqs for differnet
     # enhancement ranks can be used in conjunction with points command to
@@ -535,8 +536,8 @@ class roleCommands(
     @commands.command(
         enabled=COMON,
         aliases=["leaderboard"],
-        brief=cmdInf["top"]["Brief"],
-        description=cmdInf["top"]["Description"],
+        brief=getBrief("top"),
+        description=getDesc("top"),
     )
     # top 10 user leaderboard for number of used enhancements
     async def top(
@@ -672,8 +673,8 @@ class roleCommands(
 
     @commands.command(
         enabled=COMON,
-        brief=cmdInf["rAdd"]["Brief"],
-        description=cmdInf["rAdd"]["Description"],
+        brief=getBrief("rAdd"),
+        description=getDesc("rAdd"),
     )
     async def rAdd(self, ctx: commands.Context):
         user = ctx.message.author
@@ -693,8 +694,8 @@ class roleCommands(
     @commands.command(
         enabled=COMON,
         aliases=["c", "clean"],
-        brief=cmdInf["clear"]["Brief"],
-        description=cmdInf["clear"]["Description"],
+        brief=getBrief("clear"),
+        description=getDesc("clear"),
     )
     # remove unrestricted enhancements from command caller
     async def clear(self, ctx: commands.Context):
@@ -717,8 +718,8 @@ class roleCommands(
         enabled=COMON,
         hidden=HIDE,
         aliases=["x"],
-        brief=cmdInf["xpGrab"]["Brief"],
-        description=cmdInf["xpGrab"]["Description"],
+        brief=getBrief("xpGrab"),
+        description=getDesc("xpGrab"),
     )
     @commands.cooldown(1, 1, commands.BucketType.default)
     async def xpGrab(self, ctx: commands.Context, *, mem: str = ""):
@@ -781,8 +782,8 @@ class roleCommands(
     @commands.command(
         enabled=COMON,
         aliases=["s"],
-        brief=cmdInf["stats"]["Brief"],
-        description=cmdInf["stats"]["Description"],
+        brief=getBrief("stats"),
+        description=getDesc("stats"),
     )
     async def stats(self, ctx: commands.Context, peep: discord.Member = False):
         if not peep:
@@ -803,8 +804,8 @@ class roleCommands(
     @commands.command(
         enabled=COMON,
         aliases=["d"],
-        brief=cmdInf["duel"]["Brief"],
-        description=cmdInf["duel"]["Description"],
+        brief=getBrief("duel"),
+        description=getDesc("duel"),
     )
     async def duel(
         self,

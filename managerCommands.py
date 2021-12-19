@@ -8,10 +8,12 @@ from discord.ext import commands
 from discord.utils import get
 
 import log
-from sharedDicts import cmdInf, leader, masterEhnDict
+from sharedDicts import leader, masterEhnDict
 from sharedFuncs import (
     cut,
     dupeMes,
+    getBrief,
+    getDesc,
     load,
     memGrab,
     nON,
@@ -35,7 +37,7 @@ logP = log.get_logger(__name__)
 class managerCommands(
     commands.Cog,
     name="Manager Commands",
-    description=cmdInf["managerCommands"]["Description"],
+    description=getDesc("managerCommands"),
 ):
     def __init__(
         self, bot: typing.Union[commands.bot.Bot, commands.bot.AutoShardedBot]
@@ -61,8 +63,8 @@ class managerCommands(
 
     @commands.command(
         enabled=COMON,
-        brief=cmdInf["wipe"]["Brief"],
-        description=cmdInf["wipe"]["Description"],
+        brief=getBrief("wipe"),
+        description=getDesc("wipe"),
     )
     # manager command to check if guild has role and messages
     # some information of the role
@@ -87,8 +89,8 @@ class managerCommands(
 
     @commands.command(
         enabled=COMON,
-        brief=cmdInf["roleCall"]["Brief"],
-        description=cmdInf["roleCall"]["Description"],
+        brief=getBrief("roleCall"),
+        description=getDesc("roleCall"),
     )
     # manager command to check if guild has role and messages
     # some information of the role
@@ -98,8 +100,8 @@ class managerCommands(
 
     @commands.command(
         enabled=COMON,
-        brief=cmdInf["roleInf"]["Brief"],
-        description=cmdInf["roleInf"]["Description"],
+        brief=getBrief("roleInf"),
+        description=getDesc("roleInf"),
     )
     # manager command to check if guild has role and messages
     # some information of the role
@@ -120,8 +122,8 @@ class managerCommands(
 
     @commands.command(
         aliases=["re", "reboot"],
-        brief=cmdInf["restart"]["Brief"],
-        description=cmdInf["restart"]["Description"],
+        brief=getBrief("restart"),
+        description=getDesc("restart"),
     )
     async def restart(self, ctx: commands.Context, host: str = HOSTNAME):
         logP.debug(f"Command restart called for host: {host}")
@@ -134,8 +136,8 @@ class managerCommands(
 
     @commands.command(
         enabled=COMON,
-        brief=cmdInf["upload"]["Brief"],
-        description=cmdInf["upload"]["Description"],
+        brief=getBrief("upload"),
+        description=getDesc("upload"),
     )
     async def upload(
         self,
@@ -169,8 +171,8 @@ class managerCommands(
 
     @commands.command(
         enabled=COMON,
-        brief=cmdInf["xpAdd"]["Brief"],
-        description=cmdInf["xpAdd"]["Description"],
+        brief=getBrief("xpAdd"),
+        description=getDesc("xpAdd"),
     )
     async def xpAdd(
         self,
@@ -200,8 +202,8 @@ class managerCommands(
 
     @commands.command(
         enabled=COMON,
-        brief=cmdInf["average"]["Brief"],
-        description=cmdInf["average"]["Description"],
+        brief=getBrief("average"),
+        description=getDesc("average"),
     )
     async def average(self, ctx: commands.Context):
         mes = discord.Embed(title="Average Enhancment Points")
@@ -246,8 +248,8 @@ class managerCommands(
 
     @commands.command(
         enabled=COMON,
-        brief=cmdInf["moveRoles"]["Brief"],
-        description=cmdInf["moveRoles"]["Description"],
+        brief=getBrief("moveRoles"),
+        description=getDesc("moveRoles"),
     )
     # manager command to correct role position for roles that
     # have been created by bot
@@ -258,8 +260,8 @@ class managerCommands(
 
     """@commands.command(
         hidden=HIDE,
-        brief=cmdInf["trimAll"]["Brief"],
-        description=cmdInf["trimAll"]["Description"],
+        brief=getBrief("trimAll"),
+        description=getDesc("trimAll"),
     )
     @commands.has_any_role(MANAGER)
     # manager command to role trim all users bot has access to

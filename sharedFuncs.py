@@ -20,6 +20,7 @@ from sharedDicts import (
     rankColour,
     remList,
     restrictedList,
+    cmdInf,
 )
 from sharedVars import (
     GEMDIFF,
@@ -725,3 +726,21 @@ async def countOf(
         logP.warning(e)
         logP.debug("End countOf - fail load")
         return await count(peep)
+
+
+def getDesc(cmdName: str = ""):
+    ret = ""
+    if cmdName in cmdInf.keys():
+        ret = cmdInf[cmdName]["Description"]
+    if not ret:
+        ret = "No Description"
+    return ret
+
+
+def getBrief(cmdName: str = ""):
+    ret = ""
+    if cmdName in cmdInf.keys():
+        ret = cmdInf[cmdName]["Brief"]
+    if not ret:
+        ret = "No Brief"
+    return ret

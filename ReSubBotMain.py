@@ -215,8 +215,9 @@ async def on_message(self, message):
 
 @bot.command(
     aliases=['s'],
-    brief=cmdInf['start']['brief'],
-    description=cmdInf['start']['description'])
+    brief=getBrief('start'),
+    description=getDesc('start')
+    )
 async def start(self, ctx):
     await ctx.send("To begin use the command 'list'")
     msg = await discord.Client.wait_for('message',
