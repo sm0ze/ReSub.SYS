@@ -542,8 +542,8 @@ class battler:
 
         mes += self.recover(peep)
 
-        if peep.tired == 3:
-            mes += f"{peep.n} has exhausted themself for the third time!"
+        if peep.tired == 5:
+            mes += f"{peep.n} has exhausted themself for the fifth time!"
             if attPeep.hp < 0:
                 peep.hp = attPeep.hp
             else:

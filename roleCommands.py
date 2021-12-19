@@ -893,9 +893,9 @@ async def playerDuelInput(
             f"Expected a Duel with 2 players not {len(battle.playerList)}"
         )
     statsMes = peep.statMessage()
-    statsMes += battle.adpStatMessage(peep, notPeep)
+    statsMes += "\n\n" + battle.adpList(peep, notPeep)
     stats2Mes = notPeep.statMessage()
-    stats2Mes += battle.adpStatMessage(notPeep, peep)
+    stats2Mes += "\n\n" + battle.adpList(notPeep, peep)
 
     moveStr = ""
     reactionList = []
@@ -1214,7 +1214,7 @@ async def startDuel(
         mes.set_field_at(
             numFields - 1,
             inline=False,
-            name=f"{Who2Move.t} Move #{Who2Move.t} ",
+            name=f"{Who2Move.n} Move #{Who2Move.t} ",
             value=f"{moveTxt}",
         )
 
