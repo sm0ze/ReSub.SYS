@@ -5,7 +5,7 @@ from discord.ext import commands
 
 from exceptions import notNPC, notSupeDuel
 from sharedFuncs import dupeError, getSendLoc
-from sharedVars import ERRORTHREAD
+from sharedVars import CMDPREFIX, ERRORTHREAD
 
 
 class ErrorHandler(commands.Cog):
@@ -76,21 +76,24 @@ class ErrorHandler(commands.Cog):
                     title="Non Player Character",
                     description=error.__cause__.args[0],
                 )
+
         elif isinstance(error, commands.CheckFailure):
             dupeEr = False
             mes = discord.Embed(
                 title="Role Check Error!!!",
                 description=error,
             )
-        elif isinstance(error, commands.BadUnionArgument):
+        elif isinstance(error, commands.UserInputError):
             dupeEr = False
             delaySet = 20
             mes = discord.Embed(
-                title="Bad Argument Error!!!",
+                title="Incorrect Input",
                 description=(
-                    "Incorrect Input, \nparamater:"
-                    f" {error.param}, \n{error.args}, \n"
-                    f"Expected: {command.clean_params}"
+                    f"""The following error was produced:
+                    {error.args[0]}
+
+                    Expected:
+                    {CMDPREFIX}{str(command)} {command.signature}"""
                 ),
             )
 
@@ -99,7 +102,9 @@ class ErrorHandler(commands.Cog):
             mes = discord.Embed(
                 title=f"{str(command)} Error!!!",
                 description=(
-                    f"Error of type: {type(error)},{error.__cause__}\n{error}"
+                    f"Error of type: {type(error)},\n"
+                    f"{error.__cause__}\n"
+                    f"{error}"
                 ),
             )
 

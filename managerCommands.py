@@ -9,7 +9,17 @@ from discord.utils import get
 
 import log
 from sharedDicts import cmdInf, leader, masterEhnDict
-from sharedFuncs import dupeMes, load, memGrab, nON, pluralInt, save, topEnh
+from sharedFuncs import (
+    cut,
+    dupeMes,
+    load,
+    memGrab,
+    nON,
+    pluralInt,
+    pointsLeft,
+    save,
+    topEnh,
+)
 from sharedVars import (
     COMON,
     HOSTNAME,
@@ -48,6 +58,43 @@ class managerCommands(
 
         # messy implementation for Supe
         return commands.check(await predicate(ctx))
+
+    @commands.command(
+        enabled=COMON,
+        brief=cmdInf["wipe"]["Brief"],
+        description=cmdInf["wipe"]["Description"],
+    )
+    # manager command to check if guild has role and messages
+    # some information of the role
+    async def wipe(self, ctx: commands.Context, *, memberList: str = ""):
+        if not memberList:
+            await ctx.send("Give me a peep to wipe next time...")
+            return
+        members = await memGrab(self, ctx, memberList)
+        for peep in members:
+            toCut = [
+                x.name
+                for x in peep.roles
+                if x.name
+                in [
+                    masterEhnDict[y]["Name"]
+                    for y in masterEhnDict.keys()
+                    if masterEhnDict[y]["Rank"] > 0
+                ]
+            ]
+            logP.debug(toCut)
+            await cut(ctx, [peep], toCut)
+
+    @commands.command(
+        enabled=COMON,
+        brief=cmdInf["roleCall"]["Brief"],
+        description=cmdInf["roleCall"]["Description"],
+    )
+    # manager command to check if guild has role and messages
+    # some information of the role
+    async def roleCall(self, ctx: commands.Context, hideFull: bool = True):
+        supeRole = get(ctx.guild.roles, name=SUPEROLE)
+        await pointsLeft(ctx, supeRole.members, hideFull)
 
     @commands.command(
         enabled=COMON,

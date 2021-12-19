@@ -1,15 +1,12 @@
 # roleCommands.py
 
 import asyncio
-import math
 import random
 import typing
 
 import discord
-import tatsu
 from discord.ext import commands, tasks
 from discord.utils import get
-from mee6_py_api import API
 
 import log
 from battle import NPC, battler, player
@@ -22,24 +19,26 @@ from sharedDicts import (
     npcDict,
     posTask,
     powerTypes,
-    rankColour,
-    remList,
     restrictedList,
     rsltDict,
     taskVar,
 )
 from sharedFuncs import (
+    count,
+    countOf,
+    cut,
     funcBuild,
     load,
     lvlEqu,
     memGrab,
     nON,
     pluralInt,
+    pointsLeft,
     reqEnd,
     save,
     spent,
+    toAdd,
     topEnh,
-    toType,
     trim,
 )
 from sharedVars import (
@@ -48,7 +47,6 @@ from sharedVars import (
     COMON,
     DEFDUELOPP,
     DL_ARC_DUR,
-    GEMDIFF,
     HIDE,
     HOSTNAME,
     LEADLIMIT,
@@ -57,7 +55,6 @@ from sharedVars import (
     ROUNDLIMIT,
     SUPEROLE,
     TASKCD,
-    TATSU,
 )
 
 logP = log.get_logger(__name__)
@@ -422,66 +419,7 @@ class roleCommands(
                     )
                 )
                 return
-
-        # the guild role names grabbed from shorthand to add to user
-        addList = [
-            masterEhnDict[toType(x[1]) + str(x[0])]["Name"]
-            for x in userWantsBuild
-        ]
-        logP.debug(f"Add list = {addList}")
-
-        # restricted roles the user does not have that the build requires
-        cantAdd = [x for x in restrictedList if x in addList]
-        cantAdd = [x for x in cantAdd if x not in [y.name for y in user.roles]]
-        logP.debug(f"Cant add = {cantAdd}")
-
-        # check to ensure user has restricted roles already,
-        # if required for build
-        if cantAdd:
-            await ctx.send(
-                (
-                    f"Cannot add enhancements as {nON(user)} "
-                    f"does not have {cantAdd}"
-                )
-            )
-            return
-
-        # guild role list with name and id attributes
-        guildRoles = await user.guild.fetch_roles()
-
-        # iterate through roles to add to user
-        sendMes = ""
-        for role in addList:
-            logP.debug(f"Trying to add role: {role}")
-
-            # check for if user has enhancement role already
-            roleId = get(guildRoles, name=role)
-            if roleId in user.roles:
-                logP.debug(f"{nON(user)} already has the role {roleId}")
-                continue
-
-            # role names to add will have format "Rank *Rank* *Type*"
-            roleRank = role.split()[1]
-            logP.debug(f"{roleId}, {roleRank}")
-
-            # check for role already in guild role list, create it if required
-            if not roleId:
-                colour = rankColour[int(roleRank)]
-                logP.debug(f"colour for rank {roleRank} is: {colour}")
-                roleId = await user.guild.create_role(name=role, color=colour)
-
-            # add requested role to user
-            await user.add_roles(roleId)
-            sendMes += f"{nON(user)} now has {roleId}!\n"
-
-        # trim the user of excess roles
-        # debug("TO CUT")
-        # await cut(ctx, [user])
-        if not sendMes:
-            await ctx.send(("You cannot add enhancements with that selection"))
-        else:
-            await ctx.send(sendMes)
-        return
+        await toAdd(ctx, user, userWantsBuild)
 
     @commands.command(
         enabled=COMON,
@@ -491,30 +429,14 @@ class roleCommands(
     )
     # command to get author or specified user(s) enhancement total
     # and available points
-    async def points(self, ctx: commands.Context, *, member: str = ""):
-        users = await memGrab(self, ctx, member)
+    async def points(self, ctx: commands.Context, *, memberList: str = ""):
+        users = await memGrab(self, ctx, memberList)
         # restrict user list to those with SUPEROLE
         supeUsers = isSuper(self, users)
         if not supeUsers:  # if no SUPEROLE users in list
             await ctx.send(f"Your list contains no {SUPEROLE}'s")
             return
-
-        # fetch points of each SUPEROLE user
-        pointList = spent(supeUsers)
-
-        # return result
-        for group in pointList:
-            logP.debug(f"group in level is: {group}")
-            pointTot = await countOf(group[0])
-            await ctx.send(
-                (
-                    f"{nON(group[0])} has {group[1]} "
-                    f"enhancement{pluralInt(group[1])} active out "
-                    f"of {pointTot[0]} "
-                    f"enhancement{pluralInt(pointTot[0])} "
-                    "available."
-                )
-            )
+        await pointsLeft(ctx, supeUsers)
 
     @commands.command(
         enabled=COMON,
@@ -750,12 +672,32 @@ class roleCommands(
 
     @commands.command(
         enabled=COMON,
-        aliases=["c", "clear"],
-        brief=cmdInf["clean"]["Brief"],
-        description=cmdInf["clean"]["Description"],
+        brief=cmdInf["rAdd"]["Brief"],
+        description=cmdInf["rAdd"]["Description"],
+    )
+    async def rAdd(self, ctx: commands.Context):
+        user = ctx.message.author
+        userSpent = spent([user])
+        userEnhancements = userSpent[0][2]
+        userHas = funcBuild(userEnhancements)
+        pointTot = await count(user, 1)
+        if pointTot[0] < userHas[0] + 1:
+            await ctx.send(
+                f"{user} does not have enough points to further enhance with."
+            )
+            return
+        randPlusBuild = genBuild(userHas[0] + 1, "", userEnhancements)
+        randPlus = funcBuild(randPlusBuild)
+        await toAdd(ctx, user, randPlus[2])
+
+    @commands.command(
+        enabled=COMON,
+        aliases=["c", "clean"],
+        brief=cmdInf["clear"]["Brief"],
+        description=cmdInf["clear"]["Description"],
     )
     # remove unrestricted enhancements from command caller
-    async def clean(self, ctx: commands.Context):
+    async def clear(self, ctx: commands.Context):
         # rank 0 enhancements are either restricted or the SUPEROLE,
         # which should not be removed with this command
         toCut = [
@@ -905,115 +847,6 @@ class roleCommands(
         await startDuel(self, ctx, bat)
 
 
-# function to get specified user's enhancement points
-async def count(
-    peepList: typing.Union[list[discord.Member], discord.Member],
-    tatFrc: int = 0,
-) -> tuple[int, float, float, list[int, int, float]]:
-    tat = tatsu.wrapper
-
-    if isinstance(peepList, discord.Member):
-        peepList = [peepList]
-
-    try:
-        pickle_file = load(peepList[0].guild.id)
-    except Exception as e:
-        print(e)
-        logP.debug("Pickle file load failed")
-        pickle_file = {}
-
-    for peep in peepList:
-        if tatFrc:
-            MEE6xp = await API(peep.guild.id).levels.get_user_xp(peep.id)
-            TATSUmem = await tat.ApiWrapper(key=TATSU).get_profile(peep.id)
-        else:
-            TATSUmem = None
-            MEE6xp = int(0)
-
-        if pickle_file and peep.id in pickle_file.keys():
-            ReSubXP = float(pickle_file[peep.id]["invXP"][-1])
-        else:
-            ReSubXP = float(0)
-
-        if hasattr(TATSUmem, "xp"):
-            TATSUxp = int(TATSUmem.xp)
-            if not TATSUxp:
-                TATSUxp = int(0)
-        else:
-            TATSUxp = int(0)
-
-        if not MEE6xp:
-            MEE6xp = int(0)
-            if peep.id in pickle_file.keys():
-                if pickle_file[peep.id]["invXP"][0]:
-                    MEE6xp = int(pickle_file[peep.id]["invXP"][0])
-
-        if not TATSUxp:
-            TATSUxp = int(0)
-            if peep.id in pickle_file.keys():
-                if pickle_file[peep.id]["invXP"][0]:
-                    TATSUxp = int(pickle_file[peep.id]["invXP"][1])
-
-        if MEE6xp or TATSUxp or ReSubXP:
-            totXP = ReSubXP + MEE6xp + (TATSUxp / 2)
-        else:
-            totXP = float(0)
-        if nON(peep) == "Geminel":
-            totXP = round(totXP * float(GEMDIFF), 3)
-
-        gdv = lvlEqu(totXP)
-
-        enhP = math.floor(gdv / 5) + 1
-        logP.debug(
-            (
-                f"{nON(peep)}-"
-                f" ReSubXP: {ReSubXP},"
-                f" TATSUxp: {TATSUxp},"
-                f" MEE6xp: {MEE6xp},"
-                f" totXP: {totXP},"
-                f" gdv: {gdv},"
-                f" enhP: {enhP}"
-            )
-        )
-        pickle_file[peep.id] = {
-            "Name": peep.name,
-            "enhP": enhP,
-            "gdv": gdv,
-            "totXP": totXP,
-            "invXP": [MEE6xp, TATSUxp, ReSubXP],
-        }
-    save(peepList[0].guild.id, pickle_file)
-
-    return enhP, gdv, totXP, [MEE6xp, TATSUxp, ReSubXP]
-
-
-async def countOf(
-    peep: discord.Member,
-) -> tuple[int, float, float, list[int, int, float]]:
-    try:
-        valDict = load(peep.guild.id)
-        logP.debug("valDict loaded")
-        shrt = valDict[peep.id]
-        logP.debug(f"shrt: {shrt}")
-
-        invXP = [
-            int(shrt["invXP"][0]),
-            int(shrt["invXP"][1]),
-            float(shrt["invXP"][-1]),
-        ]
-
-        return (
-            int(shrt["enhP"]),
-            float(shrt["gdv"]),
-            float(shrt["totXP"]),
-            invXP,
-        )
-    except Exception as e:
-        logP.warning(e)
-        logP.debug("End countOf - fail load")
-        return await count(peep)
-
-
 # restrict list from members to members with SUPEROLE
 def isSuper(
     self: roleCommands, guildList: list[discord.User]
@@ -1040,67 +873,6 @@ def isSuper(
 
     # return reduced user list
     return supeGuildList
-
-
-# get roles of a lower rank on member to remove later
-def toCut(member: discord.Member) -> list[str]:
-
-    # fetch unrestricted managed roles member has
-    supeRoles = spent([member])
-    logP.debug(f"supeRoles = {supeRoles[0][2]}")
-
-    # fetch build of member
-    supeBuild = funcBuild(supeRoles[0][2])
-    logP.debug(f"supeBuild = {supeBuild[1]}")
-
-    # fetch trimmed build of user
-    supeTrim = [
-        masterEhnDict[toType(x[1]) + str(x[0])]["Name"]
-        for x in trim(supeBuild[1])
-    ]
-    logP.debug(f"supeTrim = {supeTrim}")
-
-    # fetch extra roles user has that are to be removed
-    toCut = [x for x in supeBuild[1] if x not in supeTrim]
-    logP.debug(f"to CUT = {toCut}")
-
-    # return the roles to be removed
-    return toCut
-
-
-# function to remove extra or specified roles from list of users
-async def cut(
-    ctx: commands.Context,
-    memberList: list[discord.Member],
-    cutList: list[str] = [],
-):
-    # iterate through given user list
-    # assumed list has already been reduced to users with SUPEROLE
-    mes = discord.Embed(title="Cutting roles")
-
-    for peep in memberList:
-
-        # if no list of roles to remove was given get user's extra roles
-        if not cutList:
-            cutting = toCut(peep)
-        else:
-            cutting = cutList
-
-        # for each role to be cut, remove it and send message to discord
-        sendMes = ""
-        for role in cutting:
-            logP.debug(f"role to cut: {role}, from peep: {peep}")
-            supeRoleId = get(peep.roles, name=role)
-            logP.debug(f"role to cut id = {supeRoleId}")
-            if supeRoleId in peep.roles:
-                await peep.remove_roles(supeRoleId)
-                sendMes += f"Removed {supeRoleId}, {random.choice(remList)}\n"
-
-        # notify current user has been finished with to discord
-        sendMes += f"{nON(peep)} has been cut down to size!"
-        mes.add_field(name=f"{nON(peep)}", value=sendMes)
-    await ctx.send(embed=mes)
-    return
 
 
 async def playerDuelInput(
@@ -1285,7 +1057,7 @@ def genBuild(val: int = 0, typ: str = "", iniBuild: list = []):
             nextLargest += 1
             if nextLargest > len(want[2]) - 1:
                 nextLargest = 0
-                if secondLoop < 5:
+                if secondLoop < 2:
                     secondLoop += 1
                 else:
                     build = funcBuild(prevBuild)
