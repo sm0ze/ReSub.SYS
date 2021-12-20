@@ -778,3 +778,5 @@ async def finPatrol(activeRole: discord.Role, activeTimeMax: int):
 
     for peep in membersFinishingPatrol:
         await peep.remove_roles(activeRole)
+
+    return perPatrolMes

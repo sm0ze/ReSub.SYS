@@ -12,6 +12,7 @@ from sharedDicts import leader, masterEhnDict
 from sharedFuncs import (
     cut,
     dupeMes,
+    finPatrol,
     getBrief,
     getDesc,
     load,
@@ -23,6 +24,8 @@ from sharedFuncs import (
     topEnh,
 )
 from sharedVars import (
+    ACTIVEROLEID,
+    ACTIVESEC,
     COMON,
     HOSTNAME,
     LOWESTROLE,
@@ -168,6 +171,17 @@ class managerCommands(
                 file=discord.File(SAVEFILE, filename=nameStamp),
             )
         logP.debug("command upload completed")
+
+    @commands.command(
+        enabled=COMON,
+        brief=getBrief("finPatrol"),
+        description=getDesc("finPatrol"),
+    )
+    async def finPatrol(self, ctx: commands.Context):
+        foundRole = get(ctx.guild.roles, id=int(ACTIVEROLEID))
+        if foundRole:
+            mes = await finPatrol(foundRole, ACTIVESEC)
+            await ctx.send(mes)
 
     @commands.command(
         enabled=COMON,

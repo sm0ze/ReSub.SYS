@@ -553,7 +553,7 @@ class battler:
             peep.missTurn -= 1
         return mes
 
-    def moveSelf(self, peep: player, notPeep):
+    def moveSelf(self, peep: player, notPeep: player):
         moveStr = "Physical"
         desperate = 0
         typeMove = "Attack"
@@ -734,9 +734,11 @@ class battler:
 
         if typeMove == "Defend":
             # defend func
-            if Defend.phys > Defend.ment:
+            despPyhsDef = Defend.phys + notPeep.pa
+            despMentDef = Defend.ment + notPeep.ma
+            if despPyhsDef > despMentDef:
                 moveStr = "Physical"
-            elif Defend.ment > Defend.phys:
+            elif despMentDef > despPyhsDef:
                 moveStr = "Mental"
             else:
                 moveStr = random.choice(["Physical", "Mental"])

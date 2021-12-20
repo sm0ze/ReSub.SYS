@@ -176,9 +176,16 @@ class roleCommands(
         taskAdd = taskShrt["Add"]
         logP.debug(f"Task can have additional {taskAdd} peeps")
 
+        activeRole = get(ctx.guild.roles, id=int(ACTIVEROLEID))
+        supRole = get(ctx.message.guild.roles, name=SUPEROLE)
+
+        aidPick = [activeRole, supRole]
+        aidWeight = [50, 50]
+
         if taskAdd:
             logP.debug(f"Guild has {len(ctx.message.guild.roles)} roles")
-            peepToAdd = get(ctx.message.guild.roles, name=SUPEROLE)
+            aidChoice = random.choices(aidPick, aidWeight)
+            peepToAdd = aidChoice[0] if aidChoice else supRole
             logP.debug(f"{peepToAdd.id}, {peepToAdd.name}")
             if taskAdd == -1:
                 addPeeps = peepToAdd.members
@@ -326,7 +333,7 @@ class roleCommands(
         emptMes.set_footer(
             text=HOSTNAME, icon_url=self.bot.user.display_avatar
         )
-        activeRole = get(ctx.guild.roles, id=int(ACTIVEROLEID))
+
         if activeRole and activeRole not in ctx.author.roles:
             await ctx.author.add_roles(activeRole)
             emptMes.add_field(
@@ -914,9 +921,9 @@ async def playerDuelInput(
             f"Expected a Duel with 2 players not {len(battle.playerList)}"
         )
     statsMes = peep.statMessage()
-    statsMes += "\n\n" + battle.adpList(peep, notPeep)
+    statsMes += "\n\n" + battle.adpList(peep)
     stats2Mes = notPeep.statMessage()
-    stats2Mes += "\n\n" + battle.adpList(notPeep, peep)
+    stats2Mes += "\n\n" + battle.adpList(notPeep)
 
     moveStr = ""
     reactionList = []
