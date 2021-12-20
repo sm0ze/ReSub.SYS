@@ -2,6 +2,7 @@
 
 import asyncio
 import random
+import time
 import typing
 
 import discord
@@ -29,6 +30,7 @@ from sharedFuncs import (
     funcBuild,
     getBrief,
     getDesc,
+    finPatrol,
     load,
     lvlEqu,
     memGrab,
@@ -43,6 +45,8 @@ from sharedFuncs import (
     trim,
 )
 from sharedVars import (
+    ACTIVEROLEID,
+    ACTIVESEC,
     BOTTURNWAIT,
     COMMANDSROLES,
     COMON,
@@ -78,6 +82,7 @@ class roleCommands(
     ):
         self.bot = bot
         self.grabLoop.start()
+        self.patrolLoop.start()
 
     # Check if user has guild role
     async def cog_check(self, ctx: commands.Context):
@@ -105,6 +110,14 @@ class roleCommands(
             roleGrab = get(guild.roles, name=SUPEROLE)
             if roleGrab:
                 await count(roleGrab.members)
+
+    @tasks.loop(minutes=60)
+    async def patrolLoop(self):
+        await self.bot.wait_until_ready()
+        for guild in self.bot.guilds:
+            foundRole = get(guild.roles, id=int(ACTIVEROLEID))
+            if foundRole:
+                await finPatrol(foundRole, ACTIVESEC)
 
     @commands.command(
         enabled=COMON,
@@ -262,6 +275,8 @@ class roleCommands(
         if not authInf:
             authInf = {}
 
+        authInf[ctx.author.id]["lastTaskTime"] = time.time()
+
         for peep in reversed(xpList):
             logP.debug(f"peep is: {peep}")
             if peep[0].id in authInf.keys():
@@ -311,6 +326,12 @@ class roleCommands(
         emptMes.set_footer(
             text=HOSTNAME, icon_url=self.bot.user.display_avatar
         )
+        activeRole = get(ctx.guild.roles, id=int(ACTIVEROLEID))
+        if activeRole and activeRole not in ctx.author.roles:
+            await ctx.author.add_roles(activeRole)
+            emptMes.add_field(
+                name="Patrolling", value=f"{nON(ctx.author)} is now on Patrol!"
+            )
         await ctx.send(embed=emptMes)
         await ctx.message.delete(delay=1)
         return

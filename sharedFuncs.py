@@ -623,7 +623,7 @@ async def pointsLeft(
 async def count(
     peepList: typing.Union[list[discord.Member], discord.Member],
     tatFrc: int = 0,
-) -> tuple[int, float, float, list[int, int, float]]:
+) -> tuple[int, float, float, list[int, int, float], float]:
     tat = tatsu.wrapper
 
     if isinstance(peepList, discord.Member):
@@ -678,6 +678,7 @@ async def count(
         gdv = lvlEqu(totXP)
 
         enhP = math.floor(gdv / 5) + 1
+        lastTaskTime = pickle_file[peep.id].get("lastTaskTime")
         logP.debug(
             (
                 f"{nON(peep)}-"
@@ -687,6 +688,7 @@ async def count(
                 f" totXP: {totXP},"
                 f" gdv: {gdv},"
                 f" enhP: {enhP}"
+                f" lastTaskTime: {lastTaskTime}"
             )
         )
         pickle_file[peep.id] = {
@@ -695,32 +697,30 @@ async def count(
             "gdv": gdv,
             "totXP": totXP,
             "invXP": [MEE6xp, TATSUxp, ReSubXP],
+            "lastTaskTime": lastTaskTime,
         }
     save(peepList[0].guild.id, pickle_file)
 
-    return enhP, gdv, totXP, [MEE6xp, TATSUxp, ReSubXP]
+    return enhP, gdv, totXP, [MEE6xp, TATSUxp, ReSubXP], lastTaskTime
 
 
 async def countOf(
     peep: discord.Member,
-) -> tuple[int, float, float, list[int, int, float]]:
+) -> tuple[int, float, float, list[int, int, float], float]:
     try:
         valDict = load(peep.guild.id)
         logP.debug("valDict loaded")
         shrt = valDict[peep.id]
         logP.debug(f"shrt: {shrt}")
 
-        invXP = [
-            int(shrt["invXP"][0]),
-            int(shrt["invXP"][1]),
-            float(shrt["invXP"][-1]),
-        ]
+        invXP = shrt.get("invXP")
 
         return (
-            int(shrt["enhP"]),
-            float(shrt["gdv"]),
-            float(shrt["totXP"]),
+            int(shrt.get("enhP")),
+            float(shrt.get("gdv")),
+            float(shrt.get("totXP")),
             invXP,
+            float(shrt.get("lastTaskTime")),
         )
     except Exception as e:
         logP.warning(e)
@@ -739,8 +739,42 @@ def getDesc(cmdName: str = ""):
 
 def getBrief(cmdName: str = ""):
     ret = ""
-    if cmdName in cmdInf.keys():
+    if cmdName in cmdInf:
         ret = cmdInf[cmdName]["Brief"]
     if not ret:
         ret = "No Brief"
     return ret
+
+
+async def finPatrol(activeRole: discord.Role, activeTimeMax: int):
+    notActive = []
+    memberDict = load(activeRole.guild.id)
+    currTime = time.time()
+    patrolStart = 0
+    for key, val in memberDict.items():
+        logP.debug(val)
+        lastPatrolStart = val.get("lastTaskTime")
+
+        if lastPatrolStart:
+            patrolStart += 1
+            lastPatrolStart = int(round(currTime - lastPatrolStart))
+            logP.debug(f"Time since last patrol start is: {lastPatrolStart}")
+            if lastPatrolStart > activeTimeMax:
+                member = get(activeRole.guild.members, id=int(key))
+                (notActive.append(member) if member else None)
+
+    membersFinishingPatrol = set(activeRole.members) & set(notActive)
+
+    perPatrolMes = (
+        f"{patrolStart}/{len(memberDict)} {SUPEROLE}'s have started a patrol "
+        f"at some point in time and {len(membersFinishingPatrol)} are "
+        "currently finishing their patrol. "
+        f"{len(activeRole.members)-len(membersFinishingPatrol)} are out on a "
+        f"patrol now. There are {len(notActive)} Patrol Veterans either "
+        "starting to or already resting."
+    )
+
+    logP.debug(perPatrolMes)
+
+    for peep in membersFinishingPatrol:
+        await peep.remove_roles(activeRole)
