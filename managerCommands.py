@@ -15,11 +15,13 @@ from sharedFuncs import (
     finPatrol,
     getBrief,
     getDesc,
+    isSuper,
     load,
     memGrab,
     nON,
     pluralInt,
     pointsLeft,
+    rAddFunc,
     save,
     topEnh,
 )
@@ -100,6 +102,29 @@ class managerCommands(
     async def roleCall(self, ctx: commands.Context, hideFull: bool = True):
         supeRole = get(ctx.guild.roles, name=SUPEROLE)
         await pointsLeft(ctx, supeRole.members, hideFull)
+
+    @commands.command(
+        enabled=True,
+        brief=getBrief("roleCall"),
+        description=getDesc("roleCall"),
+    )
+    async def forceRAdd(
+        self,
+        ctx: commands.Context,
+        incNum: typing.Optional[int] = 1,
+        *,
+        memberList="",
+    ):
+        memList = await memGrab(self, ctx, memberList)
+        superList = isSuper(self.bot, memList)
+        await ctx.send(
+            (
+                f"Adding to {len(superList)} supes of {len(memList)} "
+                "originally selected."
+            )
+        )
+        await rAddFunc(ctx, superList, incNum)
+        await ctx.send("Finished forcefully rAdd-ing")
 
     @commands.command(
         enabled=COMON,
@@ -199,20 +224,22 @@ class managerCommands(
         logP.debug(f"val to add is: {val}")
         memList = await memGrab(self, ctx, mem)
         logP.debug(f"memList is: {memList}")
-        peep = memList[0]
+        infGrab = load(memList[0].guild.id)
+        for peep in memList:
+            if not infGrab:
+                infGrab = {}
+            if peep.id not in infGrab.keys():
+                infGrab[peep.id] = {"Name": peep.name, "invXP": [0, 0, 0]}
+            iniVal = infGrab[peep.id]["invXP"][-1]
+            sum = iniVal + val
+            if sum < 0.0:
+                sum = 0.0
+            infGrab[peep.id]["invXP"][-1] = sum
 
-        infGrab = load(peep.guild.id)
-        if not infGrab:
-            infGrab = {}
-        if peep.id not in infGrab.keys():
-            infGrab[peep.id] = {"Name": peep.name, "invXP": [0, 0, 0]}
-        iniVal = infGrab[peep.id]["invXP"][-1]
-        sum = iniVal + val
-        if sum < 0.0:
-            sum = 0.0
-        infGrab[peep.id]["invXP"][-1] = sum
+            await ctx.send(f"Host {nON(peep)}: {iniVal} -> {sum}")
         save(ctx.message.author.guild.id, infGrab)
-        await ctx.send(f"Host {nON(peep)}: {iniVal} -> {sum}")
+        if len(memList) > 5:
+            await ctx.send("Finished adding xp")
 
     @commands.command(
         enabled=COMON,

@@ -13,6 +13,7 @@ LOG_FILE = "ReSubBot.log"
 def get_console_handler():
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setFormatter(FORMATTER)
+    console_handler.setLevel(logging.DEBUG)
     return console_handler
 
 
@@ -21,6 +22,7 @@ def get_file_handler():
         LOG_FILE, when="H", interval=8, encoding="UTF-8"
     )
     file_handler.setFormatter(FORMATTER)
+    file_handler.setLevel(logging.DEBUG)
     return file_handler
 
 

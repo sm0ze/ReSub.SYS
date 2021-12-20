@@ -8,7 +8,7 @@ import typing
 import discord
 import tatsu
 from discord.ext import commands
-from discord.ext.commands.converter import MemberConverter
+from discord.ext.commands.converter import MemberConverter, RoleConverter
 from discord.utils import get
 from mee6_py_api import API
 from sqlitedict import SqliteDict
@@ -21,6 +21,7 @@ from sharedDicts import (
     remList,
     restrictedList,
     cmdInf,
+    reqResList,
 )
 from sharedVars import (
     GEMDIFF,
@@ -362,10 +363,30 @@ async def memGrab(
         strMemList = memList.split(", ")
         logP.debug(f"split grablist: {strMemList}")
         for posMem in strMemList:
-            logP.debug("trying to find: {posMem}")
-            grabMem = await MemberConverter().convert(ctx, posMem)
-            if grabMem:
+            logP.debug(f"trying to find: {posMem}")
+            grabMem = None
+            try:
+                grabMem = await MemberConverter().convert(ctx, posMem)
+                logP.debug(f"adding: {grabMem}")
                 grabList.append(grabMem)
+            except commands.BadArgument:
+                pass
+            if not grabMem:
+                try:
+                    grabMem = await RoleConverter().convert(ctx, posMem)
+                    logP.debug(f"found: {grabMem}")
+                    await ctx.send(
+                        (
+                            f"Pulling {len(grabMem.members)} members "
+                            f"from the role {grabMem}"
+                        )
+                    )
+                    for peep in grabMem.members:
+                        grabList.append(peep)
+                    logP.debug(f"adding: {grabMem}")
+
+                except commands.BadArgument:
+                    pass
 
     # else use the command caller themself
     else:
@@ -678,7 +699,17 @@ async def count(
         gdv = lvlEqu(totXP)
 
         enhP = math.floor(gdv / 5) + 1
-        lastTaskTime = pickle_file[peep.id].get("lastTaskTime")
+
+        currPatrol = pickle_file[peep.id].get("currPatrol", {})
+        topStatistics = pickle_file[peep.id].get("topStatistics", {})
+
+        lastTaskTime = currPatrol.setdefault("lastTaskTime", 0.0)
+        patrolStart = currPatrol.setdefault("patrolStart", 0.0)
+        patrolTasks = currPatrol.setdefault("patrolTasks", 0)
+
+        totalTasks = topStatistics.setdefault("totalTasks", 0)
+        totalPatrols = topStatistics.setdefault("totalPatrols", 0)
+        longestPatrol = topStatistics.setdefault("longestPatrol", 0.0)
         logP.debug(
             (
                 f"{nON(peep)}-"
@@ -689,6 +720,11 @@ async def count(
                 f" gdv: {gdv},"
                 f" enhP: {enhP}"
                 f" lastTaskTime: {lastTaskTime}"
+                f" patrolTasks: {patrolTasks}"
+                f" patrolStart: {patrolStart}"
+                f" totalTasks: {totalTasks}"
+                f" totalPatrols: {totalPatrols}"
+                f" longestPatrol: {longestPatrol}"
             )
         )
         pickle_file[peep.id] = {
@@ -697,33 +733,39 @@ async def count(
             "gdv": gdv,
             "totXP": totXP,
             "invXP": [MEE6xp, TATSUxp, ReSubXP],
-            "lastTaskTime": lastTaskTime,
+            "currPatrol": currPatrol,
+            "topStatistics": topStatistics,
         }
     save(peepList[0].guild.id, pickle_file)
-
-    return enhP, gdv, totXP, [MEE6xp, TATSUxp, ReSubXP], lastTaskTime
+    if len(peepList) == 1:
+        return (
+            enhP,
+            gdv,
+            totXP,
+            [MEE6xp, TATSUxp, ReSubXP],
+            currPatrol,
+            topStatistics,
+        )
 
 
 async def countOf(
     peep: discord.Member,
-) -> tuple[int, float, float, list[int, int, float], float]:
+) -> tuple[int, float, float, list[int, int, float], dict, dict]:
     try:
         valDict = load(peep.guild.id)
         logP.debug("valDict loaded")
         shrt = valDict[peep.id]
         logP.debug(f"shrt: {shrt}")
 
-        invXP = shrt.get("invXP")
-
         return (
-            int(shrt.get("enhP")),
-            float(shrt.get("gdv")),
-            float(shrt.get("totXP")),
-            invXP,
-            float(shrt.get("lastTaskTime")),
+            shrt["enhP"],
+            shrt["gdv"],
+            shrt["totXP"],
+            shrt["invXP"],
+            shrt["currPatrol"],
+            shrt["topStatistics"],
         )
-    except Exception as e:
-        logP.warning(e)
+    except KeyError:
         logP.debug("End countOf - fail load")
         return await count(peep)
 
@@ -747,28 +789,30 @@ def getBrief(cmdName: str = ""):
 
 
 async def finPatrol(activeRole: discord.Role, activeTimeMax: int):
-    notActive = []
+    notActive = {}
     memberDict = load(activeRole.guild.id)
     currTime = time.time()
-    patrolStart = 0
+    currentlyPatrolling = 0
     for key, val in memberDict.items():
         logP.debug(val)
-        lastPatrolStart = val.get("lastTaskTime")
+        currPatrol = val.get("currPatrol", {})
+        lastTaskTime = currPatrol.get("lastTaskTime", 0)
 
-        if lastPatrolStart:
-            patrolStart += 1
-            lastPatrolStart = int(round(currTime - lastPatrolStart))
-            logP.debug(f"Time since last patrol start is: {lastPatrolStart}")
-            if lastPatrolStart > activeTimeMax:
+        if lastTaskTime:
+            currentlyPatrolling += 1
+            lastPatrolTime = int(round(currTime - lastTaskTime))
+            logP.debug(f"Time since last patrol start is: {lastPatrolTime}")
+            if lastPatrolTime > activeTimeMax:
                 member = get(activeRole.guild.members, id=int(key))
-                (notActive.append(member) if member else None)
+                if member:
+                    notActive[member] = lastPatrolTime
 
-    membersFinishingPatrol = set(activeRole.members) & set(notActive)
+    membersFinishingPatrol = set(activeRole.members) & set(notActive.keys())
 
     perPatrolMes = (
-        f"{patrolStart}/{len(memberDict)} {SUPEROLE}'s have started a patrol "
-        f"at some point in time and {len(membersFinishingPatrol)} are "
-        "currently finishing their patrol. "
+        f"{currentlyPatrolling}/{len(memberDict)} {SUPEROLE}'s have started a "
+        f"patrol at some point in time and {len(membersFinishingPatrol)} "
+        "are currently finishing their patrol. "
         f"{len(activeRole.members)-len(membersFinishingPatrol)} are out on a "
         f"patrol now. There are {len(notActive)} Patrol Veterans either "
         "starting to or already resting."
@@ -778,5 +822,181 @@ async def finPatrol(activeRole: discord.Role, activeTimeMax: int):
 
     for peep in membersFinishingPatrol:
         await peep.remove_roles(activeRole)
+        longestPatrol = memberDict[peep.id].get("longestPatrol", 0)
+        if longestPatrol < notActive[peep]:
+            memberDict[peep.id]["longestPatrol"] = notActive[peep]
+
+    save(activeRole.guild.id, memberDict)
 
     return perPatrolMes
+
+
+async def rAddFunc(
+    ctx: commands.Context, userList: list[discord.Member], incAmount: int = 1
+):
+    iniInc = incAmount
+    for user in userList:
+        incAmount = iniInc
+        if not incAmount:
+            pointTot = await count(user, 1)
+            incAmount = pointTot[0]
+        while incAmount:
+            incAmount -= 1
+            userSpent = spent([user])
+            userEnhancements = userSpent[0][2]
+            userHas = funcBuild(userEnhancements)
+            pointTot = await count(user, 1)
+            if pointTot[0] < userHas[0] + 1:
+                await ctx.send(
+                    (
+                        f"{user} does not have enough points "
+                        "to further enhance with."
+                    )
+                )
+                break
+            randPlusBuild = genBuild(userHas[0] + 1, "", userEnhancements)
+            randPlus = funcBuild(randPlusBuild)
+            await toAdd(ctx, user, randPlus[2])
+
+
+def genBuild(val: int = 0, typ: str = "", iniBuild: list = []):
+    build = []
+    buildFinal = []
+    pickList = [
+        x
+        for x in leader.keys()
+        if leader[x] not in restrictedList and x not in reqResList
+    ]
+
+    if not typ:
+        typ = random.choice(pickList)
+        pickList.remove(typ)
+    elif typ not in leader.keys():
+        if typ[:3] in leader.keys():
+            typ = typ[:3]
+        else:
+            typ = random.choice(pickList)
+            pickList.remove(typ)
+
+    logP.debug(f"Building a build of {val} for {typ}")
+
+    checkInt = 1
+    building = True
+    if not iniBuild:
+        searchBuild = [typ + str(checkInt)]
+    else:
+        searchBuild = iniBuild.copy()
+    nextLargest = 0
+    secondLoop = 0
+    prevBuild = []
+    maxTyp = []
+
+    testMax = True
+    maxSearch = [typ + str(10)]
+    while testMax:
+        maxBuild = funcBuild(maxSearch)
+        if val > maxBuild[0]:
+            logP.debug(f"with {val} points {typ} can be maxed")
+            maxTyp.append(typ + str(10))
+            build = maxBuild[2]
+            typ = random.choice(pickList)
+            pickList.remove(typ)
+            maxSearch.append(typ + str(10))
+            logP.debug(f"new max list is {maxSearch}")
+        else:
+            testMax = False
+        if not pickList:
+            testMax = False
+            val = maxBuild[0]
+    if maxTyp:
+        searchBuild = maxTyp.copy()
+        searchBuild.append(typ + str(checkInt))
+
+    prevBuildsDict = {}
+    while building:
+        want = prevBuildsDict.setdefault(
+            tuple(searchBuild), funcBuild(searchBuild)
+        )
+        trimmed = trim(want[1])
+
+        searchBuild = []
+
+        for group in trimmed:
+            rank = group[0]
+            name = group[1]
+            shrt = [x for x in leader.keys() if leader[x] == name]
+            if shrt:
+                shrt = shrt[0]
+            searchBuild.append(str(shrt) + str(rank))
+
+        logP.debug(f"Testing {want[0]} build: {searchBuild}, {want[2]}")
+        if want[0] < val:
+            checkInt += 1
+            if checkInt > 10:
+                checkInt = 10
+            prevBuild = searchBuild.copy()
+            searchBuild.append(typ + str(checkInt))
+        elif want[0] == val:
+            building = False
+            build = want[2]
+        else:
+            nextLargest += 1
+            if nextLargest > len(want[2]) - 1:
+                nextLargest = 0
+                if secondLoop < 1:
+                    secondLoop += 1
+                else:
+                    build = funcBuild(prevBuild)
+                    build = build[2]
+                    building = False
+            name = want[2][-nextLargest][1]
+            rank = want[2][-nextLargest][0]
+            shrt = [x for x in leader.keys() if leader[x] == name][0]
+            searchBuild = prevBuild.copy()
+            splitBuild = [[x[:3], x[3:]] for x in searchBuild]
+            for typeOf, rankOf in splitBuild:
+                if shrt == typeOf:
+                    rank = int(rankOf) + 1
+                    if rank > 10:
+                        rank = 10
+                    break
+            searchBuild.append(shrt + str(rank))
+
+    for group in build:
+        rank = group[0]
+        name = group[1]
+        shrt = [x for x in leader.keys() if leader[x] == name]
+        if shrt:
+            shrt = shrt[0]
+
+        buildFinal.append(str(shrt) + str(rank))
+    logP.info(f"Tested {len(prevBuildsDict)} builds")
+    return buildFinal
+
+
+# restrict list from members to members with SUPEROLE
+def isSuper(
+    bot: commands.Bot, guildList: list[discord.User]
+) -> list[discord.Member]:
+    guilds = bot.guilds
+    supeGuildList = []
+    foundRole = []
+
+    logP.debug(f"Guild list is: {guilds}")
+
+    for guild in guilds:
+        logP.debug(f"iter through: {guild}")
+        posRole = get(guild.roles, name=SUPEROLE)
+        if posRole:
+            logP.debug(f"found role: {posRole}")
+            foundRole.append(posRole)
+    if foundRole:
+        for role in foundRole:
+            logP.debug(f"iter through: {role}")
+            for member in role.members:
+                if member in guildList:
+                    logP.debug(f"appending: {member}")
+                    supeGuildList.append(member)
+
+    # return reduced user list
+    return supeGuildList

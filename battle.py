@@ -27,7 +27,7 @@ HP: {0:0.2g}/{9:0.2g} (**{13}%**) + {5} ({18}%)
 Sta: **{10}**/{12} +{11}
 P: {1}A/{2:0.2g}D
 M: {3}A/{4:0.2g}D
-Acc/Eva({16}): {6}/{7}
+Acc/Eva({16} + {19}): {6}/{7}
 Swi: {14}/{15} +{8}"""
 
 
@@ -131,8 +131,8 @@ class player:
 
         self.weak = bool(False)
 
-        self.focusNum = int(0)
-        self.focused = False
+        self.focusNumNow = int(0)
+        self.focusNumLast = int(0)
 
     def iniCalc(self) -> None:
         statDict = {}
@@ -200,9 +200,10 @@ class player:
                 "percentHP",
                 "swiNow",
                 "totSwi",
-                "focusNum",
+                "focusNumNow",
                 "hpRender",
                 "hpRecPer",
+                "focusNumLast",
             ],
         )
         ret = stats(
@@ -222,9 +223,10 @@ class player:
             self.hpPer(),
             self.swiNow,
             self.totSwi,
-            self.focusNum,
+            self.focusNumNow,
             self.hpRender(),
             self.recPer(),
+            self.focusNumLast,
         )
         return ret
 
@@ -375,18 +377,19 @@ class player:
             mes += f"{self.n} no longer has lowered defenses.\n"
         return mes
 
-    def focus(self, inc: bool = True):
-        self.focused = bool(False)
-        if inc:
-            self.focusNum += 1
+    def focus(self, add: bool = True):
+        if add:
+            self.focusNumNow += 1
             self.sta -= 1
             self.eva += 5
             self.acc += 5
         else:
-            while self.focusNum:
-                self.focusNum -= 1
+            while self.focusNumLast:
+                self.focusNumLast -= 1
                 self.eva -= 5
                 self.acc -= 5
+            self.focusNumLast = self.focusNumNow
+            self.focusNumNow = 0
 
     def focusTill(self, num: int = 2):
         if self.sta > num:
@@ -527,10 +530,7 @@ class battler:
                 mes += f"{peep.n} recovered this turn for {staRec} stamina.\n"
                 peep.sta += staRec
 
-        if peep.focusNum and not peep.focused:
-            peep.focused = bool(True)
-        elif peep.focusNum and peep.focused:
-            peep.focus(False)
+        peep.focus(False)
 
         if not peep.sta:
             peep.missTurn = int(2)

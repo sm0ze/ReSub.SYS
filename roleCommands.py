@@ -1,6 +1,7 @@
 # roleCommands.py
 
 import asyncio
+import datetime
 import random
 import time
 import typing
@@ -22,27 +23,30 @@ from sharedDicts import (
     restrictedList,
     rsltDict,
     taskVar,
+    reqResList,
 )
 from sharedFuncs import (
     count,
     countOf,
     cut,
     funcBuild,
+    genBuild,
     getBrief,
     getDesc,
     finPatrol,
+    isSuper,
     load,
     lvlEqu,
     memGrab,
     nON,
     pluralInt,
     pointsLeft,
+    rAddFunc,
     reqEnd,
     save,
     spent,
     toAdd,
     topEnh,
-    trim,
 )
 from sharedVars import (
     ACTIVEROLEID,
@@ -282,8 +286,6 @@ class roleCommands(
         if not authInf:
             authInf = {}
 
-        authInf[ctx.author.id]["lastTaskTime"] = time.time()
-
         for peep in reversed(xpList):
             logP.debug(f"peep is: {peep}")
             if peep[0].id in authInf.keys():
@@ -305,6 +307,55 @@ class roleCommands(
                 name="Everyone Else",
                 value=f"Earns {taskGrant * taskShrt['Aid']} GDV XP",
             )
+
+        if activeRole:
+            patrolMes = ""
+
+            currTime = time.time()
+            authInf[ctx.author.id]["topStatistics"]["totalTasks"] += 1
+            authInf[ctx.author.id]["currPatrol"]["lastTaskTime"] = currTime
+            if activeRole not in ctx.author.roles:
+                await ctx.author.add_roles(activeRole)
+
+                authInf[ctx.author.id]["currPatrol"]["patrolStart"] = currTime
+                authInf[ctx.author.id]["currPatrol"]["patrolTasks"] = 1
+
+                authInf[ctx.author.id]["topStatistics"]["totalPatrols"] += 1
+
+                totPatrols = authInf[ctx.author.id]["topStatistics"][
+                    "totalPatrols"
+                ]
+
+                patrolMes += (
+                    f"{nON(ctx.author)} is starting their Patrol"
+                    f"#{totPatrols}!\n"
+                )
+
+            else:
+                authInf[ctx.author.id]["currPatrol"]["patrolTasks"] += 1
+
+                currPatrolStart = authInf[ctx.author.id]["currPatrol"][
+                    "patrolStart"
+                ]
+                totPatrols = authInf[ctx.author.id]["topStatistics"][
+                    "totalPatrols"
+                ]
+                currPatrolTime = str(
+                    datetime.timedelta(
+                        seconds=int(round(currTime - currPatrolStart))
+                    )
+                )
+                currPatrolTasks = authInf[ctx.author.id]["currPatrol"][
+                    "patrolTasks"
+                ]
+
+                patrolMes += (
+                    f"{nON(ctx.author)} is continuing their Patrol "
+                    f"#{totPatrols}! \nThey have completed "
+                    f"{currPatrolTasks} tasks on this patrol over the last "
+                    f"{currPatrolTime}"
+                )
+            emptMes.add_field(inline=False, name="Patrolling", value=patrolMes)
 
         save(ctx.message.author.guild.id, authInf)
         stateL = await countOf(ctx.message.author)
@@ -334,11 +385,6 @@ class roleCommands(
             text=HOSTNAME, icon_url=self.bot.user.display_avatar
         )
 
-        if activeRole and activeRole not in ctx.author.roles:
-            await ctx.author.add_roles(activeRole)
-            emptMes.add_field(
-                name="Patrolling", value=f"{nON(ctx.author)} is now on Patrol!"
-            )
         await ctx.send(embed=emptMes)
         await ctx.message.delete(delay=1)
         return
@@ -461,7 +507,7 @@ class roleCommands(
     async def points(self, ctx: commands.Context, *, memberList: str = ""):
         users = await memGrab(self, ctx, memberList)
         # restrict user list to those with SUPEROLE
-        supeUsers = isSuper(self, users)
+        supeUsers = isSuper(self.bot, users)
         if not supeUsers:  # if no SUPEROLE users in list
             await ctx.send(f"Your list contains no {SUPEROLE}'s")
             return
@@ -640,7 +686,7 @@ class roleCommands(
             logP.debug(f"Guild list is of length: {len(guildList)}")
 
             # restrict list to those with SUPEROLE
-            supeList = isSuper(self, guildList)
+            supeList = isSuper(self.bot, guildList)
             logP.debug(f"Supe list is of length: {len(supeList)}")
 
             # fetch points of each SUPEROLE user
@@ -704,20 +750,10 @@ class roleCommands(
         brief=getBrief("rAdd"),
         description=getDesc("rAdd"),
     )
-    async def rAdd(self, ctx: commands.Context):
+    async def rAdd(self, ctx: commands.Context, incAmount: int = 1):
         user = ctx.message.author
-        userSpent = spent([user])
-        userEnhancements = userSpent[0][2]
-        userHas = funcBuild(userEnhancements)
-        pointTot = await count(user, 1)
-        if pointTot[0] < userHas[0] + 1:
-            await ctx.send(
-                f"{user} does not have enough points to further enhance with."
-            )
-            return
-        randPlusBuild = genBuild(userHas[0] + 1, "", userEnhancements)
-        randPlus = funcBuild(randPlusBuild)
-        await toAdd(ctx, user, randPlus[2])
+        await rAddFunc(ctx, [user], incAmount)
+        await ctx.send(f"Finished rAdd-ing to {nON(user)}")
 
     @commands.command(
         enabled=COMON,
@@ -876,34 +912,6 @@ class roleCommands(
         await startDuel(self, ctx, bat)
 
 
-# restrict list from members to members with SUPEROLE
-def isSuper(
-    self: roleCommands, guildList: list[discord.User]
-) -> list[discord.Member]:
-    guilds = self.bot.guilds
-    supeGuildList = []
-    foundRole = []
-
-    logP.debug(f"Guild list is: {guilds}")
-
-    for guild in guilds:
-        logP.debug(f"iter through: {guild}")
-        posRole = get(guild.roles, name=SUPEROLE)
-        if posRole:
-            logP.debug(f"found role: {posRole}")
-            foundRole.append(posRole)
-    if foundRole:
-        for role in foundRole:
-            logP.debug(f"iter through: {role}")
-            for member in role.members:
-                if member in guildList:
-                    logP.debug(f"appending: {member}")
-                    supeGuildList.append(member)
-
-    # return reduced user list
-    return supeGuildList
-
-
 async def playerDuelInput(
     self: roleCommands,
     ctx: commands.Context,
@@ -1010,103 +1018,6 @@ async def playerDuelInput(
     else:
         desperate, typeMove, moveString = battle.moveSelf(peep, notPeep)
     return [desperate, typeMove, moveString], notPeep
-
-
-def genBuild(val: int = 0, typ: str = "", iniBuild: list = []):
-    build = []
-    buildFinal = []
-    pickList = [x for x in leader.keys() if leader[x] not in restrictedList]
-
-    if not typ:
-        typ = random.choice(pickList)
-        pickList.remove(typ)
-    elif typ not in leader.keys():
-        if typ[:3] in leader.keys():
-            typ = typ[:3]
-        else:
-            typ = random.choice(pickList)
-            pickList.remove(typ)
-
-    logP.debug(f"Building a build of {val} for {typ}")
-
-    checkInt = 1
-    building = True
-    if not iniBuild:
-        searchBuild = [typ + str(checkInt)]
-    else:
-        searchBuild = iniBuild.copy()
-    nextLargest = 0
-    secondLoop = 0
-    prevBuild = []
-    maxTyp = []
-
-    testMax = True
-    maxSearch = [typ + str(10)]
-    while testMax:
-        maxBuild = funcBuild(maxSearch)
-        if val > maxBuild[0]:
-            logP.debug(f"with {val} points {typ} can be maxed")
-            maxTyp.append(typ + str(10))
-            build = maxBuild[2]
-            typ = random.choice(pickList)
-            pickList.remove(typ)
-            maxSearch.append(typ + str(10))
-            logP.debug(f"new max list is {maxSearch}")
-        else:
-            testMax = False
-    if maxTyp:
-        searchBuild = maxTyp.copy()
-        searchBuild.append(typ + str(checkInt))
-
-    while building:
-        want = funcBuild(searchBuild)
-        trimmed = trim(want[1])
-
-        searchBuild = []
-
-        for group in trimmed:
-            rank = group[0]
-            name = group[1]
-            shrt = [x for x in leader.keys() if leader[x] == name]
-            if shrt:
-                shrt = shrt[0]
-            searchBuild.append(str(shrt) + str(rank))
-
-        logP.debug(f"Testing {want[0]} build: {searchBuild}, {want[2]}")
-        if want[0] < val:
-            checkInt += 1
-            if checkInt > 10:
-                checkInt = 10
-            prevBuild = searchBuild.copy()
-            searchBuild.append(typ + str(checkInt))
-        elif want[0] == val:
-            building = False
-            build = want[2]
-        else:
-            nextLargest += 1
-            if nextLargest > len(want[2]) - 1:
-                nextLargest = 0
-                if secondLoop < 2:
-                    secondLoop += 1
-                else:
-                    build = funcBuild(prevBuild)
-                    build = build[2]
-                    building = False
-            name = want[2][-nextLargest][1]
-            rank = want[2][-nextLargest][0]
-            shrt = [x for x in leader.keys() if leader[x] == name][0]
-            searchBuild = prevBuild.copy()
-            searchBuild.append(shrt + str(rank))
-
-    for group in build:
-        rank = group[0]
-        name = group[1]
-        shrt = [x for x in leader.keys() if leader[x] == name]
-        if shrt:
-            shrt = shrt[0]
-
-        buildFinal.append(str(shrt) + str(rank))
-    return buildFinal
 
 
 def checkAddBuild(listAdd: list = [], listBase: list = []):
@@ -1293,7 +1204,9 @@ def highestEhn(userEhnList: list = [], belowTop: bool = True):
 
     if not topRankStr:
         pickList = [
-            x for x in leader.keys() if leader[x] not in restrictedList
+            x
+            for x in leader.keys()
+            if leader[x] not in restrictedList and x not in reqResList
         ]
         topRankStr = random.choice(pickList)
     return topRankStr

@@ -221,6 +221,7 @@ restrictedList = ["System", "Authors"]
 
 freeRoles = ["Ping Unto Me My Daily Quack", "Supe"]
 
+reqResList = ["int", "4th", "omn"]
 
 cmdInf = {}
 
