@@ -130,15 +130,11 @@ class roleCommands(
     )
     # command to trim command caller of extra roles. OBSOLETE due to cut call
     # after role add in add command
-    async def trim(self, ctx: commands.Context, *, member: str = ""):
-        logP.debug("funcTrim START")
+    async def trim(self, ctx: commands.Context):
 
-        memberList = await memGrab(self, ctx, "")  # member)
-        logP.debug(f"memberlist = {memberList}")
+        memberList = await memGrab(ctx, "")
 
         await cut(ctx, memberList)
-        logP.debug("funcTrim END")
-        return
 
     @commands.command(
         enabled=COMON,
@@ -192,11 +188,17 @@ class roleCommands(
             peepToAdd = aidChoice[0] if aidChoice else supRole
             logP.debug(f"{peepToAdd.id}, {peepToAdd.name}")
             if taskAdd == -1:
-                addPeeps = peepToAdd.members
+                if len(peepToAdd.members) < 2:
+                    addPeeps = [ctx.author, random.choice(supRole.members)]
+                else:
+                    addPeeps = peepToAdd.members
                 addPeeps.remove(ctx.message.author)
                 # addNames = "every host of the Superhero Enhancement System!"
             else:
-                addPeeps = random.sample(peepToAdd.members, k=taskAdd + 1)
+                if len(peepToAdd.members) < taskAdd + 1:
+                    addPeeps = random.sample(supRole.members, k=taskAdd + 1)
+                else:
+                    addPeeps = random.sample(peepToAdd.members, k=taskAdd + 1)
                 logP.debug(f"peeps list is: {addPeeps}")
                 if ctx.message.author in addPeeps:
                     addPeeps.remove(ctx.message.author)
@@ -505,7 +507,7 @@ class roleCommands(
     # command to get author or specified user(s) enhancement total
     # and available points
     async def points(self, ctx: commands.Context, *, memberList: str = ""):
-        users = await memGrab(self, ctx, memberList)
+        users = await memGrab(ctx, memberList)
         # restrict user list to those with SUPEROLE
         supeUsers = isSuper(self.bot, users)
         if not supeUsers:  # if no SUPEROLE users in list
@@ -787,7 +789,7 @@ class roleCommands(
     )
     @commands.cooldown(1, 1, commands.BucketType.default)
     async def xpGrab(self, ctx: commands.Context, *, mem: str = ""):
-        typeMem = await memGrab(self, ctx, mem)
+        typeMem = await memGrab(ctx, mem)
         typeMem = [typeMem[0]]
         pointList = spent(typeMem)
         i = 0

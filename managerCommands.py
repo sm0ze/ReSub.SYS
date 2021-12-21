@@ -77,7 +77,7 @@ class managerCommands(
         if not memberList:
             await ctx.send("Give me a peep to wipe next time...")
             return
-        members = await memGrab(self, ctx, memberList)
+        members = await memGrab(ctx, memberList)
         for peep in members:
             toCut = [
                 x.name
@@ -115,7 +115,7 @@ class managerCommands(
         *,
         memberList="",
     ):
-        memList = await memGrab(self, ctx, memberList)
+        memList = await memGrab(ctx, memberList)
         superList = isSuper(self.bot, memList)
         await ctx.send(
             (
@@ -222,7 +222,7 @@ class managerCommands(
     ):
         val = round(val, 2)
         logP.debug(f"val to add is: {val}")
-        memList = await memGrab(self, ctx, mem)
+        memList = await memGrab(ctx, mem)
         logP.debug(f"memList is: {memList}")
         infGrab = load(memList[0].guild.id)
         for peep in memList:
@@ -299,22 +299,16 @@ class managerCommands(
         await ctx.send(embed=managed)
         return
 
-    """@commands.command(
-        hidden=HIDE,
+    @commands.command(
+        enabled=COMON,
         brief=getBrief("trimAll"),
         description=getDesc("trimAll"),
     )
-    @commands.has_any_role(MANAGER)
     # manager command to role trim all users bot has access to
-    async def trimAll(self, ctx: commands.Context):
-        debug("funcTrimAll START")
-
-        memberList = isSuper(self, self.bot.users)
-        debug("\tmemberlist to cut = {}".format([x.name for x in memberList]))
-
-        await cut(ctx, memberList)
-        debug("funcTrimAll END")
-        return"""
+    async def trimAll(self, ctx: commands.Context, memStr: str = ""):
+        memList = await memGrab(ctx, memStr)
+        await cut(ctx, memList)
+        await ctx.send(f"Finished trimAll for {len(memList)} members.")
 
 
 def restart_bot() -> None:
