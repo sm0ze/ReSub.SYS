@@ -9,16 +9,16 @@ import discord
 from discord.ext import commands
 
 import log
-from sharedFuncs import funcBuild, nON, spent
 from sharedDicts import (
-    leader,
-    moveOpt,
-    masterEhnDict,
     baseDict,
-    statCalcDict,
-    replaceDict,
     bonusDict,
+    leader,
+    masterEhnDict,
+    moveOpt,
+    replaceDict,
+    statCalcDict,
 )
+from sharedFuncs import funcBuild, nON, spent
 
 logP = log.get_logger(__name__)
 

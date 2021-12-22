@@ -5,8 +5,8 @@ import discord
 from discord.ext import commands
 
 import log
+from sharedConsts import COMON, GEMDIFF, setGemDiff
 from sharedFuncs import getBrief, getDesc
-from sharedVars import COMON, GEMDIFF, setGemDiff
 
 logP = log.get_logger(__name__)
 

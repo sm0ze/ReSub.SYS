@@ -5,8 +5,8 @@ import git
 from discord.ext import commands
 
 import log
+from sharedConsts import COMON, HOSTNAME
 from sharedFuncs import asleep, dupeMes, getBrief, getDesc
-from sharedVars import COMON, HOSTNAME
 
 logP = log.get_logger(__name__)
 

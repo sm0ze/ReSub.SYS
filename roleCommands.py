@@ -11,44 +11,10 @@ from discord.ext import commands, tasks
 from discord.utils import get
 
 import log
+import sharedDyVars
 from battle import NPC, battler, player
 from exceptions import noFields, notADuel, notNPC, notSupeDuel
-from sharedDicts import (
-    leader,
-    masterEhnDict,
-    moveOpt,
-    npcDict,
-    posTask,
-    powerTypes,
-    restrictedList,
-    rsltDict,
-    taskVar,
-    reqResList,
-)
-from sharedFuncs import (
-    count,
-    countOf,
-    cut,
-    funcBuild,
-    genBuild,
-    getBrief,
-    getDesc,
-    finPatrol,
-    isSuper,
-    load,
-    lvlEqu,
-    memGrab,
-    nON,
-    pluralInt,
-    pointsLeft,
-    rAddFunc,
-    reqEnd,
-    save,
-    spent,
-    toAdd,
-    topEnh,
-)
-from sharedVars import (
+from sharedConsts import (
     ACTIVEROLEID,
     ACTIVESEC,
     BOTTURNWAIT,
@@ -64,6 +30,43 @@ from sharedVars import (
     ROUNDLIMIT,
     SUPEROLE,
     TASKCD,
+)
+from sharedDicts import (
+    leader,
+    masterEhnDict,
+    moveOpt,
+    npcDict,
+    posTask,
+    powerTypes,
+    reqResList,
+    restrictedList,
+    rsltDict,
+    taskVar,
+)
+from sharedFuncs import (
+    count,
+    countOf,
+    cut,
+    finPatrol,
+    funcBuild,
+    genBuild,
+    getBrief,
+    getDesc,
+    isSuper,
+    load,
+    lvlEqu,
+    mee6DictGrab,
+    memGrab,
+    nON,
+    pluralInt,
+    pointsLeft,
+    rAddFunc,
+    reqEnd,
+    save,
+    spent,
+    tatsuXpGrab,
+    toAdd,
+    topEnh,
 )
 
 logP = log.get_logger(__name__)
@@ -85,8 +88,8 @@ class roleCommands(
         self, bot: typing.Union[commands.bot.Bot, commands.bot.AutoShardedBot]
     ):
         self.bot = bot
-        self.grabLoop.start()
         self.patrolLoop.start()
+        self.xpLoop.start()
 
     # Check if user has guild role
     async def cog_check(self, ctx: commands.Context):
@@ -106,22 +109,31 @@ class roleCommands(
         # messy implementation for Supe
         return commands.check(await predicate(ctx))
 
-    @tasks.loop(minutes=30)
-    async def grabLoop(self):
-        await self.bot.wait_until_ready()
+    @tasks.loop(minutes=5)
+    async def xpLoop(self):
         roleGrab = None
         for guild in self.bot.guilds:
             roleGrab = get(guild.roles, name=SUPEROLE)
             if roleGrab:
-                await count(roleGrab.members)
+                await mee6DictGrab(roleGrab)
+
+            if sharedDyVars.tatsuUpdate:
+                await tatsuXpGrab(roleGrab)
+
+    @xpLoop.before_loop
+    async def before_xpLoop(self):
+        await self.bot.wait_until_ready()
 
     @tasks.loop(minutes=60)
     async def patrolLoop(self):
-        await self.bot.wait_until_ready()
         for guild in self.bot.guilds:
             foundRole = get(guild.roles, id=int(ACTIVEROLEID))
             if foundRole:
                 await finPatrol(foundRole, ACTIVESEC)
+
+    @patrolLoop.before_loop
+    async def before_patrolLoop(self):
+        await self.bot.wait_until_ready()
 
     @commands.command(
         enabled=COMON,
@@ -135,6 +147,19 @@ class roleCommands(
         memberList = await memGrab(ctx, "")
 
         await cut(ctx, memberList)
+
+    @commands.command(
+        enabled=COMON,
+        aliases=["tu"],
+        brief=getBrief("tatsuUpdate"),
+        description=getDesc("tatsuUpdate"),
+    )
+    async def tatsuUpdate(self, ctx: commands.Context):
+        if ctx.author not in sharedDyVars.tatsuUpdate:
+            sharedDyVars.tatsuUpdate.append(ctx.author)
+            await ctx.send("Your tatsu xp will update on next update loop.")
+        else:
+            await ctx.send("You are already set to update your xp soon.")
 
     @commands.command(
         enabled=COMON,
@@ -451,7 +476,7 @@ class roleCommands(
             else True
         )
 
-        pointTot = await count(user, 1)
+        pointTot = await count(user)
         # if author did not provide an enhancement to add, return
         if not typeRank:
             buildList = [highestEhn(userEnhancements)]
@@ -795,7 +820,7 @@ class roleCommands(
         i = 0
         for peep in typeMem:
             mes = discord.Embed(title=f"{nON(peep)} Stats")
-            stuff = await count(peep, 1)
+            stuff = await count(peep)
             group = pointList[i]
             unspent = stuff[0] - group[1]
 
@@ -811,13 +836,37 @@ class roleCommands(
                 value=f"{stuff[0]}",
             )
 
+            patrolRole = get(ctx.guild.roles, id=int(ACTIVEROLEID))
+            isPatrolStr = "Not Patrolling"
+            patrolStats = ""
+            if patrolRole:
+                if peep in patrolRole.members:
+                    isPatrolStr = f"Patrol #{stuff[5]['totalPatrols']}"
+
+                    currPatrolStart = stuff[4]["patrolStart"]
+                    currPatrolTime = str(
+                        datetime.timedelta(
+                            seconds=int(round(time.time() - currPatrolStart))
+                        )
+                    )
+                    currPatrolTasks = stuff[4]["patrolTasks"]
+
+                    patrolStats += (
+                        f"{nON(ctx.author)} has completed "
+                        f"{currPatrolTasks} tasks on this patrol over the "
+                        f"last {currPatrolTime}"
+                    )
+                mes.add_field(name="Patrol", value=isPatrolStr)
+                if patrolStats:
+                    mes.add_field(
+                        inline=False, name="Patrol Stats", value=patrolStats
+                    )
             nextGDV = int(stuff[1]) + 1
             nextGDV_XP = lvlEqu(nextGDV, 1)
             nextGDVneedXP = nextGDV_XP - stuff[2]
 
             mes.add_field(
-                inline=False,
-                name="XP to next GDV",
+                name="Next GDV XP",
                 value=f"{round(nextGDVneedXP, 3):,}",
             )
 
@@ -826,14 +875,12 @@ class roleCommands(
             nextEnhPneedXP = nextEnhP_XP - stuff[2]
 
             mes.add_field(
-                inline=False,
-                name="XP to next Enhancement Point",
+                name="Next EP XP",
                 value=f"{round(nextEnhPneedXP, 3):,}",
             )
 
             mes.add_field(
-                inline=False,
-                name=(f"Unspent Enhancement Point{pluralInt(unspent)}"),
+                name=(f"Unspent EP{pluralInt(unspent)}"),
                 value=unspent,
             )
 

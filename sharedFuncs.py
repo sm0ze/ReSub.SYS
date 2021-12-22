@@ -14,22 +14,23 @@ from mee6_py_api import API
 from sqlitedict import SqliteDict
 
 import log
-from sharedDicts import (
-    leader,
-    masterEhnDict,
-    rankColour,
-    remList,
-    restrictedList,
-    cmdInf,
-    reqResList,
-)
-from sharedVars import (
+import sharedDyVars
+from sharedConsts import (
     GEMDIFF,
     HOSTNAME,
     SAVEFILE,
     STARTCHANNEL,
     SUPEROLE,
     TATSU,
+)
+from sharedDicts import (
+    cmdInf,
+    leader,
+    masterEhnDict,
+    rankColour,
+    remList,
+    reqResList,
+    restrictedList,
 )
 
 logP = log.get_logger(__name__)
@@ -640,12 +641,65 @@ async def pointsLeft(
         await ctx.send("Point scanning finished.")
 
 
+async def mee6DictGrab(roleTo: discord.Role):
+    numToGrab = len(roleTo.guild.members)
+    pages = math.floor(numToGrab / 100) + 1
+
+    leaderboard = await API(roleTo.guild.id).levels.get_all_leaderboard_pages(
+        pages, roleTo.guild.id
+    )
+
+    memberList = []
+
+    for page in leaderboard:
+        memberList += page["players"]
+
+    logP.debug(f"mee6 peep list of length: {len(memberList)}")
+
+    savedCache = load(roleTo.guild.id)
+
+    for peep in memberList:
+        peepID = int(peep["id"])
+        if peepID in savedCache:
+            origXP = savedCache[peepID]["invXP"][0]
+            savedCache[peepID]["invXP"][0] = peep["xp"]
+            logP.debug(
+                (
+                    "Updating Mee6XP for "
+                    f"{peep['username']}: {origXP} -> {peep['xp']}"
+                )
+            )
+
+    save(roleTo.guild.id, savedCache)
+
+
+async def tatsuXpGrab(roleTo: discord.Role):
+    tat = tatsu.wrapper
+    savedCache = load(roleTo.guild.id)
+    peepList = sharedDyVars.tatsuUpdate.copy()
+    for peep in peepList:
+        TATSUxp = 0
+        try:
+            TATSUmem = await tat.ApiWrapper(key=TATSU).get_profile(peep.id)
+            TATSUxp = int(TATSUmem.xp)
+        except Exception as e:
+            logP.warning(e)
+        origXP = savedCache[peep.id]["invXP"][1]
+        savedCache[peep.id]["invXP"][0] = TATSUxp
+        logP.debug(
+            ("Updating TatsuXP for " f"{nON(peep)}: {origXP} -> {TATSUxp}")
+        )
+        try:
+            sharedDyVars.tatsuUpdate.remove(peep)
+        except ValueError as e:
+            logP.warning(e)
+    save(roleTo.guild.id, savedCache)
+
+
 # function to get specified user's enhancement points
 async def count(
-    peepList: typing.Union[list[discord.Member], discord.Member],
-    tatFrc: int = 0,
-) -> tuple[int, float, float, list[int, int, float], float]:
-    tat = tatsu.wrapper
+    peepList: typing.Union[list[discord.Member], discord.Member]
+) -> tuple[int, float, float, list[int, int, float], dict, dict]:
 
     if isinstance(peepList, discord.Member):
         peepList = [peepList]
@@ -658,24 +712,13 @@ async def count(
         pickle_file = {}
 
     for peep in peepList:
-        if tatFrc:
-            MEE6xp = await API(peep.guild.id).levels.get_user_xp(peep.id)
-            TATSUmem = await tat.ApiWrapper(key=TATSU).get_profile(peep.id)
-        else:
-            TATSUmem = None
-            MEE6xp = int(0)
+        MEE6xp = int(0)
+        TATSUxp = int(0)
 
         if pickle_file and peep.id in pickle_file.keys():
             ReSubXP = float(pickle_file[peep.id]["invXP"][-1])
         else:
             ReSubXP = float(0)
-
-        if hasattr(TATSUmem, "xp"):
-            TATSUxp = int(TATSUmem.xp)
-            if not TATSUxp:
-                TATSUxp = int(0)
-        else:
-            TATSUxp = int(0)
 
         if not MEE6xp:
             MEE6xp = int(0)
@@ -727,15 +770,14 @@ async def count(
                 f" longestPatrol: {longestPatrol}"
             )
         )
-        pickle_file[peep.id] = {
-            "Name": peep.name,
-            "enhP": enhP,
-            "gdv": gdv,
-            "totXP": totXP,
-            "invXP": [MEE6xp, TATSUxp, ReSubXP],
-            "currPatrol": currPatrol,
-            "topStatistics": topStatistics,
-        }
+        pickle_file[peep.id]["Name"] = peep.name
+        pickle_file[peep.id]["enhP"] = enhP
+        pickle_file[peep.id]["gdv"] = gdv
+        pickle_file[peep.id]["totXP"] = totXP
+        pickle_file[peep.id]["invXP"] = [MEE6xp, TATSUxp, ReSubXP]
+        pickle_file[peep.id]["currPatrol"] = currPatrol
+        pickle_file[peep.id]["topStatistics"] = topStatistics
+
     save(peepList[0].guild.id, pickle_file)
     if len(peepList) == 1:
         return (
@@ -838,14 +880,14 @@ async def rAddFunc(
     for user in userList:
         incAmount = iniInc
         if not incAmount:
-            pointTot = await count(user, 1)
+            pointTot = await count(user)
             incAmount = pointTot[0]
         while incAmount:
             incAmount -= 1
             userSpent = spent([user])
             userEnhancements = userSpent[0][2]
             userHas = funcBuild(userEnhancements)
-            pointTot = await count(user, 1)
+            pointTot = await count(user)
             if pointTot[0] < userHas[0] + 1:
                 await ctx.send(
                     (

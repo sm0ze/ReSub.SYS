@@ -6,9 +6,9 @@ from discord.utils import get
 from pretty_help import DefaultMenu, PrettyHelp
 
 import log
+from sharedConsts import CMDPREFIX, HOSTNAME, STARTTIME, SUPEROLE, TOKEN
 from sharedDicts import powerTypes
 from sharedFuncs import asleep, dupeMes, nON
-from sharedVars import CMDPREFIX, HOSTNAME, STARTTIME, SUPEROLE, TOKEN
 
 logP = log.get_logger(__name__)
 

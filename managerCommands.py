@@ -8,6 +8,16 @@ from discord.ext import commands
 from discord.utils import get
 
 import log
+from sharedConsts import (
+    ACTIVEROLEID,
+    ACTIVESEC,
+    COMON,
+    HOSTNAME,
+    LOWESTROLE,
+    MANAGERROLES,
+    SAVEFILE,
+    SUPEROLE,
+)
 from sharedDicts import leader, masterEhnDict
 from sharedFuncs import (
     cut,
@@ -24,16 +34,6 @@ from sharedFuncs import (
     rAddFunc,
     save,
     topEnh,
-)
-from sharedVars import (
-    ACTIVEROLEID,
-    ACTIVESEC,
-    COMON,
-    HOSTNAME,
-    LOWESTROLE,
-    MANAGERROLES,
-    SAVEFILE,
-    SUPEROLE,
 )
 
 logP = log.get_logger(__name__)
@@ -104,7 +104,7 @@ class managerCommands(
         await pointsLeft(ctx, supeRole.members, hideFull)
 
     @commands.command(
-        enabled=True,
+        enabled=COMON,
         brief=getBrief("roleCall"),
         description=getDesc("roleCall"),
     )

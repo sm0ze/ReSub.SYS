@@ -9,9 +9,9 @@ from discord.ext import commands
 from discord.utils import get
 
 import log
+from sharedConsts import COMON, HOSTNAME, STARTTIME
 from sharedDicts import freeRoles
 from sharedFuncs import getBrief, getDesc, nON
-from sharedVars import COMON, HOSTNAME, STARTTIME
 
 logP = log.get_logger(__name__)
 

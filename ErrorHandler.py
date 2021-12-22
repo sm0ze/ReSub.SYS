@@ -4,8 +4,8 @@ import discord
 from discord.ext import commands
 
 from exceptions import notNPC, notSupeDuel
+from sharedConsts import CMDPREFIX, ERRORTHREAD
 from sharedFuncs import dupeError, getSendLoc
-from sharedVars import CMDPREFIX, ERRORTHREAD
 
 
 class ErrorHandler(commands.Cog):
