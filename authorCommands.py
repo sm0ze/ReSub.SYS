@@ -6,7 +6,7 @@ from discord.ext import commands
 
 import log
 from sharedConsts import COMON, GEMDIFF, setGemDiff
-from sharedFuncs import getBrief, getDesc
+from sharedFuncs import getBrief, getDesc, sendMessage
 
 logP = log.get_logger(__name__)
 
@@ -36,7 +36,7 @@ class authorCommands(
                         "uploads/2018/03/talktohand_trans.png"
                     )
                 )
-                await ctx.send(embed=mes)
+                await sendMessage(mes, ctx)
                 passCheck = False
             return passCheck
 
@@ -58,8 +58,9 @@ class authorCommands(
         GEMDIFF = var
         setGemDiff(var)
 
-        await ctx.send(
-            f"Gem diff is now {GEMDIFF} times total XP or {100 * GEMDIFF}%"
+        await sendMessage(
+            f"Gem diff is now {GEMDIFF} times total XP or {100 * GEMDIFF}%",
+            ctx,
         )
 
 

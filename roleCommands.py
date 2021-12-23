@@ -45,7 +45,6 @@ from sharedDicts import (
 )
 from sharedFuncs import (
     count,
-    countOf,
     cut,
     finPatrol,
     funcBuild,
@@ -385,7 +384,7 @@ class roleCommands(
             emptMes.add_field(inline=False, name="Patrolling", value=patrolMes)
 
         save(ctx.message.author.guild.id, authInf)
-        stateL = await countOf(ctx.message.author)
+        stateL = await count(ctx.message.author)
         currEnhP = stateL[0]
         logP.debug(
             f"{nON(ctx.message.author)} has {currEnhP} available"
@@ -815,7 +814,6 @@ class roleCommands(
     @commands.cooldown(1, 1, commands.BucketType.default)
     async def xpGrab(self, ctx: commands.Context, *, mem: str = ""):
         typeMem = await memGrab(ctx, mem)
-        typeMem = [typeMem[0]]
         pointList = spent(typeMem)
         i = 0
         for peep in typeMem:
@@ -836,6 +834,33 @@ class roleCommands(
                 value=f"{stuff[0]}",
             )
 
+            nextGDV = int(stuff[1]) + 1
+            nextGDV_XP = lvlEqu(nextGDV, 1)
+            nextGDVneedXP = nextGDV_XP - stuff[2]
+
+            mes.add_field(
+                name="Next GDV",
+                value=f"{round(nextGDVneedXP, 3):,} XP",
+            )
+
+            nextEnhP = int(5 * (int(stuff[1] / 5) + 1))
+            nextEnhP_XP = lvlEqu(nextEnhP, 1)
+            nextEnhPneedXP = nextEnhP_XP - stuff[2]
+
+            mes.add_field(
+                name="Next EP",
+                value=f"{round(nextEnhPneedXP, 3):,} XP",
+            )
+
+            mes.add_field(
+                name=(f"Unspent EP{pluralInt(unspent)}"),
+                value=unspent,
+            )
+
+            mes.set_footer(
+                text=f"{peep.name}#{peep.discriminator} - {HOSTNAME}",
+                icon_url=peep.display_avatar,
+            )
             patrolRole = get(ctx.guild.roles, id=int(ACTIVEROLEID))
             isPatrolStr = "Not Patrolling"
             patrolStats = ""
@@ -852,7 +877,7 @@ class roleCommands(
                     currPatrolTasks = stuff[4]["patrolTasks"]
 
                     patrolStats += (
-                        f"{nON(ctx.author)} has completed "
+                        f"{nON(peep)} has completed "
                         f"{currPatrolTasks} tasks on this patrol over the "
                         f"last {currPatrolTime}"
                     )
@@ -861,33 +886,6 @@ class roleCommands(
                     mes.add_field(
                         inline=False, name="Patrol Stats", value=patrolStats
                     )
-            nextGDV = int(stuff[1]) + 1
-            nextGDV_XP = lvlEqu(nextGDV, 1)
-            nextGDVneedXP = nextGDV_XP - stuff[2]
-
-            mes.add_field(
-                name="Next GDV XP",
-                value=f"{round(nextGDVneedXP, 3):,}",
-            )
-
-            nextEnhP = int(5 * (int(stuff[1] / 5) + 1))
-            nextEnhP_XP = lvlEqu(nextEnhP, 1)
-            nextEnhPneedXP = nextEnhP_XP - stuff[2]
-
-            mes.add_field(
-                name="Next EP XP",
-                value=f"{round(nextEnhPneedXP, 3):,}",
-            )
-
-            mes.add_field(
-                name=(f"Unspent EP{pluralInt(unspent)}"),
-                value=unspent,
-            )
-
-            mes.set_footer(
-                text=f"{peep.name}#{peep.discriminator} - {HOSTNAME}",
-                icon_url=peep.display_avatar,
-            )
 
             await ctx.send(embed=mes)
             i += 1
@@ -933,8 +931,10 @@ class roleCommands(
                 if not opponent:
                     opponent = get(ctx.guild.members, id=DEFDUELOPP)
                 else:
+
                     raise notSupeDuel("Not a supe.")
-            elif str(SUPEROLE) not in [x.name for x in opponent.roles]:
+            nameList = [x.name for x in opponent.roles]
+            if (str(SUPEROLE) not in nameList) and str("Bots") not in nameList:
                 raise notSupeDuel(f"{opponent} is not a {SUPEROLE}.")
             bat = battler(self.bot, [ctx.author, opponent])
 

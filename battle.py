@@ -18,7 +18,7 @@ from sharedDicts import (
     replaceDict,
     statCalcDict,
 )
-from sharedFuncs import funcBuild, nON, spent
+from sharedFuncs import funcBuild, nON, sendMessage, spent
 
 logP = log.get_logger(__name__)
 
@@ -328,16 +328,20 @@ class player:
         endHP = self.hp
         return endHP - strtHP
 
-    async def ask(
-        self,
-    ):
+    async def ask(self, duelList: list):
         if self.npc:
             return
         elif self.p.bot:
             return
 
+        peepNameList = []
         reactionList = ["✅", "❌"]
-        mes = discord.Embed(title="Do you wish to play a duel?")
+        for peep in duelList:
+            if isinstance(peep, player):
+                peepNameList.append(peep.n)
+        mes = discord.Embed(
+            title="Do you wish to play a duel?", description=f"{peepNameList}"
+        )
         msg = await self.p.send(embed=mes)
         for reac in reactionList:
             await msg.add_reaction(reac)
@@ -410,25 +414,22 @@ class battler:
             self.playerList.append(player(peep, bot))
 
     async def echoMes(self, mes, thrd, toThrd: bool = True):
-        if isinstance(mes, discord.Embed):
-            for peep in self.playerList:
-                if peep.play:
-                    await peep.p.send(embed=mes)
-            if toThrd:
-                await thrd.send(embed=mes)
-        elif isinstance(mes, str):
-            for peep in self.playerList:
-                if peep.play:
-                    await peep.p.send(mes)
-            if toThrd:
-                await thrd.send(mes)
+
+        for peep in self.playerList:
+            if not isinstance(peep, player):
+                continue
+            if peep.play:
+                await sendMessage(mes, peep.p)
+        if toThrd:
+            await sendMessage(mes, thrd)
 
     async def findPlayers(self, dontAsk):
         for peep in self.playerList:
             if not peep.npc:
                 if not peep.p.bot:
                     if not dontAsk == 1:
-                        await peep.ask()
+                        if isinstance(peep, player):
+                            await peep.ask(self.playerList)
 
     def nextRound(self) -> player:
         looping = True

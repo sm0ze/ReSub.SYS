@@ -105,8 +105,9 @@ class managerCommands(
 
     @commands.command(
         enabled=COMON,
-        brief=getBrief("roleCall"),
-        description=getDesc("roleCall"),
+        aliases=["fra"],
+        brief=getBrief("forceRAdd"),
+        description=getDesc("forceRAdd"),
     )
     async def forceRAdd(
         self,

@@ -6,6 +6,7 @@ import time
 import typing
 
 import discord
+from discord.abc import Messageable
 import tatsu
 from discord.ext import commands
 from discord.ext.commands.converter import MemberConverter, RoleConverter
@@ -543,7 +544,7 @@ async def cut(
         # notify current user has been finished with to discord
         sendMes += f"{nON(peep)} has been cut down to size!"
         mes.add_field(name=f"{nON(peep)}", value=sendMes)
-    await ctx.send(embed=mes)
+    await sendMessage(mes, ctx)
     return
 
 
@@ -618,7 +619,7 @@ async def pointsLeft(
     # return result
     for group in pointList:
         logP.debug(f"group in level is: {group}")
-        pointTot = await countOf(group[0])
+        pointTot = await count(group[0])
 
         if hideFull:
             if group[1] >= pointTot[0]:
@@ -788,28 +789,8 @@ async def count(
             currPatrol,
             topStatistics,
         )
-
-
-async def countOf(
-    peep: discord.Member,
-) -> tuple[int, float, float, list[int, int, float], dict, dict]:
-    try:
-        valDict = load(peep.guild.id)
-        logP.debug("valDict loaded")
-        shrt = valDict[peep.id]
-        logP.debug(f"shrt: {shrt}")
-
-        return (
-            shrt["enhP"],
-            shrt["gdv"],
-            shrt["totXP"],
-            shrt["invXP"],
-            shrt["currPatrol"],
-            shrt["topStatistics"],
-        )
-    except KeyError:
-        logP.debug("End countOf - fail load")
-        return await count(peep)
+    else:
+        return pickle_file
 
 
 def getDesc(cmdName: str = ""):
@@ -1042,3 +1023,51 @@ def isSuper(
 
     # return reduced user list
     return supeGuildList
+
+
+async def sendMessage(mes, location: Messageable):
+    if isinstance(mes, discord.Embed):
+        embedList = splitEmbed(mes)
+        for emb in embedList:
+            if emb:
+                await location.send(embed=emb)
+    if isinstance(mes, str):
+        # minMessages = math.floor(mesLength / 2000) + 1
+        mesList = []
+        mesSplit = mes.splitlines(True)
+        mesList = splitFunc(mesSplit)
+        for message in mesList:
+            if message:
+                await location.send(message)
+
+
+def splitEmbed(mes: discord.Embed):
+    return [mes]
+
+
+def splitFunc(mesList: list[str], maxLen: int = 2000):
+    currMes = ""
+    retList = []
+    for mes in mesList:
+        if len(mes) + len(currMes) <= maxLen:
+            currMes += mes
+            continue
+        else:
+            if currMes:
+                retList.append(currMes)
+            if len(mes) <= maxLen:
+                currMes = mes
+                continue
+            splitupMes = mes.split(" ")
+            if len(splitupMes) > 1:
+                for i, bit in enumerate(splitupMes):
+                    splitupMes[i] = bit + " "
+                retList += splitFunc(splitupMes)
+                currMes = ""
+                continue
+            else:
+                retList += splitFunc(mes)
+                currMes = ""
+                continue
+    retList.append(currMes)
+    return retList
