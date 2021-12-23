@@ -915,7 +915,7 @@ def genBuild(val: int = 0, typ: str = "", iniBuild: list = []):
     maxTyp = []
 
     testMax = True
-    maxSearch = [typ + str(10)]
+    maxSearch = [typ + str(10)] + searchBuild
     while testMax:
         maxBuild = funcBuild(maxSearch)
         if val > maxBuild[0]:
@@ -932,7 +932,7 @@ def genBuild(val: int = 0, typ: str = "", iniBuild: list = []):
             testMax = False
             val = maxBuild[0]
     if maxTyp:
-        searchBuild = maxTyp.copy()
+        searchBuild = searchBuild + maxTyp.copy()
         searchBuild.append(typ + str(checkInt))
 
     prevBuildsDict = {}
