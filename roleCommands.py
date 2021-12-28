@@ -355,6 +355,7 @@ class roleCommands(
                 authInf["currPatrol"]["patrolStart"] = currTime
                 authInf["currPatrol"]["patrolTasks"] = 1
 
+                authInf["topStatistics"].setdefault("totalPatrols", 0)
                 authInf["topStatistics"]["totalPatrols"] += 1
 
                 totPatrols = authInf["topStatistics"]["totalPatrols"]
