@@ -410,7 +410,7 @@ def save(key: int, value: dict, cache_file=SAVEFILE):
         logP.warning(["Error during storing data (Possibly unsupported):", ex])
 
 
-def load(key: int, cache_file=SAVEFILE) -> dict:
+def load(key: int, cache_file=SAVEFILE) -> dict[int, dict]:
     try:
         with SqliteDict(cache_file) as mydict:
             # No need to use commit(), since we are only loading data!
@@ -744,16 +744,19 @@ async def count(
 
         enhP = math.floor(gdv / 5) + 1
 
-        currPatrol = pickle_file[peep.id].get("currPatrol", {})
-        topStatistics = pickle_file[peep.id].get("topStatistics", {})
+        currPatrol = pickle_file[peep.id].setdefault("currPatrol", {})
+        topStatistics = pickle_file[peep.id].setdefault("topStatistics", {})
 
-        lastTaskTime = currPatrol.setdefault("lastTaskTime", 0.0)
-        patrolStart = currPatrol.setdefault("patrolStart", 0.0)
+        lastTaskTime = currPatrol.setdefault("lastTaskTime", None)
+        patrolStart = currPatrol.setdefault("patrolStart", None)
         patrolTasks = currPatrol.setdefault("patrolTasks", 0)
 
         totalTasks = topStatistics.setdefault("totalTasks", 0)
         totalPatrols = topStatistics.setdefault("totalPatrols", 0)
         longestPatrol = topStatistics.setdefault("longestPatrol", 0.0)
+        mostActivePatrol = topStatistics.setdefault("mostActivePatrol", 0)
+        firstTaskTime = topStatistics.setdefault("firstTaskTime", None)
+
         logP.debug(
             (
                 f"{nON(peep)}-"
@@ -769,6 +772,8 @@ async def count(
                 f" totalTasks: {totalTasks}"
                 f" totalPatrols: {totalPatrols}"
                 f" longestPatrol: {longestPatrol}"
+                f" firstTaskTime: {firstTaskTime}"
+                f" mostActivePatrol: {mostActivePatrol}"
             )
         )
         pickle_file[peep.id]["Name"] = peep.name
@@ -811,45 +816,83 @@ def getBrief(cmdName: str = ""):
     return ret
 
 
-async def finPatrol(activeRole: discord.Role, activeTimeMax: int):
+async def finOnCall(onCallRole: discord.Role, activeTimeMax: int):
     notActive = {}
-    memberDict = load(activeRole.guild.id)
+    memberDict = load(onCallRole.guild.id)
     currTime = time.time()
     currentlyPatrolling = 0
     for key, val in memberDict.items():
-        logP.debug(val)
         currPatrol = val.get("currPatrol", {})
-        lastTaskTime = currPatrol.get("lastTaskTime", 0)
+        lastTaskTime = currPatrol.get("lastTaskTime", None)
+
+        if lastTaskTime:
+            currentlyPatrolling += 1
+            sinceLastTask = int(round(currTime - lastTaskTime))
+            logP.debug(f"Time since last task is: {sinceLastTask}")
+            if sinceLastTask > activeTimeMax:
+                member = get(onCallRole.guild.members, id=int(key))
+                if member:
+                    notActive[member] = sinceLastTask
+
+    membersFinishingPatrol = set(onCallRole.members) & set(notActive.keys())
+    for peep in membersFinishingPatrol:
+        await peep.remove_roles(onCallRole)
+
+
+async def finPatrol(
+    patrolRole: discord.Role, activeTimeMax: int, onCallRole: discord.Role
+):
+    notActive = {}
+    memberDict = load(patrolRole.guild.id)
+    currTime = time.time()
+    currentlyPatrolling = 0
+    for key, val in memberDict.items():
+        currPatrol = val.get("currPatrol", {})
+        lastTaskTime = currPatrol.get("lastTaskTime", None)
 
         if lastTaskTime:
             currentlyPatrolling += 1
             lastPatrolTime = int(round(currTime - lastTaskTime))
-            logP.debug(f"Time since last patrol start is: {lastPatrolTime}")
+            numPatrolTasks = currPatrol.get("patrolTasks", 0)
+            logP.debug(f"Time since last task is: {lastPatrolTime}")
             if lastPatrolTime > activeTimeMax:
-                member = get(activeRole.guild.members, id=int(key))
+                member = get(patrolRole.guild.members, id=int(key))
                 if member:
-                    notActive[member] = lastPatrolTime
+                    notActive[member] = [lastPatrolTime, numPatrolTasks]
 
-    membersFinishingPatrol = set(activeRole.members) & set(notActive.keys())
+    membersFinishingPatrol = set(patrolRole.members) & set(notActive.keys())
 
     perPatrolMes = (
         f"{currentlyPatrolling}/{len(memberDict)} {SUPEROLE}'s have started a "
         f"patrol at some point in time and {len(membersFinishingPatrol)} "
         "are currently finishing their patrol. "
-        f"{len(activeRole.members)-len(membersFinishingPatrol)} are out on a "
-        f"patrol now. There are {len(notActive)} Patrol Veterans either "
-        "starting to or already resting."
+        f"{len(patrolRole.members)-len(membersFinishingPatrol)} are out on a "
+        f"patrol now."
     )
 
     logP.debug(perPatrolMes)
 
     for peep in membersFinishingPatrol:
-        await peep.remove_roles(activeRole)
-        longestPatrol = memberDict[peep.id].get("longestPatrol", 0)
-        if longestPatrol < notActive[peep]:
-            memberDict[peep.id]["longestPatrol"] = notActive[peep]
+        await peep.remove_roles(patrolRole)
+        await peep.add_roles(onCallRole)
+        memberDict[peep.id].setdefault("topStatistics", {})
+        longestPatrol = memberDict[peep.id]["topStatistics"].get(
+            "longestPatrol", 0
+        )
+        mostActivePatrol = memberDict[peep.id]["topStatistics"].get(
+            "mostActivePatrol", 0
+        )
 
-    save(activeRole.guild.id, memberDict)
+        if longestPatrol < notActive[peep][0]:
+            memberDict[peep.id]["topStatistics"]["longestPatrol"] = notActive[
+                peep
+            ][0]
+        if mostActivePatrol < notActive[peep][1]:
+            memberDict[peep.id]["topStatistics"][
+                "mostActivePatrol"
+            ] = notActive[peep][1]
+
+    save(patrolRole.guild.id, memberDict)
 
     return perPatrolMes
 
@@ -1027,8 +1070,7 @@ def isSuper(
 
 async def sendMessage(mes, location: Messageable):
     if isinstance(mes, discord.Embed):
-        embedList = splitEmbed(mes)
-        for emb in embedList:
+        for emb in pageEmbed(mes):
             if emb:
                 await location.send(embed=emb)
     if isinstance(mes, str):
@@ -1041,8 +1083,40 @@ async def sendMessage(mes, location: Messageable):
                 await location.send(message)
 
 
-def splitEmbed(mes: discord.Embed):
-    return [mes]
+def embedBelowMaxLen(mes: discord.Embed, lenCheck=6000):
+    if embedLen(mes) < lenCheck:
+        return True
+    return False
+
+
+def embedLen(emb: discord.Embed):
+    fields = [emb.title, emb.description, emb.footer.text, emb.author.name]
+    fields.extend([field.name for field in emb.fields])
+    fields.extend([field.value for field in emb.fields])
+    total = ""
+    for item in fields:
+        total += str(item) if str(item) != "Embed.Empty" else ""
+    return len(total)
+
+
+def pageEmbed(mes: discord.Embed, maxFields=25):
+    totFields = 0
+    newMes = discord.Embed(title=mes.title, description=mes.description)
+    newMes.set_author(
+        name=mes.author.name,
+        url=mes.author.url,
+        icon_url=mes.author.icon_url,
+    )
+    newMes.set_footer(text=mes.footer.text, icon_url=mes.footer.icon_url)
+
+    for field in mes.fields:
+        if totFields + 1 > maxFields or not embedBelowMaxLen:
+            yield newMes
+            totFields = 0
+        newMes.add_field(name=field.name, value=field.value)
+        totFields += 1
+
+    yield newMes
 
 
 def splitFunc(mesList: list[str], maxLen: int = 2000):
@@ -1071,3 +1145,48 @@ def splitFunc(mesList: list[str], maxLen: int = 2000):
                 continue
     retList.append(currMes)
     return retList
+
+
+def pickWeightedSupe(
+    ctx: commands.Context,
+    roles: list[discord.Role],
+    weights: list[int],
+    numPicks: int = 1,
+) -> list[discord.Member]:
+
+    if len(roles) != len(weights):
+        raise Exception("Number of roles and weights do not match.")
+    toRet = []
+
+    if numPicks == -1:
+        toRet += roles[-1].members
+        if ctx.author in toRet:
+            toRet.remove(ctx.author)
+
+    elif numPicks:
+        if numPicks < 0:
+            numPicks = 0
+        roleSets = []
+        for role in roles:
+            toAppend = role.members
+            if ctx.author in toAppend:
+                toAppend.remove(ctx.author)
+            roleSets.append(toAppend)
+
+        while numPicks:
+            numPicks -= 1
+
+            toAdd = None
+            while not toAdd:
+                pickRole = random.choices(roleSets, weights)
+                if isinstance(pickRole, list):
+                    pickRole = pickRole[0]
+                if pickRole:
+                    toAdd = random.choice(pickRole)
+            toRet.append(toAdd)
+
+            for roleList in roleSets:
+                if toAdd in roleList:
+                    roleList.remove(toAdd)
+
+    return toRet

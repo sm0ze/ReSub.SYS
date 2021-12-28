@@ -6,7 +6,7 @@ from discord.ext import commands
 
 import log
 from sharedConsts import COMON, HOSTNAME
-from sharedFuncs import asleep, dupeMes, getBrief, getDesc
+from sharedFuncs import asleep, dupeMes, getBrief, getDesc, load, save
 
 logP = log.get_logger(__name__)
 
@@ -29,6 +29,20 @@ class ownerCommands(
 
         # messy implementation for Supe
         return commands.check(await predicate(ctx))
+
+    @commands.command(
+        enabled=COMON,
+        brief=getBrief("resetPatrol"),
+        description=getDesc("resetPatrol"),
+    )
+    async def resetPatrol(self, ctx: commands.Context):
+        cache_file = load(ctx.guild.id)
+
+        for key in cache_file.keys():
+            cache_file[key].pop("currPatrol", None)
+            cache_file[key].pop("topStatistics", None)
+        save(ctx.guild.id, cache_file)
+        await ctx.send("Truncated File.")
 
     @commands.command(
         brief=getBrief("resume"),

@@ -23,7 +23,7 @@ from sharedFuncs import funcBuild, nON, sendMessage, spent
 logP = log.get_logger(__name__)
 
 statMes = """{17}
-HP: {0:0.2g}/{9:0.2g} (**{13}%**) + {5} ({18}%)
+HP: {0:0.3g}/{9:0.3g} (**{13}%**) + {5} ({18}%)
 Sta: **{10}**/{12} +{11}
 P: {1}A/{2:0.2g}D
 M: {3}A/{4:0.2g}D

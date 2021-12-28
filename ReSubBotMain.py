@@ -248,4 +248,5 @@ if __name__ == "__main__":
     if runBot:
         logP.info("Bot connection starting....")
         bot.run(TOKEN, reconnect=True)
+
 logP.critical("Bot has reached end of file")

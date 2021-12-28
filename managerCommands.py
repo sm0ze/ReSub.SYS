@@ -9,7 +9,8 @@ from discord.utils import get
 
 import log
 from sharedConsts import (
-    ACTIVEROLEID,
+    CALLROLEID,
+    PATROLROLEID,
     ACTIVESEC,
     COMON,
     HOSTNAME,
@@ -33,6 +34,7 @@ from sharedFuncs import (
     pointsLeft,
     rAddFunc,
     save,
+    sendMessage,
     topEnh,
 )
 
@@ -204,10 +206,26 @@ class managerCommands(
         description=getDesc("finPatrol"),
     )
     async def finPatrol(self, ctx: commands.Context):
-        foundRole = get(ctx.guild.roles, id=int(ACTIVEROLEID))
-        if foundRole:
-            mes = await finPatrol(foundRole, ACTIVESEC)
+        patrolRole = get(ctx.guild.roles, id=int(PATROLROLEID))
+        onCallRole = get(ctx.guild.roles, id=int(CALLROLEID))
+
+        if patrolRole and onCallRole:
+            mes = await finPatrol(patrolRole, ACTIVESEC, onCallRole)
             await ctx.send(mes)
+
+    @commands.command(
+        enabled=COMON,
+        brief=getBrief("printSave"),
+        description=getDesc("printSave"),
+    )
+    async def printSave(self, ctx: commands.Context):
+        sendMes = ""
+        cache_file = load(ctx.guild.id)
+
+        for key, val in cache_file.items():
+            sendMes += f"{val}\n"
+        await sendMessage(sendMes, ctx)
+        await ctx.send("Printed Save File.")
 
     @commands.command(
         enabled=COMON,

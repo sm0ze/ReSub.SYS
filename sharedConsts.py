@@ -18,7 +18,7 @@ def askToken(var: str) -> str:
     return tempToken
 
 
-HOSTNAME = socket.gethostname()
+HOSTNAME = socket.gethostname().lower()
 logP.info(f"Name of host for program is: {HOSTNAME}")
 
 COMON = True
@@ -67,10 +67,13 @@ MANAGERROLES = [MANAGER]
 
 LOWESTROLE = 2  # bot sorts roles by rank from position of int10 to LOWESTROLE
 LEADLIMIT = 12
-NEWCALC = 1
 DL_ARC_DUR = 60
 
-ACTIVEROLEID = 922408216644698162
+
+PATROLROLEID = 922408216644698162
+CALLROLEID = 925197249179418654
+TASKCD = 60 * 30
+TIMTILLONCALL = TASKCD * 4 + 60 * 60
 ACTIVESEC = 60 * 60 * 24 * 7
 
 DEFDUELOPP = 159985870458322944
@@ -81,7 +84,6 @@ BOTTURNWAIT = 60
 GEMDIFF = os.getenv("GEMDIFF")
 if not GEMDIFF:
     GEMDIFF = 0.5
-TASKCD = 60 * 30
 
 
 VERSION = 0

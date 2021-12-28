@@ -15,7 +15,8 @@ import sharedDyVars
 from battle import NPC, battler, player
 from exceptions import noFields, notADuel, notNPC, notSupeDuel
 from sharedConsts import (
-    ACTIVEROLEID,
+    CALLROLEID,
+    PATROLROLEID,
     ACTIVESEC,
     BOTTURNWAIT,
     COMMANDSROLES,
@@ -30,6 +31,7 @@ from sharedConsts import (
     ROUNDLIMIT,
     SUPEROLE,
     TASKCD,
+    TIMTILLONCALL,
 )
 from sharedDicts import (
     leader,
@@ -46,6 +48,7 @@ from sharedDicts import (
 from sharedFuncs import (
     count,
     cut,
+    finOnCall,
     finPatrol,
     funcBuild,
     genBuild,
@@ -57,6 +60,7 @@ from sharedFuncs import (
     mee6DictGrab,
     memGrab,
     nON,
+    pickWeightedSupe,
     pluralInt,
     pointsLeft,
     rAddFunc,
@@ -87,6 +91,7 @@ class roleCommands(
         self, bot: typing.Union[commands.bot.Bot, commands.bot.AutoShardedBot]
     ):
         self.bot = bot
+        self.onCallLoop.start()
         self.patrolLoop.start()
         self.xpLoop.start()
 
@@ -126,12 +131,24 @@ class roleCommands(
     @tasks.loop(minutes=60)
     async def patrolLoop(self):
         for guild in self.bot.guilds:
-            foundRole = get(guild.roles, id=int(ACTIVEROLEID))
-            if foundRole:
-                await finPatrol(foundRole, ACTIVESEC)
+            patrolRole = get(guild.roles, id=int(PATROLROLEID))
+            onCallRole = get(guild.roles, id=int(CALLROLEID))
+            if patrolRole and onCallRole:
+                await finPatrol(patrolRole, TIMTILLONCALL, onCallRole)
 
     @patrolLoop.before_loop
     async def before_patrolLoop(self):
+        await self.bot.wait_until_ready()
+
+    @tasks.loop(minutes=10)
+    async def onCallLoop(self):
+        for guild in self.bot.guilds:
+            onCallRole = get(guild.roles, id=int(CALLROLEID))
+            if onCallRole:
+                await finOnCall(onCallRole, ACTIVESEC)
+
+    @patrolLoop.before_loop
+    async def before_onCallLoop(self):
         await self.bot.wait_until_ready()
 
     @commands.command(
@@ -200,41 +217,25 @@ class roleCommands(
         taskAdd = taskShrt["Add"]
         logP.debug(f"Task can have additional {taskAdd} peeps")
 
-        activeRole = get(ctx.guild.roles, id=int(ACTIVEROLEID))
-        supRole = get(ctx.message.guild.roles, name=SUPEROLE)
+        patrolRole = get(ctx.guild.roles, id=int(PATROLROLEID))
+        supRole = get(ctx.guild.roles, name=SUPEROLE)
+        onCallRole = get(ctx.guild.roles, id=int(CALLROLEID))
 
-        aidPick = [activeRole, supRole]
-        aidWeight = [50, 50]
+        aidPick = [patrolRole, onCallRole, supRole]
+        aidWeight = [40, 30, 30]
 
         if taskAdd:
             logP.debug(f"Guild has {len(ctx.message.guild.roles)} roles")
-            aidChoice = random.choices(aidPick, aidWeight)
-            peepToAdd = aidChoice[0] if aidChoice else supRole
-            logP.debug(f"{peepToAdd.id}, {peepToAdd.name}")
-            if taskAdd == -1:
-                if len(peepToAdd.members) < 2:
-                    addPeeps = [ctx.author, random.choice(supRole.members)]
-                else:
-                    addPeeps = peepToAdd.members
-                addPeeps.remove(ctx.message.author)
-                # addNames = "every host of the Superhero Enhancement System!"
-            else:
-                if len(peepToAdd.members) < taskAdd + 1:
-                    addPeeps = random.sample(supRole.members, k=taskAdd + 1)
-                else:
-                    addPeeps = random.sample(peepToAdd.members, k=taskAdd + 1)
-                logP.debug(f"peeps list is: {addPeeps}")
-                if ctx.message.author in addPeeps:
-                    addPeeps.remove(ctx.message.author)
+            addPeeps = pickWeightedSupe(ctx, aidPick, aidWeight, taskAdd)
             xpList = [[x, taskShrt["Aid"]] for x in addPeeps[:taskAdd]]
-            xpList.append([ctx.message.author, 1])
+            xpList.append([ctx.author, 1])
         else:
             addPeeps = ""
-            xpList = [[ctx.message.author, 1]]
+            xpList = [[ctx.author, 1]]
         logP.debug("xpList = ", xpList)
         logP.debug(f"{taskType}\nTask XP: {lvlEqu(taskWorth[0], 1)}")
         emptMes = discord.Embed(
-            title=f"Alert, {nON(ctx.message.author)}!",
+            title=f"Alert, {nON(ctx.author)}!",
             description=f"A new {taskType[0]} GDV task has been assigned.",
         )
 
@@ -306,26 +307,26 @@ class roleCommands(
         )
 
         try:
-            authInf = load(ctx.message.author.guild.id)
+            cached_file = load(ctx.guild.id)
         except Exception as e:
             logP.debug(str(e))
-        if not authInf:
-            authInf = {}
+        if not cached_file:
+            cached_file = {}
 
         for peep in reversed(xpList):
             logP.debug(f"peep is: {peep}")
-            if peep[0].id in authInf.keys():
-                authInf[peep[0].id]["invXP"][-1] += taskGrant * peep[1]
+            if peep[0].id in cached_file.keys():
+                cached_file[peep[0].id]["invXP"][-1] += taskGrant * peep[1]
             else:
-                authInf[peep[0].id] = {"Name": peep[0].name}
-                authInf[peep[0].id]["invXP"] = [0, 0, taskGrant * peep[1]]
+                cached_file[peep[0].id] = {"Name": peep[0].name}
+                cached_file[peep[0].id]["invXP"] = [0, 0, taskGrant * peep[1]]
 
-            if peep[0].id == ctx.message.author.id or taskAdd != -1:
+            if peep[0].id == ctx.author.id or taskAdd != -1:
                 emptMes.add_field(
                     name=f"{nON(peep[0])} Earns",
                     value=(
                         f"{taskGrant * peep[1]:,} GDV XP\nTotal of "
-                        f"{authInf[peep[0].id]['invXP'][-1]:,} XP"
+                        f"{cached_file[peep[0].id]['invXP'][-1]:,} XP"
                     ),
                 )
         if taskAdd == -1:
@@ -334,23 +335,29 @@ class roleCommands(
                 value=f"Earns {taskGrant * taskShrt['Aid']} GDV XP",
             )
 
-        if activeRole:
+        if patrolRole and onCallRole:
             patrolMes = ""
+            authInf = cached_file[ctx.author.id]
 
             currTime = time.time()
-            authInf[ctx.author.id]["topStatistics"]["totalTasks"] += 1
-            authInf[ctx.author.id]["currPatrol"]["lastTaskTime"] = currTime
-            if activeRole not in ctx.author.roles:
-                await ctx.author.add_roles(activeRole)
 
-                authInf[ctx.author.id]["currPatrol"]["patrolStart"] = currTime
-                authInf[ctx.author.id]["currPatrol"]["patrolTasks"] = 1
+            authInf.setdefault("topStatistics", {})
+            authInf.setdefault("currPatrol", {})
 
-                authInf[ctx.author.id]["topStatistics"]["totalPatrols"] += 1
+            authInf["topStatistics"].setdefault("totalTasks", 0)
+            authInf["topStatistics"].setdefault("firstTaskTime", currTime)
 
-                totPatrols = authInf[ctx.author.id]["topStatistics"][
-                    "totalPatrols"
-                ]
+            authInf["topStatistics"]["totalTasks"] += 1
+            authInf["currPatrol"]["lastTaskTime"] = currTime
+            if patrolRole not in ctx.author.roles:
+                await ctx.author.add_roles(patrolRole)
+
+                authInf["currPatrol"]["patrolStart"] = currTime
+                authInf["currPatrol"]["patrolTasks"] = 1
+
+                authInf["topStatistics"]["totalPatrols"] += 1
+
+                totPatrols = authInf["topStatistics"]["totalPatrols"]
 
                 patrolMes += (
                     f"{nON(ctx.author)} is starting their Patrol"
@@ -358,22 +365,19 @@ class roleCommands(
                 )
 
             else:
-                authInf[ctx.author.id]["currPatrol"]["patrolTasks"] += 1
+                authInf["currPatrol"].setdefault("patrolTasks", 0)
+                authInf["currPatrol"]["patrolTasks"] += 1
 
-                currPatrolStart = authInf[ctx.author.id]["currPatrol"][
-                    "patrolStart"
-                ]
-                totPatrols = authInf[ctx.author.id]["topStatistics"][
-                    "totalPatrols"
-                ]
+                currPatrolStart = authInf["currPatrol"].setdefault(
+                    "patrolStart", currTime
+                )
+                totPatrols = authInf["topStatistics"]["totalPatrols"]
                 currPatrolTime = str(
                     datetime.timedelta(
                         seconds=int(round(currTime - currPatrolStart))
                     )
                 )
-                currPatrolTasks = authInf[ctx.author.id]["currPatrol"][
-                    "patrolTasks"
-                ]
+                currPatrolTasks = authInf["currPatrol"]["patrolTasks"]
 
                 patrolMes += (
                     f"{nON(ctx.author)} is continuing their Patrol "
@@ -383,7 +387,7 @@ class roleCommands(
                 )
             emptMes.add_field(inline=False, name="Patrolling", value=patrolMes)
 
-        save(ctx.message.author.guild.id, authInf)
+        save(ctx.message.author.guild.id, cached_file)
         stateL = await count(ctx.message.author)
         currEnhP = stateL[0]
         logP.debug(
@@ -861,7 +865,7 @@ class roleCommands(
                 text=f"{peep.name}#{peep.discriminator} - {HOSTNAME}",
                 icon_url=peep.display_avatar,
             )
-            patrolRole = get(ctx.guild.roles, id=int(ACTIVEROLEID))
+            patrolRole = get(ctx.guild.roles, id=int(PATROLROLEID))
             isPatrolStr = "Not Patrolling"
             patrolStats = ""
             if patrolRole:
@@ -1222,7 +1226,7 @@ async def startDuel(
         ),
         value="Prize to be implemented.",
     )
-    if not winner == "exhaustion":
+    if isinstance(winner, player):
         mes.set_thumbnail(url=winner.pic)
     await bat.echoMes(mes, thrd)
     await bat.echoMes(f"<#{ctx.channel.id}>", thrd, False)
