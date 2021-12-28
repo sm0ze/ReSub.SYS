@@ -376,6 +376,9 @@ class roleCommands(
                     currPatrolStart = currTime
                     authInf["currPatrol"]["patrolStart"] = currTime
                 totPatrols = authInf["topStatistics"]["totalPatrols"]
+                if not totPatrols:
+                    totPatrols = 1
+                    authInf["topStatistics"]["totalPatrols"] = totPatrols
                 currPatrolTime = str(
                     datetime.timedelta(
                         seconds=int(round(currTime - currPatrolStart))
