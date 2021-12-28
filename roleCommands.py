@@ -372,6 +372,9 @@ class roleCommands(
                 currPatrolStart = authInf["currPatrol"].setdefault(
                     "patrolStart", currTime
                 )
+                if not currPatrolStart:
+                    currPatrolStart = currTime
+                    authInf["currPatrol"]["patrolStart"] = currTime
                 totPatrols = authInf["topStatistics"]["totalPatrols"]
                 currPatrolTime = str(
                     datetime.timedelta(
@@ -874,10 +877,13 @@ class roleCommands(
                     isPatrolStr = f"Patrol #{stuff[5]['totalPatrols']}"
 
                     currPatrolStart = stuff[4]["patrolStart"]
+                    currTime = time.time()
+                    if currPatrolStart:
+                        patrolLength = currTime - currPatrolStart
+                    else:
+                        patrolLength = 0
                     currPatrolTime = str(
-                        datetime.timedelta(
-                            seconds=int(round(time.time() - currPatrolStart))
-                        )
+                        datetime.timedelta(seconds=int(round(patrolLength)))
                     )
                     currPatrolTasks = stuff[4]["patrolTasks"]
 
