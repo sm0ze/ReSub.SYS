@@ -490,7 +490,11 @@ class roleCommands(
         brief=getBrief("generate"),
         description=getDesc("generate"),
     )
-    async def generate(self, ctx: commands.Context, val: int = 5, typ=""):
+    async def generate(
+        self, ctx: commands.Context, val: int = 5, typ: str = ""
+    ):
+        if typ:
+            typ = typ.lower()
         if val < 0:
             await ctx.send("A positive integer is required")
             return

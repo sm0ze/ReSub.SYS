@@ -1019,6 +1019,7 @@ def genBuild(val: int = 0, typ: str = "", iniBuild: list = []):
                     build = funcBuild(prevBuild)
                     build = build[2]
                     building = False
+
             name = want[2][-nextLargest][1]
             rank = want[2][-nextLargest][0]
             shrt = [x for x in leader.keys() if leader[x] == name][0]
@@ -1027,6 +1028,8 @@ def genBuild(val: int = 0, typ: str = "", iniBuild: list = []):
             for typeOf, rankOf in splitBuild:
                 if shrt == typeOf:
                     rank = int(rankOf) + 1
+                    if name in restrictedList:
+                        rank = 0
                     if rank > 10:
                         rank = 10
                     break
