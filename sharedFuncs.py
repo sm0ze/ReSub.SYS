@@ -1069,6 +1069,21 @@ def isSuper(
 
 
 async def sendMessage(mes, location: Messageable):
+    """
+    What are you sending and where is it going?
+    This function will friut ninja your message to discord message
+    length standards.
+
+    Parameters
+    ----------
+    mes : Str | Discord.Embed
+        The message to be sent. Can be a string that will be split by line
+        into 2000 character chunks. or a Discord.Embed that will be split by
+        24 field chunks.
+    location : Messageable
+        The location to send the message. A messagable type is a Discord type
+        that has the attribute send.
+    """
     if isinstance(mes, discord.Embed):
         for emb in pageEmbed(mes):
             if emb:

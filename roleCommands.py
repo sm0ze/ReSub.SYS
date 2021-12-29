@@ -354,7 +354,7 @@ class roleCommands(
                 totPatrols = authInf["topStatistics"]["totalPatrols"]
 
                 patrolMes += (
-                    f"{nON(ctx.author)} is starting their Patrol"
+                    f"{nON(ctx.author)} is starting their Patrol "
                     f"#{totPatrols}!\n"
                 )
 

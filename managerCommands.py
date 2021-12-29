@@ -304,7 +304,7 @@ class managerCommands(
             ),
         )
         mes.set_footer(text=HOSTNAME, icon_url=self.bot.user.display_avatar)
-        await ctx.send(embed=mes)
+        await sendMessage(mes, ctx)
 
     @commands.command(
         enabled=COMON,
