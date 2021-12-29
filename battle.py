@@ -93,6 +93,7 @@ class player:
             self.pic = member.pic
 
         self.fB = funcBuild(self.bL)
+        self.bC = self.fB[0]
         self.stats = self.fB[2]
 
         self.t = int(0)

@@ -308,6 +308,22 @@ class managerCommands(
 
     @commands.command(
         enabled=COMON,
+        aliases=["poop"],
+        brief=getBrief("popPeep"),
+        description=getDesc("popPeep"),
+    )
+    async def popPeep(self, ctx: commands.Context, peep: discord.Member):
+        cache_file = load(ctx.guild.id)
+        if peep.id not in cache_file.keys():
+            ctx.send(f"{nON(peep)} is not saved in File.")
+            return
+        haveRemoved = cache_file.pop(peep.id)
+        sendMes = f"Have removed {peep.id}: {haveRemoved}"
+        logP.debug(sendMes)
+        await ctx.send(sendMes)
+
+    @commands.command(
+        enabled=COMON,
         brief=getBrief("moveRoles"),
         description=getDesc("moveRoles"),
     )

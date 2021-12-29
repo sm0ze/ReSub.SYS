@@ -66,6 +66,7 @@ from sharedFuncs import (
     rAddFunc,
     reqEnd,
     save,
+    sendMessage,
     spent,
     tatsuXpGrab,
     toAdd,
@@ -150,6 +151,68 @@ class roleCommands(
     @patrolLoop.before_loop
     async def before_onCallLoop(self):
         await self.bot.wait_until_ready()
+
+    @commands.command(
+        enabled=COMON,
+        aliases=["npc"],
+        brief=getBrief("npcList"),
+        description=getDesc("npcList"),
+    )
+    async def npcList(self, ctx: commands.Context, toList: str = ""):
+        newMes = discord.Embed(title="NPC List")
+        peepList = []
+        if toList:
+            if not (
+                toList in npcDict.keys()
+                or toList in [npcDict[x]["name"] for x in npcDict.keys()]
+            ):
+                if not toList.lower() == "stats":
+                    ctx.send(f"NPC {toList} not found.")
+                    return
+            NPCid = ""
+            if toList in npcDict.keys():
+                NPCid = toList
+            elif toList in [npcDict[x]["name"] for x in npcDict.keys()]:
+                posName = [
+                    x for x in npcDict.keys() if npcDict[x]["name"] == toList
+                ]
+                if posName:
+                    NPCid = posName[0]
+            elif toList.lower() == "stats":
+                for x in npcDict.keys():
+                    peepList.append(x)
+
+            if NPCid:
+                peepList.append(NPCid)
+            for peep in peepList:
+                foundNPC = NPC(self.bot, npcDict[peep])
+                foundPlayer = player(foundNPC, self.bot)
+                newMes.add_field(
+                    name=f"{foundPlayer.n} ({foundPlayer.bC})",
+                    value=f"{foundPlayer.statMessage()}",
+                )
+
+                if NPCid:
+                    playerEhnList = [
+                        masterEhnDict[x]["Name"] for x in foundPlayer.bL
+                    ]
+                    playerEhnListStr = ""
+                    for ehn in sorted(
+                        playerEhnList,
+                        key=lambda x: int(x.split()[1]),
+                        reverse=True,
+                    ):
+                        playerEhnListStr += f"{ehn}\n"
+                    newMes.add_field(
+                        name="Enhancements", value=playerEhnListStr
+                    )
+                    newMes.set_thumbnail(url=foundNPC.pic)
+        else:
+            peepListStr = ""
+            for peep in npcDict.keys():
+                peepListStr += f"{peep}: {npcDict[peep]['name']}\n"
+            newMes.add_field(name="ID: Name", value=peepListStr)
+        await sendMessage(newMes, ctx)
 
     @commands.command(
         enabled=COMON,

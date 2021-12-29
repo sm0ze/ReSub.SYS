@@ -1117,12 +1117,14 @@ def embedLen(emb: discord.Embed):
 def pageEmbed(mes: discord.Embed, maxFields=24):
     totFields = 0
     newMes = discord.Embed(title=mes.title, description=mes.description)
-    if isinstance(mes.author.name, str):
+    if mes.author:
         newMes.set_author(
             name=mes.author.name,
             url=mes.author.url,
             icon_url=mes.author.icon_url,
         )
+    if mes.thumbnail:
+        newMes.set_thumbnail(url=mes.thumbnail.url)
     newMes.set_footer(text=mes.footer.text, icon_url=mes.footer.icon_url)
 
     for field in mes.fields:
