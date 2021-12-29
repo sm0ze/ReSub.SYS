@@ -1099,20 +1099,22 @@ def embedLen(emb: discord.Embed):
     return len(total)
 
 
-def pageEmbed(mes: discord.Embed, maxFields=25):
+def pageEmbed(mes: discord.Embed, maxFields=24):
     totFields = 0
     newMes = discord.Embed(title=mes.title, description=mes.description)
-    newMes.set_author(
-        name=mes.author.name,
-        url=mes.author.url,
-        icon_url=mes.author.icon_url,
-    )
+    if isinstance(mes.author.name, str):
+        newMes.set_author(
+            name=mes.author.name,
+            url=mes.author.url,
+            icon_url=mes.author.icon_url,
+        )
     newMes.set_footer(text=mes.footer.text, icon_url=mes.footer.icon_url)
 
     for field in mes.fields:
         if totFields + 1 > maxFields or not embedBelowMaxLen:
             yield newMes
             totFields = 0
+            newMes.clear_fields()
         newMes.add_field(name=field.name, value=field.value)
         totFields += 1
 

@@ -199,13 +199,6 @@ class roleCommands(
     )
     @commands.cooldown(1, TASKCD, type=commands.BucketType.user)
     async def task(self, ctx: commands.Context):
-        """
-        It can be 60% minor, you only,
-        25% moderate +1 random supe gets half xp,
-        10% major +3 random supes get half and
-        5% [imperative] everyone gets quarter xp - Geminel
-        https://discord.com/channels/822410354860097577/823225800073412698/907167823284019231
-        """
 
         taskType = random.choices(
             taskVar["taskOpt"][0],
