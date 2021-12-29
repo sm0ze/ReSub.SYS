@@ -85,5 +85,9 @@ GEMDIFF = os.getenv("GEMDIFF")
 if not GEMDIFF:
     GEMDIFF = 0.5
 
+ASKSELF = 0
+ASKNOONE = 1
+ASKALL = 2
+ASKNPC = 3
 
 VERSION = 0

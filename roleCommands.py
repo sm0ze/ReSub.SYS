@@ -15,6 +15,8 @@ import sharedDyVars
 from battle import NPC, battler, player
 from exceptions import noFields, notADuel, notNPC, notSupeDuel
 from sharedConsts import (
+    ASKNPC,
+    ASKSELF,
     CALLROLEID,
     PATROLROLEID,
     ACTIVESEC,
@@ -995,10 +997,10 @@ class roleCommands(
             typing.Union[
                 typing.Literal[1], typing.Literal[2], typing.Literal[3]
             ]
-        ] = None,
+        ] = ASKSELF,
         opponent: typing.Union[discord.Member, str] = False,
     ):
-        if not dontAsk == 2:
+        if not dontAsk == ASKNPC:
             if not isinstance(opponent, discord.Member):
                 if not opponent:
                     opponent = get(ctx.guild.members, id=DEFDUELOPP)
