@@ -428,7 +428,9 @@ class battler:
         for peep in self.playerList:
             if not peep.npc:
                 if not peep.p.bot:
-                    if not dontAsk == 1:
+                    if dontAsk == 3 and (peep is self.playerList[0]):
+                        await peep.ask(self.playerList)
+                    elif dontAsk not in [1, 3]:
                         if isinstance(peep, player):
                             await peep.ask(self.playerList)
 

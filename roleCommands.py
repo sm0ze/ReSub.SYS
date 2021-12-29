@@ -992,7 +992,9 @@ class roleCommands(
         self,
         ctx: commands.Context,
         dontAsk: typing.Optional[
-            typing.Union[typing.Literal[1], typing.Literal[2]]
+            typing.Union[
+                typing.Literal[1], typing.Literal[2], typing.Literal[3]
+            ]
         ] = None,
         opponent: typing.Union[discord.Member, str] = False,
     ):
