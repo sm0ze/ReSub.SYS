@@ -202,6 +202,21 @@ class managerCommands(
 
     @commands.command(
         enabled=COMON,
+        brief=getBrief("leavers"),
+        description=getDesc("leavers"),
+    )
+    async def leavers(self, ctx: commands.Context):
+        supeRole = get(ctx.guild.roles, name=SUPEROLE)
+        cached_file = load(ctx.guild.id)
+        mes = discord.Embed(title="Leavers")
+        memberIdList = [x.id for x in supeRole.members]
+        for peep in cached_file.keys():
+            if peep not in memberIdList:
+                mes.add_field(name=f"{peep}", value=cached_file[peep])
+        await sendMessage(mes, ctx)
+
+    @commands.command(
+        enabled=COMON,
         brief=getBrief("finPatrol"),
         description=getDesc("finPatrol"),
     )
@@ -312,7 +327,7 @@ class managerCommands(
         brief=getBrief("popPeep"),
         description=getDesc("popPeep"),
     )
-    async def popPeep(self, ctx: commands.Context, peep: discord.Member):
+    async def popPeep(self, ctx: commands.Context, peep: discord.User):
         cache_file = load(ctx.guild.id)
         if peep.id not in cache_file.keys():
             ctx.send(f"{nON(peep)} is not saved in File.")
