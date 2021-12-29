@@ -423,10 +423,14 @@ def load(key: int, cache_file=SAVEFILE) -> dict[int, dict]:
 
 def lvlEqu(givVar: float = 0, inv=0) -> float:
     if inv:
-        calVar = (20 * math.pow(givVar, 2)) / 1.25
+        # calVar = (20 * math.pow(givVar, 2)) / 1.25
+        calVar = ((500 * math.pow(givVar, 2)) / 51) + ((35000 * givVar) / 51)
         logP.debug(f"{givVar:0.2g} GDV is equivalent to {calVar:,} XP")
     else:
-        calVar = math.sqrt((1.25 * givVar) / 20)
+        # calVar = math.sqrt((1.25 * givVar) / 20)
+        calVar = -35 + (
+            math.sqrt((51 * givVar) + 612500) / (10 * math.sqrt(5))
+        )
         logP.debug(f"{givVar:,} XP is equivalent to {calVar:0.2g} GDV")
     return round(calVar, 2)
 
