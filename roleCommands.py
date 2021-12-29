@@ -486,6 +486,74 @@ class roleCommands(
 
     @commands.command(
         enabled=COMON,
+        brief=getBrief("keep"),
+        description=getDesc("keep"),
+    )
+    async def keep(
+        self, ctx: commands.Context, doWith: str = "show", buildName: str = ""
+    ):
+        if doWith:
+            doWith = doWith.lower()
+        if not doWith == "show" and not buildName:
+            await ctx.send("No buildname to edit.")
+            return
+
+        cache_file = load(ctx.guild.id)
+        if doWith == "save":
+            if ctx.author.id not in cache_file.keys():
+                cache_file[ctx.author.id] = {}
+            cache_file[ctx.author.id].setdefault("builds", {})
+            cache_file[ctx.author.id]["builds"][buildName] = spent(
+                [ctx.author]
+            )[0][2]
+            await sendMessage(
+                f"Saved: {cache_file[ctx.author.id]['builds'][buildName]}", ctx
+            )
+
+        elif doWith in ["del", "delete"]:
+            if (
+                ctx.author.id not in cache_file.keys()
+                or "builds" not in cache_file[ctx.author.id].keys()
+                or not cache_file[ctx.author.id]["builds"]
+            ):
+                await ctx.send("No builds saved")
+                return
+            if buildName not in cache_file[ctx.author.id]["builds"].keys():
+                await ctx.send(f"no saved build named {buildName}")
+                return
+            await sendMessage(
+                (
+                    "Removed build: "
+                    f"{cache_file[ctx.author.id]['builds'].pop(buildName)}"
+                ),
+                ctx,
+            )
+        elif doWith == "show":
+            if (
+                ctx.author.id not in cache_file.keys()
+                or "builds" not in cache_file[ctx.author.id].keys()
+                or not cache_file[ctx.author.id]["builds"]
+            ):
+                await ctx.send("No builds saved")
+                return
+            await sendMessage(f"{cache_file[ctx.author.id]['builds']}", ctx)
+        elif doWith == "load":
+            if (
+                ctx.author.id not in cache_file.keys()
+                or "builds" not in cache_file[ctx.author.id].keys()
+                or not cache_file[ctx.author.id]["builds"]
+            ):
+                await ctx.send("No builds saved")
+                return
+            # HERE
+            await ctx.send("Not implemented yet")
+        else:
+            await ctx.send(f"{doWith} is not a recognised option.")
+
+        save(ctx.guild.id, cache_file)
+
+    @commands.command(
+        enabled=COMON,
         aliases=["gen"],
         brief=getBrief("generate"),
         description=getDesc("generate"),
@@ -549,6 +617,9 @@ class roleCommands(
         )
 
         pointTot = await count(user)
+        if pointTot[0] <= userHas[0]:
+            await ctx.send("User has no spare enhancement points.")
+            return
         # if author did not provide an enhancement to add, return
         if not typeRank:
             buildList = [highestEhn(userEnhancements)]
