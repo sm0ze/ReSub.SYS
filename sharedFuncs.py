@@ -867,7 +867,7 @@ async def finPatrol(
         f"patrol at some point in time and {len(membersFinishingPatrol)} "
         "are currently finishing their patrol. "
         f"{len(patrolRole.members)-len(membersFinishingPatrol)} are out on a "
-        f"patrol now."
+        f"patrol now with {len(onCallRole.members)} on call."
     )
 
     logP.debug(perPatrolMes)

@@ -320,6 +320,7 @@ class managerCommands(
         haveRemoved = cache_file.pop(peep.id)
         sendMes = f"Have removed {peep.id}: {haveRemoved}"
         logP.debug(sendMes)
+        save(ctx.guild.id, cache_file)
         await ctx.send(sendMes)
 
     @commands.command(
