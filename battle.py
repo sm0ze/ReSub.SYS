@@ -9,7 +9,7 @@ import discord
 from discord.ext import commands
 
 import log
-from sharedConsts import ASKALL, ASKSELF
+from sharedConsts import ASKALL, ASKNPC, ASKSELF
 from sharedDicts import (
     baseDict,
     bonusDict,
@@ -431,7 +431,7 @@ class battler:
                 if not peep.p.bot:
                     if dontAsk == ASKSELF and (peep is self.playerList[0]):
                         await peep.ask(self.playerList)
-                    elif dontAsk == ASKALL:
+                    elif dontAsk in [ASKALL, ASKNPC]:
                         if isinstance(peep, player):
                             await peep.ask(self.playerList)
 

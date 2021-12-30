@@ -1020,8 +1020,8 @@ def genBuild(val: int = 0, typ: str = "", iniBuild: list = []):
                     build = build[2]
                     building = False
 
-            name = want[2][-nextLargest][1]
-            rank = want[2][-nextLargest][0]
+            name = want[2][nextLargest][1]
+            rank = want[2][nextLargest][0]
             shrt = [x for x in leader.keys() if leader[x] == name][0]
             searchBuild = prevBuild.copy()
             splitBuild = [[x[:3], x[3:]] for x in searchBuild]
