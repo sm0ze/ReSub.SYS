@@ -539,7 +539,17 @@ class roleCommands(
             ):
                 await ctx.send("No builds saved")
                 return
-            await sendMessage(f"{cache_file[ctx.author.id]['builds']}", ctx)
+            mes = discord.Embed(title="Saved Builds")
+            for name, val in cache_file[ctx.author.id]["builds"].items():
+                valStr = ""
+                nameList = [masterEhnDict[x]["Name"] for x in val]
+                for item in sorted(
+                    nameList, key=lambda x: int(x.split()[1]), reverse=True
+                ):
+                    valStr += f"{item}\n"
+                mes.add_field(name=name, value=valStr)
+
+            await sendMessage(mes, ctx)
         elif doWith == "load":
             if (
                 ctx.author.id not in cache_file.keys()
