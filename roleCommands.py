@@ -488,10 +488,11 @@ class roleCommands(
 
     @commands.command(
         enabled=COMON,
-        brief=getBrief("keep"),
-        description=getDesc("keep"),
+        aliases=["lo"],
+        brief=getBrief("loadout"),
+        description=getDesc("loadout"),
     )
-    async def keep(
+    async def loadout(
         self, ctx: commands.Context, doWith: str = "show", buildName: str = ""
     ):
         if doWith:
