@@ -409,6 +409,8 @@ class roleCommands(
             authInf["currPatrol"]["lastTaskTime"] = currTime
             if patrolRole not in ctx.author.roles:
                 await ctx.author.add_roles(patrolRole)
+                if onCallRole in ctx.author.roles:
+                    await ctx.author.remove_roles(onCallRole)
 
                 authInf["currPatrol"]["patrolStart"] = currTime
                 authInf["currPatrol"]["patrolTasks"] = 1
