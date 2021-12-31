@@ -392,7 +392,7 @@ async def memGrab(
 
     # else use the command caller themself
     else:
-        grabList.append(ctx.message.author)
+        grabList.append(ctx.author)
         logP.debug(f"Author is: {grabList}")
     logP.debug(f"fixed grablist: {grabList}")
 
@@ -459,7 +459,7 @@ def topEnh(ctx: commands.Context, enh: str) -> dict:
         if enh == masterEhnDict[x]["Type"]
     }
     peepDict = {}
-    for peep in ctx.message.author.guild.members:
+    for peep in ctx.guild.members:
         if SUPEROLE not in [x.name for x in peep.roles]:
             continue
         for role in peep.roles:
@@ -523,7 +523,7 @@ async def cut(
 ):
     # iterate through given user list
     # assumed list has already been reduced to users with SUPEROLE
-    mes = discord.Embed(title="Cutting roles")
+    mes = discord.Embed(title="Cutting Roles")
 
     for peep in memberList:
 
@@ -579,7 +579,9 @@ async def toAdd(ctx: commands.Context, user: discord.Member, givenBuild: list):
     guildRoles = await user.guild.fetch_roles()
 
     # iterate through roles to add to user
-    sendMes = ""
+    sendMes = discord.Embed(title="Adding Roles")
+    rolesToAddStr = ""
+    rolesToAdd = []
     for role in addList:
         logP.debug(f"Trying to add role: {role}")
 
@@ -600,16 +602,16 @@ async def toAdd(ctx: commands.Context, user: discord.Member, givenBuild: list):
             roleId = await user.guild.create_role(name=role, color=colour)
 
         # add requested role to user
-        await user.add_roles(roleId)
-        sendMes += f"{nON(user)} now has {roleId}!\n"
+        rolesToAdd.append(roleId)
+        rolesToAddStr += f"Added {roleId}!\n"
 
     # trim the user of excess roles
     # debug("TO CUT")
     # await cut(ctx, [user])
-    if not sendMes:
-        await ctx.send(("You cannot add enhancements with that selection"))
-    else:
-        await ctx.send(sendMes)
+    if rolesToAddStr:
+        sendMes.add_field(name=f"{nON(user)}", value=rolesToAddStr)
+        await user.add_roles(*rolesToAdd)
+    await sendMessage(sendMes, ctx)
 
 
 async def pointsLeft(

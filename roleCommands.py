@@ -103,7 +103,7 @@ class roleCommands(
         async def predicate(ctx: commands.Context):
             for role in COMMANDSROLES:
                 chkRole = get(ctx.guild.roles, name=role)
-                if chkRole in ctx.message.author.roles:
+                if chkRole in ctx.author.roles:
                     return chkRole
             raise commands.CheckFailure(
                 (
@@ -454,14 +454,13 @@ class roleCommands(
                 )
             emptMes.add_field(inline=False, name="Patrolling", value=patrolMes)
 
-        save(ctx.message.author.guild.id, cached_file)
-        stateL = await count(ctx.message.author)
+        save(ctx.author.guild.id, cached_file)
+        stateL = await count(ctx.author)
         currEnhP = stateL[0]
         logP.debug(
-            f"{nON(ctx.message.author)} has {currEnhP} available"
-            " enhancements"
+            f"{nON(ctx.author)} has {currEnhP} available" " enhancements"
         )
-        stateG = spent([ctx.message.author])
+        stateG = spent([ctx.author])
         currEnh = int(stateG[0][1])
         logP.debug(f"and enhancments of number = {currEnh}")
         logP.debug(
@@ -469,14 +468,14 @@ class roleCommands(
         )
         if currEnh < currEnhP:
             val = (
-                f"{nON(ctx.message.author)} has "
+                f"{nON(ctx.author)} has "
                 f"{currEnhP - currEnh} unspent enhancement "
                 f"point{pluralInt(currEnhP - currEnh)}."
             )
 
             emptMes.add_field(name="Unspent Alert", value=val)
 
-        emptMes.set_thumbnail(url=ctx.message.author.display_avatar)
+        emptMes.set_thumbnail(url=ctx.author.display_avatar)
 
         emptMes.set_footer(
             text=HOSTNAME, icon_url=self.bot.user.display_avatar
@@ -495,33 +494,39 @@ class roleCommands(
     async def loadout(
         self, ctx: commands.Context, doWith: str = "show", buildName: str = ""
     ):
-        if doWith:
-            doWith = doWith.lower()
-        if not doWith == "show" and not buildName:
+        saveStrL = ["save", "s"]
+        delStrL = ["delete", "del"]
+        loadStrL = ["load", "l"]
+        showStrL = ["show", "sh"]
+
+        cache_file = load(ctx.guild.id)
+
+        lowDoWith = doWith.lower()
+
+        cache_file.setdefault(ctx.author.id, {})
+        cache_file[ctx.author.id].setdefault("builds", {})
+
+        builds = cache_file[ctx.author.id]["builds"]
+
+        if (
+            lowDoWith not in showStrL
+            and not buildName
+            and doWith not in builds.keys()
+        ):
             await ctx.send("No buildname to edit.")
             return
 
-        cache_file = load(ctx.guild.id)
-        if doWith == "save":
-            if ctx.author.id not in cache_file.keys():
-                cache_file[ctx.author.id] = {}
-            cache_file[ctx.author.id].setdefault("builds", {})
-            cache_file[ctx.author.id]["builds"][buildName] = spent(
-                [ctx.author]
-            )[0][2]
+        if lowDoWith in saveStrL:
+            builds[buildName] = spent([ctx.author])[0][2]
             await sendMessage(
                 f"Saved: {cache_file[ctx.author.id]['builds'][buildName]}", ctx
             )
 
-        elif doWith in ["del", "delete"]:
-            if (
-                ctx.author.id not in cache_file.keys()
-                or "builds" not in cache_file[ctx.author.id].keys()
-                or not cache_file[ctx.author.id]["builds"]
-            ):
+        elif lowDoWith in delStrL:
+            if not builds:
                 await ctx.send("No builds saved")
                 return
-            if buildName not in cache_file[ctx.author.id]["builds"].keys():
+            if buildName not in builds.keys():
                 await ctx.send(f"no saved build named {buildName}")
                 return
             await sendMessage(
@@ -531,16 +536,12 @@ class roleCommands(
                 ),
                 ctx,
             )
-        elif doWith == "show":
-            if (
-                ctx.author.id not in cache_file.keys()
-                or "builds" not in cache_file[ctx.author.id].keys()
-                or not cache_file[ctx.author.id]["builds"]
-            ):
+        elif lowDoWith in showStrL:
+            if not builds:
                 await ctx.send("No builds saved")
                 return
             mes = discord.Embed(title="Saved Builds")
-            for name, val in cache_file[ctx.author.id]["builds"].items():
+            for name, val in builds.items():
                 valStr = ""
                 nameList = [masterEhnDict[x]["Name"] for x in val]
                 for item in sorted(
@@ -550,16 +551,45 @@ class roleCommands(
                 mes.add_field(name=name, value=valStr)
 
             await sendMessage(mes, ctx)
-        elif doWith == "load":
-            if (
-                ctx.author.id not in cache_file.keys()
-                or "builds" not in cache_file[ctx.author.id].keys()
-                or not cache_file[ctx.author.id]["builds"]
-            ):
+
+        elif lowDoWith in loadStrL or doWith in builds.keys():
+            if not builds:
                 await ctx.send("No builds saved")
                 return
-            # HERE
-            await ctx.send("Not implemented yet")
+
+            if doWith in builds.keys():
+                buildName = doWith
+
+            if buildName not in builds.keys():
+                await ctx.send(
+                    f"Build {buildName} not found in saved build list"
+                )
+                return
+            authCount = await count(ctx.author)
+            buildToAdd = funcBuild(builds[buildName])
+            if authCount[0] < buildToAdd[0]:
+                await ctx.send(
+                    (
+                        f"You have {authCount[0]} points but require "
+                        f"{buildToAdd[0]} for this saved build."
+                    )
+                )
+                return
+
+            toCut = [
+                x.name
+                for x in ctx.author.roles
+                if x.name
+                in [
+                    masterEhnDict[y]["Name"]
+                    for y in masterEhnDict.keys()
+                    if masterEhnDict[y]["Rank"] > 0
+                ]
+            ]
+
+            await cut(ctx, [ctx.author], toCut)
+            await toAdd(ctx, ctx.author, buildToAdd[2])
+
         else:
             await ctx.send(f"{doWith} is not a recognised option.")
 
@@ -616,7 +646,7 @@ class roleCommands(
 
         # fetch message author and their current enhancement roles
         # as well as the build for those roles
-        user = ctx.message.author
+        user = ctx.author
         userSpent = spent([user])
         userEnhancements = userSpent[0][2]
         userHas = funcBuild(userEnhancements)
@@ -807,7 +837,7 @@ class roleCommands(
     ):
 
         xpKey = ["xp", "gdv"]
-        if MANAGER in [str(x.name) for x in ctx.message.author.roles]:
+        if MANAGER in [str(x.name) for x in ctx.author.roles]:
             leade = lead
         else:
             if lead < LEADLIMIT:
@@ -820,7 +850,7 @@ class roleCommands(
         endLead = page * leade
 
         if enh.lower() in xpKey:
-            serverXP = load(ctx.message.author.guild.id)
+            serverXP = load(ctx.author.guild.id)
             if enh == xpKey[0]:
                 resubXPList = [
                     [ctx.message.guild.get_member(x), serverXP[x]["invXP"][-1]]
@@ -934,7 +964,7 @@ class roleCommands(
         description=getDesc("rAdd"),
     )
     async def rAdd(self, ctx: commands.Context, incAmount: int = 1):
-        user = ctx.message.author
+        user = ctx.author
         await rAddFunc(ctx, [user], incAmount)
         await ctx.send(f"Finished rAdd-ing to {nON(user)}")
 
@@ -950,7 +980,7 @@ class roleCommands(
         # which should not be removed with this command
         toCut = [
             x.name
-            for x in ctx.message.author.roles
+            for x in ctx.author.roles
             if x.name
             in [
                 masterEhnDict[y]["Name"]
@@ -959,7 +989,7 @@ class roleCommands(
             ]
         ]
         logP.debug(toCut)
-        await cut(ctx, [ctx.message.author], toCut)
+        await cut(ctx, [ctx.author], toCut)
 
     @commands.command(
         enabled=COMON,

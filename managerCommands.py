@@ -56,7 +56,7 @@ class managerCommands(
         async def predicate(ctx: commands.Context):
             for role in MANAGERROLES:
                 chkRole = get(ctx.guild.roles, name=role)
-                if chkRole in ctx.message.author.roles:
+                if chkRole in ctx.author.roles:
                     return chkRole
             raise commands.CheckFailure(
                 (
@@ -271,7 +271,7 @@ class managerCommands(
             infGrab[peep.id]["invXP"][-1] = sum
 
             await ctx.send(f"Host {nON(peep)}: {iniVal} -> {sum}")
-        save(ctx.message.author.guild.id, infGrab)
+        save(ctx.guild.id, infGrab)
         if len(memList) > 5:
             await ctx.send("Finished adding xp")
 
@@ -372,7 +372,7 @@ async def orderRole(ctx: commands.Context):
 
     supeList = [
         x
-        for x in ctx.message.author.guild.roles
+        for x in ctx.guild.roles
         if str(x) in [y["Name"] for y in masterEhnDict.values()]
     ]
 

@@ -175,7 +175,7 @@ class defaultCommands(
     async def role(
         self, ctx: commands.Context, *, roleToAdd: str = freeRoles[0]
     ):
-        member = ctx.message.author
+        member = ctx.author
         sendMes = ""
         logP.debug(
             f"Trying to toggle the role: {roleToAdd}, for: {nON(member)}"

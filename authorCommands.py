@@ -25,7 +25,7 @@ class authorCommands(
     async def cog_check(self, ctx: commands.Context):
         async def predicate(ctx: commands.Context):
             passCheck = True
-            if int(ctx.message.author.id) not in [
+            if int(ctx.author.id) not in [
                 213090220147605506,
                 277041901776142337,
             ]:

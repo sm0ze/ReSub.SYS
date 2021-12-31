@@ -221,7 +221,7 @@ async def on_message(self, message):
 async def start(self, ctx):
     await ctx.send("To begin use the command 'list'")
     msg = await discord.Client.wait_for('message',
-    author=ctx.message.author,
+    author=ctx.author,
     content='list')
     await ctx.send("Next step")
     return
