@@ -513,6 +513,7 @@ class roleCommands(
         if (
             lowDoWith not in (allStrL + clearStrL)
             and doWith not in builds.keys()
+            and not buildName
         ):
             await ctx.send("No buildname to edit.")
             return
