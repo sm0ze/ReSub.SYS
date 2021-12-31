@@ -94,9 +94,10 @@ class roleCommands(
         self, bot: typing.Union[commands.bot.Bot, commands.bot.AutoShardedBot]
     ):
         self.bot = bot
-        self.onCallLoop.start()
-        self.patrolLoop.start()
-        self.xpLoop.start()
+        if not HOSTNAME == "sm0ze-desktop":
+            self.onCallLoop.start()
+            self.patrolLoop.start()
+            self.xpLoop.start()
 
     # Check if user has guild role
     async def cog_check(self, ctx: commands.Context):
@@ -492,12 +493,12 @@ class roleCommands(
         description=getDesc("loadout"),
     )
     async def loadout(
-        self, ctx: commands.Context, doWith: str = "show", buildName: str = ""
+        self, ctx: commands.Context, doWith: str = "all", buildName: str = ""
     ):
         saveStrL = ["save", "s"]
-        delStrL = ["delete", "del"]
+        delStrL = ["delete", "del", "d"]
         loadStrL = ["load", "l"]
-        showStrL = ["show", "sh"]
+        allStrL = ["all", "a"]
         clearStrL = ["clear", "c"]
 
         cache_file = load(ctx.guild.id)
@@ -510,7 +511,7 @@ class roleCommands(
         builds = cache_file[ctx.author.id]["builds"]
 
         if (
-            lowDoWith not in (showStrL + clearStrL)
+            lowDoWith not in (allStrL + clearStrL)
             and doWith not in builds.keys()
         ):
             await ctx.send("No buildname to edit.")
@@ -536,7 +537,7 @@ class roleCommands(
                 ("Removed build: " f"{builds.pop(buildName)}"),
                 ctx,
             )
-        elif lowDoWith in showStrL:
+        elif lowDoWith in allStrL:
             if not builds:
                 await ctx.send("No builds saved")
                 return
