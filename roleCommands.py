@@ -498,6 +498,7 @@ class roleCommands(
         delStrL = ["delete", "del"]
         loadStrL = ["load", "l"]
         showStrL = ["show", "sh"]
+        clearStrL = ["clear", "c"]
 
         cache_file = load(ctx.guild.id)
 
@@ -508,7 +509,10 @@ class roleCommands(
 
         builds = cache_file[ctx.author.id]["builds"]
 
-        if lowDoWith not in showStrL and doWith not in builds.keys():
+        if (
+            lowDoWith not in (showStrL + clearStrL)
+            and doWith not in builds.keys()
+        ):
             await ctx.send("No buildname to edit.")
             return
 
@@ -517,10 +521,7 @@ class roleCommands(
                 await ctx.send("You need a buildname to save this build.")
             builds[buildName] = spent([ctx.author])[0][2]
             await sendMessage(
-                (
-                    f"Saved {buildName}: "
-                    f"{cache_file[ctx.author.id]['builds'][buildName]}"
-                ),
+                (f"Saved {buildName}: " f"{builds[buildName]}"),
                 ctx,
             )
 
@@ -532,10 +533,7 @@ class roleCommands(
                 await ctx.send(f"no saved build named {buildName}")
                 return
             await sendMessage(
-                (
-                    "Removed build: "
-                    f"{cache_file[ctx.author.id]['builds'].pop(buildName)}"
-                ),
+                ("Removed build: " f"{builds.pop(buildName)}"),
                 ctx,
             )
         elif lowDoWith in showStrL:
@@ -550,10 +548,13 @@ class roleCommands(
                     nameList, key=lambda x: int(x.split()[1]), reverse=True
                 ):
                     valStr += f"{item}\n"
-                mes.add_field(name=name, value=valStr)
+                mes.add_field(name=f"Build: {name}", value=valStr)
 
             await sendMessage(mes, ctx)
-
+        elif lowDoWith in clearStrL:
+            valLen = len(builds.keys())
+            builds = {}
+            await ctx.send(f"All {valLen} builds cleared.")
         elif lowDoWith in loadStrL or doWith in builds.keys():
             if not builds:
                 await ctx.send("No builds saved")
@@ -594,7 +595,7 @@ class roleCommands(
 
         else:
             await ctx.send(f"{doWith} is not a recognised option.")
-
+        cache_file[ctx.author.id]["builds"] = builds
         save(ctx.guild.id, cache_file)
 
     @commands.command(
