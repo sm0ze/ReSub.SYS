@@ -508,18 +508,20 @@ class roleCommands(
 
         builds = cache_file[ctx.author.id]["builds"]
 
-        if (
-            lowDoWith not in showStrL
-            and not buildName
-            and doWith not in builds.keys()
-        ):
+        if lowDoWith not in showStrL and doWith not in builds.keys():
             await ctx.send("No buildname to edit.")
             return
 
         if lowDoWith in saveStrL:
+            if not buildName:
+                await ctx.send("You need a buildname to save this build.")
             builds[buildName] = spent([ctx.author])[0][2]
             await sendMessage(
-                f"Saved: {cache_file[ctx.author.id]['builds'][buildName]}", ctx
+                (
+                    f"Saved {buildName}: "
+                    f"{cache_file[ctx.author.id]['builds'][buildName]}"
+                ),
+                ctx,
             )
 
         elif lowDoWith in delStrL:
