@@ -552,7 +552,9 @@ class roleCommands(
                     nameList, key=lambda x: int(x.split()[1]), reverse=True
                 ):
                     valStr += f"{item}\n"
-                mes.add_field(name=f"Build: {name}", value=valStr)
+                mes.add_field(
+                    name=f"Build ({FPC.fB[0]}): {name}", value=valStr
+                )
 
             await sendMessage(mes, ctx)
         elif lowDoWith in clearStrL:
