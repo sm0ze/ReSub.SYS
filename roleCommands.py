@@ -579,6 +579,14 @@ class roleCommands(
             cache_file[ctx.author.id]["buildSort"] = not cache_file[
                 ctx.author.id
             ]["buildSort"]
+            terminary = (
+                "sorting"
+                if cache_file[ctx.author.id]["buildSort"]
+                else "not sorting"
+            )
+            await ctx.send(
+                f"Your loadout list is now {terminary} alphabetically."
+            )
 
         elif lowDoWith in loadStrL or doWith in builds.keys():
             if not builds:
