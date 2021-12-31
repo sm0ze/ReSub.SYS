@@ -501,6 +501,7 @@ class roleCommands(
         loadStrL = ["load", "l"]
         allStrL = ["all", "a"]
         clearStrL = ["clear", "c"]
+        toggleStrL = ["toggle", "tog", "t"]
 
         cache_file = load(ctx.guild.id)
 
@@ -510,9 +511,12 @@ class roleCommands(
         cache_file[ctx.author.id].setdefault("builds", {})
 
         builds = cache_file[ctx.author.id]["builds"]
+        if not isinstance(builds, dict):
+            builds = dict(builds)
+        cache_file[ctx.author.id].setdefault("buildSort", False)
 
         if (
-            lowDoWith not in (allStrL + clearStrL)
+            lowDoWith not in (allStrL + clearStrL + toggleStrL)
             and doWith not in builds.keys()
             and not buildName
         ):
@@ -539,12 +543,21 @@ class roleCommands(
                 ("Removed build: " f"{builds.pop(buildName)}"),
                 ctx,
             )
+
         elif lowDoWith in allStrL:
             if not builds:
                 await ctx.send("No builds saved")
                 return
             mes = discord.Embed(title="Saved Builds")
-            for name, val in builds.items():
+
+            iterList = builds.items()
+
+            if cache_file[ctx.author.id]["buildSort"]:
+                iterList = sorted(iterList, key=lambda x: x[0])
+
+            for name, val in iterList:
+                if isinstance(val, bool):
+                    continue
                 FPC = playerFromBuild(self.bot, val, name)
                 valStr = FPC.statMessage() + "\n\n"
                 nameList = [masterEhnDict[x]["Name"] for x in val]
@@ -555,12 +568,18 @@ class roleCommands(
                 mes.add_field(
                     name=f"Build ({FPC.fB[0]}): {name}", value=valStr
                 )
-
             await sendMessage(mes, ctx)
+
         elif lowDoWith in clearStrL:
             valLen = len(builds.keys())
             builds = {}
             await ctx.send(f"All {valLen} builds cleared.")
+
+        elif lowDoWith in toggleStrL:
+            cache_file[ctx.author.id]["buildSort"] = not cache_file[
+                ctx.author.id
+            ]["buildSort"]
+
         elif lowDoWith in loadStrL or doWith in builds.keys():
             if not builds:
                 await ctx.send("No builds saved")
@@ -595,12 +614,12 @@ class roleCommands(
                     if masterEhnDict[y]["Rank"] > 0
                 ]
             ]
-
             await cut(ctx, [ctx.author], toCut)
             await toAdd(ctx, ctx.author, buildToAdd[2])
 
         else:
             await ctx.send(f"{doWith} is not a recognised option.")
+
         cache_file[ctx.author.id]["builds"] = builds
         save(ctx.guild.id, cache_file)
 
