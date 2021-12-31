@@ -992,3 +992,24 @@ def addBonus(self, bonusType) -> int:
                     )
                 )
     return ret
+
+
+def playerFromBuild(
+    bot: typing.Union[commands.Bot, commands.AutoShardedBot],
+    buildList: list[str],
+    name: str,
+):
+    FPC = {}
+    FPC["name"] = name
+    for item in buildList:
+        typ = item[:3]
+        rank = item[3:]
+        FPC[typ] = int(rank)
+
+    genNPC = NPC(
+        bot,
+        FPC,
+    )
+
+    genPlay = player(genNPC, bot)
+    return genPlay

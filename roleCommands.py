@@ -12,7 +12,7 @@ from discord.utils import get
 
 import log
 import sharedDyVars
-from battle import NPC, battler, player
+from battle import NPC, battler, player, playerFromBuild
 from exceptions import noFields, notADuel, notNPC, notSupeDuel
 from sharedConsts import (
     ASKNPC,
@@ -70,6 +70,7 @@ from sharedFuncs import (
     save,
     sendMessage,
     spent,
+    strList,
     tatsuXpGrab,
     toAdd,
     topEnh,
@@ -544,7 +545,8 @@ class roleCommands(
                 return
             mes = discord.Embed(title="Saved Builds")
             for name, val in builds.items():
-                valStr = ""
+                FPC = playerFromBuild(self.bot, val, name)
+                valStr = FPC.statMessage() + "\n\n"
                 nameList = [masterEhnDict[x]["Name"] for x in val]
                 for item in sorted(
                     nameList, key=lambda x: int(x.split()[1]), reverse=True
@@ -823,6 +825,8 @@ class roleCommands(
             name="Required Enhancements",
             value=reqEnd([buildTot[0], buildTot[2]]),
         )
+        FPC = playerFromBuild(self.bot, strList(buildTot[2]), "NA")
+        mes.add_field(inline=False, name="Stats", value=FPC.statMessage())
         await ctx.send(embed=mes)
 
     @commands.command(

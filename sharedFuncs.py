@@ -1218,3 +1218,15 @@ def pickWeightedSupe(
                     roleList.remove(toAdd)
 
     return toRet
+
+
+def strList(dualList):
+    retList = []
+    for item in dualList:
+        typ = item[1]
+        rank = item[0]
+        shrtTyp = [x for x in leader.keys() if leader[x] == typ]
+        if isinstance(shrtTyp, list):
+            shrtTyp = shrtTyp[0]
+        retList.append(f"{shrtTyp}{rank}")
+    return retList
