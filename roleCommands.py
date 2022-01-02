@@ -171,7 +171,7 @@ class roleCommands(
                 or toList in [npcDict[x]["name"] for x in npcDict.keys()]
             ):
                 if not toList.lower() == "stats":
-                    ctx.send(f"NPC {toList} not found.")
+                    await ctx.send(f"NPC {toList} not found.")
                     return
             NPCid = ""
             if toList in npcDict.keys():

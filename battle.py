@@ -28,7 +28,7 @@ HP: {0:0.3g}/{9:0.3g} (**{13}%**) + {5} ({18}%)
 Sta: **{10}**/{12} +{11}
 P: {1}A/{2:0.2g}D
 M: {3}A/{4:0.2g}D
-Acc/Eva({16} + {19}): {6}/{7}
+Acc/Eva({16}+{19}): {6}({20})/{7}({21})
 Swi: {14}/{15} +{8}"""
 
 
@@ -119,8 +119,11 @@ class player:
         self.ma = int(baseDict["MA"]) + self.calcStat("MA")
         self.md = float(int(baseDict["MD"]) + self.calcStat("MD"))
 
-        self.acc = int(baseDict["ACC"]) + self.calcStat("Acc")
-        self.eva = int(baseDict["EVA"]) + self.calcStat("Eva")
+        self.hAcc = self.calcStat("Acc")
+        self.acc = int(baseDict["ACC"]) + self.hAcc
+
+        self.hEva = self.calcStat("Eva")
+        self.eva = int(baseDict["EVA"]) + self.hEva
 
         self.swi = int(baseDict["SWI"]) + self.calcStat("Swi")
         self.totSwi = int(baseDict["SWITOT"])
@@ -206,6 +209,8 @@ class player:
                 "hpRender",
                 "hpRecPer",
                 "focusNumLast",
+                "sumHit",
+                "sumDodge",
             ],
         )
         ret = stats(
@@ -229,6 +234,8 @@ class player:
             self.hpRender(),
             self.recPer(),
             self.focusNumLast,
+            self.hAcc + self.acc,
+            self.hEva + self.eva,
         )
         return ret
 
@@ -402,6 +409,14 @@ class player:
             while self.sta > num:
                 self.focus()
 
+    def bacc(self):
+        bacc = max(self.acc * 2 - int(baseDict["ACC"]), 0)
+        return bacc
+
+    def beva(self):
+        beva = max(self.eva * 2 - int(baseDict["EVA"]), 0)
+        return beva
+
 
 class battler:
     def __init__(
@@ -558,8 +573,30 @@ class battler:
             peep.missTurn -= 1
         return mes
 
+    def decAtk(self, Attack, peep):
+        # norm attack value
+        decAtk = max(
+            [[Attack.phys, "Physical"], [Attack.ment, "Mental"]],
+            key=lambda x: x[0],
+        )
+        atk = decAtk[0]
+        atkStr = decAtk[1]
+
+        # desperate attack value
+        decDAtk = max(
+            [
+                [Attack.phys + peep.pa, "Physical"],
+                [Attack.ment + peep.ma, "Mental"],
+            ],
+            key=lambda x: x[0],
+        )
+        dAtk = decDAtk[0]
+        dAtkStr = decDAtk[1]
+
+        return atk, atkStr, dAtk, dAtkStr
+
     def moveSelf(self, peep: player, notPeep: player):
-        moveStr = "Physical"
+        moveStr = ""
         desperate = 0
         typeMove = "Attack"
 
@@ -569,24 +606,17 @@ class battler:
         normSta = moveOpt["physA"]["cost"]
         despSta = moveOpt["dPhysA"]["cost"]
 
-        # norm attack value
-        atk = Attack.phys
+        atk, atkStr, dAtk, dAtkStr = self.decAtk(Attack, peep)
 
-        # desperate attack value
-        dAtk = Attack.phys + peep.pa
-
-        critDesp = Attack.phys + 2 * peep.pa
-
-        if Attack.ment > atk:
-            moveStr = "Mental"
-        elif Attack.ment == atk:
-            moveStr = random.choice(["Physical", "Mental"])
-
-        if moveStr == "Mental":
-            # update attack values for mental attacks
-            atk = Attack.ment
-            dAtk = Attack.ment + peep.ma
-            critDesp = Attack.ment + 2 * peep.ma
+        decCritDesp = max(
+            [
+                [Attack.phys + 2 * peep.pa, "Physical"],
+                [Attack.ment + 2 * peep.ma, "Mental"],
+            ],
+            key=lambda x: x[0],
+        )
+        critDesp = decCritDesp[0]
+        critDespStr = decCritDesp[1]
 
         # peep stamina after norm attack
         staAftA = peep.sta - normSta
@@ -642,13 +672,7 @@ class battler:
             else:
                 typeMove = "Defend"
 
-            if moveStr == "Mental":
-                # update attack values for mental attacks
-                atk = Attack.ment
-                dAtk = Attack.ment + peep.ma
-            else:
-                atk = Attack.phys
-                dAtk = Attack.phys + peep.pa
+            atk, atkStr, dAtk, dAtkStr = self.decAtk(Attack, peep)
 
         elif Attack.hitChance < 75:
             # avhit func
@@ -720,17 +744,21 @@ class battler:
             elif notPeep.hp <= critDesp and staAftD >= 2:
                 peep.focus()
                 desperate = 1
+                moveStr = critDespStr
                 # then desperate attack
             elif maxSta:
                 if critDesp * 2 >= nextHP:
                     desperate = 1
+                    moveStr = critDespStr
                     # then desperate attack
                 elif critDesp < notPeep.rec * (10 / (peep.rec + 1)):
                     peep.focus()
                     desperate = 1
+                    moveStr = critDespStr
                     # then desperate attack
                 else:
                     desperate = 1
+                    moveStr = critDespStr
             elif staAftA >= 1 and atk > notPeep.rec * 2:
                 pass
                 # then normal attack
@@ -747,6 +775,11 @@ class battler:
                 moveStr = "Mental"
             else:
                 moveStr = random.choice(["Physical", "Mental"])
+        elif not moveStr:
+            if desperate:
+                moveStr = dAtkStr
+            else:
+                moveStr = atkStr
 
         return desperate, typeMove, moveStr
 
@@ -761,7 +794,7 @@ class battler:
 
         heal = peep.recHP(peep.rec)
         if heal:
-            mes += f"{peep.n} heals for {heal:0.2g}.\n"
+            mes += f"{peep.n} heals for {heal:0.3g}.\n"
         peep.t += 1
         return mes
 
@@ -771,18 +804,21 @@ class battler:
         defender: player,
         attMove: str,
         desperate: bool = 0,
+        riposte: bool = 0,
     ) -> str:
         mes = ""
 
         if desperate:
             typeAtt = "desperately "
-            staCost = 5
+            staCost = moveOpt["dPhysA"]["cost"]
         else:
             typeAtt = ""
-            staCost = 2
-
-        attacker.sta -= staCost
-        mes += f"{attacker.n} {typeAtt}attacks for {staCost} stamina.\n"
+            staCost = moveOpt["physA"]["cost"]
+        if not riposte:
+            attacker.sta -= staCost
+            mes += f"{attacker.n} {typeAtt}attacks for {staCost} stamina.\n"
+        else:
+            mes += f"{attacker.n} {typeAtt}counterattacks {defender.n}.\n"
 
         if not attMove:
             if attacker.pa - defender.pd > attacker.ma - defender.md:
@@ -790,98 +826,128 @@ class battler:
             else:
                 attMove = "Mental"
 
-        if desperate and attacker.hpPer() > 50:
+        if not riposte and desperate and attacker.hpPer() > 50:
             mes += attacker.beWeak(True)
 
-        attChance = attacker.acc - defender.eva
-        critChance = 0
-        dblCritChance = 0
-        if attChance > 100:
-            critChance = attChance - 100
-            attChance = 100
-        if attChance < 0:
-            attChance = 0
-        missChance = 100 - attChance
-        logP.debug(f"attChance: {attChance}, missChance: {missChance}")
-        hit = random.choices(
-            ["Hit", "Missed"],
-            [attChance, missChance],
-        )
-        if "Missed" in hit:
-            multi = int(0)
-        else:
-            if critChance > 100:
-                dblCritChance = critChance - 100
-                critChance = 100
-            normChance = 100 - critChance
-            logP.debug(f"normChance: {normChance}, critChance: {critChance}")
-            hit = random.choices(
-                ["Normal", "Critical"], [normChance, critChance]
-            )
-            if "Normal" in hit:
-                multi = int(1)
-            else:
-                if dblCritChance > 100:
-                    triCritChance = dblCritChance - 100
-                    dblCritChance = 100
-                notDblCrit = 100 - dblCritChance
-                logP.debug(
-                    f"dblCritChance: {dblCritChance}, notDblCrit: {notDblCrit}"
-                )
-                hit = random.choices(
-                    ["Critical", "Double Critical"],
-                    [notDblCrit, dblCritChance],
-                )
-                if "Critical" in hit:
-                    multi = int(2)
-                else:
-                    notTriCrit = 100 - triCritChance
-                    logP.debug(
-                        (
-                            f"triCritChance: {triCritChance}, "
-                            f"notTriCrit: {notTriCrit}"
-                        )
-                    )
-                    hit = random.choices(
-                        ["Double Critical", "Triple Critical"],
-                        [notTriCrit, triCritChance],
-                    )
-                    if "Double Critical" in hit:
-                        multi = int(3)
-                    else:
-                        multi = int(4)
-        mes += f"{attacker.n}'s attack is a {hit[0]} attack.\n"
+        bacc = attacker.bacc()
+        beva = defender.beva()
 
-        if attMove == "Physical":
-            attDmg = attackCalc(
-                multi,
-                attacker.pa,
-                defender.pd,
-                desperate,
-            )
-            if attDmg < int(0):
-                attDmg = float(0)
-            defender.hp = defender.hp - attDmg
-            mes += (
-                f"{attacker.n} physically attacks {defender.n} "
-                f"for {attDmg:0.2g} damage.\n"
-            )
-            logP.debug(f"physical attack is a: {hit}, for: {attDmg}")
-        if attMove == "Mental":
-            attDmg = attackCalc(
-                multi,
-                attacker.ma,
-                defender.md,
-                desperate,
-            )
-            if attDmg < int(0):
-                attDmg = float(0)
-            defender.hp = defender.hp - attDmg
-            mes += (
-                f"{attacker.n} mentally attacks {defender.n} "
-                f"for {attDmg:0.2g} damage.\n"
-            )
-            logP.debug(f"mental attack is a: {hit}, for: {attDmg}")
+        crit = max((attacker.acc - beva) - 100, 0)
+        hcrit = max(((bacc - beva) - 100) - crit, 0)
+        dodge = max(100 - (bacc - defender.eva), 0)
+        hdodge = max((100 - (bacc - beva)) - dodge, 0)
+
+        tripCrit = max(hcrit + crit - 200, 0)
+        if tripCrit:
+            doubCrit = 100 - tripCrit
+            hcrit = 0
+            crit = 0
+        else:
+            doubCrit = max(hcrit + crit - 100, 0)
+            if doubCrit:
+                hcrit = 100 - doubCrit - crit
+                if hcrit < 0:
+                    crit = 100 - doubCrit
+                    hcrit = 0
+
+        despRiposte = max(hdodge + dodge - 200, 0)
+        if despRiposte:
+            normRiposte = 100 - despRiposte
+            hdodge = 0
+            dodge = 0
+        else:
+            normRiposte = max(hdodge + dodge - 100, 0)
+            if normRiposte:
+                hdodge = 100 - normRiposte - dodge
+                if hdodge < 0:
+                    dodge = 100 - normRiposte
+                    hdodge = 0
+
+        norm = max(
+            100 - tripCrit - doubCrit - crit - hcrit - dodge - hdodge, 0
+        )
+
+        weights = [
+            tripCrit,
+            doubCrit,
+            crit,
+            hcrit,
+            norm,
+            hdodge,
+            dodge,
+            normRiposte,
+            despRiposte,
+        ]
+
+        weightNames = [
+            ["Triple Crits!!!", 4],
+            ["Double Crits!!", 3],
+            ["Crits!", 2],
+            ["Half Crits!", 1.5],
+            ["Normally attacks.", 1],
+            ["Half Misses!", 0.5],
+            ["Misses!", 0],
+            ["Riposte", -1],
+            ["Desperate Riposte", -2],
+        ]
+
+        debugWeights = (
+            f"Weights are {sum(weights)}:"
+            f"{[[weightNames[x][0], y] for x,y in enumerate(weights)]}"
+        )
+        logP.debug(debugWeights)
+        if sum(weights) != 100:
+            mes += "\n***" + debugWeights + "***\n\n"
+
+        hit = random.choices(
+            weightNames,
+            weights,
+        )
+
+        typHit = hit[0][0]
+        multi = hit[0][1]
+
+        logP.debug(f"Hit is a {typHit}")
+
+        if multi >= 0:
+
+            mes += f"{attacker.n} {typHit}\n"
+
+            if attMove == "Physical":
+                attDmg = attackCalc(
+                    multi,
+                    attacker.pa,
+                    defender.pd,
+                    desperate,
+                )
+                if attDmg < int(0):
+                    attDmg = float(0)
+                defender.hp = defender.hp - attDmg
+                mes += (
+                    f"{attacker.n} physically "
+                    f"{'attacks' if not riposte else 'ripostes'} {defender.n} "
+                    f"for {attDmg:0.3g} damage.\n"
+                )
+                logP.debug(f"physical attack is a: {typHit}, for: {attDmg}")
+            if attMove == "Mental":
+                attDmg = attackCalc(
+                    multi,
+                    attacker.ma,
+                    defender.md,
+                    desperate,
+                )
+                if attDmg < int(0):
+                    attDmg = float(0)
+                defender.hp = defender.hp - attDmg
+                mes += (
+                    f"{attacker.n} mentally "
+                    f"{'attacks' if not riposte else 'ripostes'} {defender.n} "
+                    f"for {attDmg:0.3g} damage.\n"
+                )
+                logP.debug(f"mental attack is a: {typHit}, for: {attDmg}")
+        else:
+            typDesp = 0 if multi < -1 else 1
+            mes += "\n" + self.attack(defender, attacker, "", typDesp, True)
 
         return mes
 
@@ -889,7 +955,7 @@ class battler:
         adpStats = namedtuple("adpStats", ["hitChance", "phys", "ment"])
         phys = at1.pa - at2.pd
         ment = at1.ma - at2.md
-        hitChance = at1.acc - at2.eva
+        hitChance = at1.bacc() - at2.beva()
 
         ret = adpStats(hitChance, phys, ment)
         return ret
