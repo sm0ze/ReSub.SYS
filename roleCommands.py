@@ -12,7 +12,7 @@ from discord.utils import get
 
 import log
 import sharedDyVars
-from battle import NPC, battler, player, playerFromBuild
+from battle import NPC, NPCFromBuild, battler, player, playerFromBuild
 from exceptions import noFields, notADuel, notNPC, notSupeDuel
 from sharedConsts import (
     ASKNPC,
@@ -46,6 +46,7 @@ from sharedDicts import (
     restrictedList,
     rsltDict,
     taskVar,
+    activeDic,
 )
 from sharedFuncs import (
     count,
@@ -1142,6 +1143,31 @@ class roleCommands(
 
     @commands.command(
         enabled=COMON,
+        aliases=["gd", "genD", "genDuel"],
+        brief=getBrief("generateDuel"),
+        description=getDesc("generateDuel"),
+    )
+    async def generateDuel(self, ctx: commands.Context, diffVal: int = 0):
+        authCount = await count(ctx.author)
+        genVal = authCount[0] + diffVal
+        build = genBuild(genVal)
+
+        peepName = random.choice(activeDic["person"])
+        if isinstance(peepName, list):
+            peepName = peepName[0]
+
+        if isinstance(peepName, str):
+            peepName = peepName[0].upper() + peepName[1:]
+
+        FPC = NPCFromBuild(self.bot, build, peepName)
+        await ctx.send(f"Creating a duel against {FPC.n}")
+
+        bat = battler(self.bot, [ctx.author, FPC])
+        await bat.findPlayers(0)
+        await startDuel(self, ctx, bat)
+
+    @commands.command(
+        enabled=COMON,
         aliases=["d"],
         brief=getBrief("duel"),
         description=getDesc("duel"),
@@ -1388,13 +1414,12 @@ async def startDuel(
     while not winner:
         totRounds += 1
         Who2Move = bat.nextRound()
-        iniMove = ""
 
         move = None
         defPeep = None
 
         if Who2Move.defending:
-            iniMove = Who2Move.defend()
+            Who2Move.defend()
         if Who2Move.play:
             move, defPeep = await playerDuelInput(
                 self, ctx, totRounds, Who2Move, bat
@@ -1428,7 +1453,7 @@ async def startDuel(
         if not numFields:
             raise noFields()
 
-        moveTxt = iniMove + moveStr
+        moveTxt = moveStr
         mes.set_field_at(
             numFields - 1,
             inline=False,

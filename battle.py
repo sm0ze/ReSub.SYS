@@ -279,7 +279,7 @@ class player:
         stats = self.bStat()
         return statMes.format(*stats)
 
-    def defend(self, defType: str = "Physical"):
+    def defend(self, defType: str = "physical"):
         defAlr = False
         addOn = ""
         if not self.defending:
@@ -290,7 +290,7 @@ class player:
             val = float(0.5)
             defAlr = True
 
-        if self.defending == "Physical":
+        if self.defending == "physical":
             if self.noDef and val == float(0.5):
                 self.noDef = not self.noDef
                 val = float(0)
@@ -300,7 +300,7 @@ class player:
 
             self.pd = float(val * self.pd)
 
-        elif self.defending == "Mental":
+        elif self.defending == "mental":
             if self.noDef and val == float(0.5):
                 self.noDef = not self.noDef
                 val = float(0)
@@ -314,11 +314,9 @@ class player:
             self.defending = ""
             addOn = "no longer "
 
-        ret = f"{self.n} is {addOn}defending from {defType} attacks"
+        ret = f"{self.n} is {addOn}defending from {defType} attacks.\n"
         if not defAlr:
-            ret += f" and recovers {self.recSta()} additional stamina.\n"
-        else:
-            ret += ".\n"
+            self.recSta()
         return ret
 
     def recSta(self, val: int = 1) -> int:
@@ -381,8 +379,8 @@ class player:
             self.pd = self.pd / 2
             self.md = self.md / 2
             mes += (
-                f"{self.n} has {self.hpPer()}% HP and has halved "
-                "defenses until their next turn.\n"
+                f"with {self.hpPer()}% HP and has halved "
+                "defenses until their next turn. Their attack is"
             )
         else:
             self.md = self.md * 2
@@ -524,11 +522,15 @@ class battler:
 
     def turn(self, peep: player, attPeep: player, move: list[str]) -> str:
         mes = ""
+        if peep.focusNumNow or peep.focusNumLast:
+            mes += (
+                f"{peep.n} is focused x{peep.focusNumLast+peep.focusNumNow}\n"
+            )
         if peep.missTurn:
             extraSta = 1
             mes += f"{peep.n} misses this turn due to exhaustion!\n"
             mes += (
-                f"This exhaustion means {peep.n} recovers an "
+                f"{peep.n} recovers an "
                 f"additional {peep.recSta(extraSta)} stamina this turn.\n"
             )
         elif peep.weak:
@@ -576,7 +578,7 @@ class battler:
     def decAtk(self, Attack, peep):
         # norm attack value
         decAtk = max(
-            [[Attack.phys, "Physical"], [Attack.ment, "Mental"]],
+            [[Attack.phys, "physical"], [Attack.ment, "mental"]],
             key=lambda x: x[0],
         )
         atk = decAtk[0]
@@ -585,8 +587,8 @@ class battler:
         # desperate attack value
         decDAtk = max(
             [
-                [Attack.phys + peep.pa, "Physical"],
-                [Attack.ment + peep.ma, "Mental"],
+                [Attack.phys + peep.pa, "physical"],
+                [Attack.ment + peep.ma, "mental"],
             ],
             key=lambda x: x[0],
         )
@@ -610,8 +612,8 @@ class battler:
 
         decCritDesp = max(
             [
-                [Attack.phys + 2 * peep.pa, "Physical"],
-                [Attack.ment + 2 * peep.ma, "Mental"],
+                [Attack.phys + 2 * peep.pa, "physical"],
+                [Attack.ment + 2 * peep.ma, "mental"],
             ],
             key=lambda x: x[0],
         )
@@ -770,11 +772,11 @@ class battler:
             despPyhsDef = Defend.phys + notPeep.pa
             despMentDef = Defend.ment + notPeep.ma
             if despPyhsDef > despMentDef:
-                moveStr = "Physical"
+                moveStr = "physical"
             elif despMentDef > despPyhsDef:
-                moveStr = "Mental"
+                moveStr = "mental"
             else:
-                moveStr = random.choice(["Physical", "Mental"])
+                moveStr = random.choice(["physical", "mental"])
         elif not moveStr:
             if desperate:
                 moveStr = dAtkStr
@@ -787,10 +789,10 @@ class battler:
         mes = ""
         staRec = peep.recSta(peep.staR)
         if staRec:
-            mes += (
+            """mes += (
                 f"{peep.n} recovers {staRec} stamina for a "
                 f"running total of {peep.sta}.\n"
-            )
+            )"""
 
         heal = peep.recHP(peep.rec)
         if heal:
@@ -816,18 +818,20 @@ class battler:
             staCost = moveOpt["physA"]["cost"]
         if not riposte:
             attacker.sta -= staCost
-            mes += f"{attacker.n} {typeAtt}attacks for {staCost} stamina.\n"
+            mes += f"{attacker.n} {typeAtt}attacks, "
         else:
-            mes += f"{attacker.n} {typeAtt}counterattacks {defender.n}.\n"
+            mes += f"{attacker.n} {typeAtt}counterattacks, "
 
         if not attMove:
             if attacker.pa - defender.pd > attacker.ma - defender.md:
-                attMove = "Physical"
+                attMove = "physical"
             else:
-                attMove = "Mental"
+                attMove = "mental"
 
         if not riposte and desperate and attacker.hpPer() > 50:
             mes += attacker.beWeak(True)
+        else:
+            mes += "it is "
 
         bacc = attacker.bacc()
         beva = defender.beva()
@@ -880,15 +884,15 @@ class battler:
         ]
 
         weightNames = [
-            ["Triple Crits!!!", 4],
-            ["Double Crits!!", 3],
-            ["Crits!", 2],
-            ["Half Crits!", 1.5],
-            ["Normally attacks.", 1],
-            ["Half Misses!", 0.5],
-            ["Misses!", 0],
-            ["Riposte", -1],
-            ["Desperate Riposte", -2],
+            ["triple critical", 4],
+            ["double critical", 3],
+            ["critical", 2],
+            ["powerful", 1.5],
+            ["normal", 1],
+            ["poor", 0.5],
+            ["missed", 0],
+            ["failed", -1],
+            ["spectacularly failed", -2],
         ]
 
         debugWeights = (
@@ -909,11 +913,10 @@ class battler:
 
         logP.debug(f"Hit is a {typHit}")
 
+        mes += f"a {typHit} {'hit' if not riposte else 'riposte'}"
         if multi >= 0:
 
-            mes += f"{attacker.n} {typHit}\n"
-
-            if attMove == "Physical":
+            if attMove == "physical":
                 attDmg = attackCalc(
                     multi,
                     attacker.pa,
@@ -923,13 +926,9 @@ class battler:
                 if attDmg < int(0):
                     attDmg = float(0)
                 defender.hp = defender.hp - attDmg
-                mes += (
-                    f"{attacker.n} physically "
-                    f"{'attacks' if not riposte else 'ripostes'} {defender.n} "
-                    f"for {attDmg:0.3g} damage.\n"
-                )
+                mes += f" for {attDmg:0.3g} physical damage.\n"
                 logP.debug(f"physical attack is a: {typHit}, for: {attDmg}")
-            if attMove == "Mental":
+            if attMove == "mental":
                 attDmg = attackCalc(
                     multi,
                     attacker.ma,
@@ -939,14 +938,11 @@ class battler:
                 if attDmg < int(0):
                     attDmg = float(0)
                 defender.hp = defender.hp - attDmg
-                mes += (
-                    f"{attacker.n} mentally "
-                    f"{'attacks' if not riposte else 'ripostes'} {defender.n} "
-                    f"for {attDmg:0.3g} damage.\n"
-                )
+                mes += f" for {attDmg:0.3g} mental damage.\n"
                 logP.debug(f"mental attack is a: {typHit}, for: {attDmg}")
         else:
             typDesp = 0 if multi < -1 else 1
+            mes += ".\n"
             mes += "\n" + self.attack(defender, attacker, "", typDesp, True)
 
         return mes
@@ -1065,17 +1061,30 @@ def playerFromBuild(
     buildList: list[str],
     name: str,
 ):
+    genNPC = NPCFromBuild(bot, buildList, name)
+    return playerFromNPC(bot, genNPC)
+
+
+def playerFromNPC(
+    bot: typing.Union[commands.Bot, commands.AutoShardedBot], genNPC
+):
+    genPlay = player(genNPC, bot)
+    return genPlay
+
+
+def NPCFromBuild(
+    bot: typing.Union[commands.Bot, commands.AutoShardedBot],
+    buildList: list[str],
+    name: str,
+):
     FPC = {}
     FPC["name"] = name
     for item in buildList:
         typ = item[:3]
         rank = item[3:]
         FPC[typ] = int(rank)
-
     genNPC = NPC(
         bot,
         FPC,
     )
-
-    genPlay = player(genNPC, bot)
-    return genPlay
+    return genNPC

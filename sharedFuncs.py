@@ -931,7 +931,7 @@ async def rAddFunc(
             await toAdd(ctx, user, randPlus[2])
 
 
-def genBuild(val: int = 0, typ: str = "", iniBuild: list = []):
+def genBuild(val: int = 0, typ: str = "", iniBuild: list = []) -> list[str]:
     build = []
     buildFinal = []
     pickList = [

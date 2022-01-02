@@ -79,7 +79,7 @@ moveOpt = {
         "name": "Physical Attack",
         "desperate": 0,
         "type": "Attack",
-        "moveStr": "Physical",
+        "moveStr": "physical",
         "cost": 2,
         "reaction": "🗡️",
     },
@@ -87,7 +87,7 @@ moveOpt = {
         "name": "Mental Attack",
         "desperate": 0,
         "type": "Attack",
-        "moveStr": "Mental",
+        "moveStr": "mental",
         "cost": 2,
         "reaction": "😠",
     },
@@ -95,7 +95,7 @@ moveOpt = {
         "name": "Desperate Physical Attack",
         "desperate": 1,
         "type": "Attack",
-        "moveStr": "Physical",
+        "moveStr": "physical",
         "cost": 5,
         "reaction": "⚔️",
     },
@@ -103,7 +103,7 @@ moveOpt = {
         "name": "Desperate Mental Attack",
         "desperate": 1,
         "type": "Attack",
-        "moveStr": "Mental",
+        "moveStr": "mental",
         "cost": 5,
         "reaction": "🤯",
     },
@@ -111,7 +111,7 @@ moveOpt = {
         "name": "Physical Defense",
         "desperate": 0,
         "type": "Defend",
-        "moveStr": "Physical",
+        "moveStr": "physical",
         "cost": 0,
         "reaction": "🛡️",
     },
@@ -119,7 +119,7 @@ moveOpt = {
         "name": "Mental Defense",
         "desperate": 0,
         "type": "Defend",
-        "moveStr": "Mental",
+        "moveStr": "mental",
         "cost": 0,
         "reaction": "😎",
     },
@@ -250,7 +250,7 @@ for sheetL in sheet_names:
         frame = None
         frame = pd.read_csv(url)
     except Exception as e:
-        print(e)
+        logP.warning(e)
         continue
 
     for i in frame:
@@ -270,7 +270,7 @@ for statsheet in statsheetNom:
         frame = None
         frame = pd.read_csv(statUrl)
     except Exception as e:
-        print(e)
+        logP.warning(e)
         continue
 
     for tup in frame.itertuples():
@@ -341,7 +341,7 @@ for url, dic, dicName in urlList:
         frame = None
         frame = pd.read_csv(url)
     except Exception as e:
-        print(e)
+        logP.warning(e)
     for tup in frame.itertuples():
         shrt = [x[0] for x in leader.items() if x[1] == tup.Role]
         if shrt:
@@ -358,7 +358,7 @@ try:
     frame = None
     frame = pd.read_csv(urlReplace)
 except Exception as e:
-    print(e)
+    logP.warning(e)
 for tup in frame.itertuples():
     shrt = [x[0] for x in leader.items() if x[1] == tup.Role]
     if shrt:
@@ -373,7 +373,7 @@ try:
     frame = None
     frame = pd.read_csv(urlBase)
 except Exception as e:
-    print(e)
+    logP.warning(e)
 
 for tup in frame.itertuples():
     baseDict[tup.Constant] = tup.BaseStat
@@ -388,7 +388,7 @@ try:
     frame = None
     frame = pd.read_csv(npcUrl)
 except Exception as e:
-    print(e)
+    logP.warning(e)
 
 for tup in frame.itertuples():
     npcDict[str(tup.ID)] = {}
@@ -408,7 +408,7 @@ try:
     frame = None
     frame = pd.read_csv(descUrl)
 except Exception as e:
-    print(e)
+    logP.warning(e)
 
 for tup in frame.itertuples():
     cmdInf[tup.Command] = {}
@@ -419,4 +419,39 @@ for tup in frame.itertuples():
             cmdInf[tup.Command][ite] = getattr(tup, ite)
     logP.debug(f"Added Command description: {cmdInf[tup.Command]}")
 
+
+activeDic = {}
+
+interactiveSheet = "Interactive"
+interactiveToken = "12F0NDWn6dAiavMPH7f1ADDfFwUZx4JWn9KhWC4kQOag"
+interactiveUrl = urltoAdd.format(interactiveToken, interactiveSheet)
+
+try:
+    frame = None
+    frame = pd.read_csv(interactiveUrl)
+except Exception as e:
+    logP.warning(e)
+
+powers = 0
+ranks = 0
+for tup in frame.itertuples():
+    if str(tup.Power) != str("nan") and str(tup.Descriptor) != str("nan"):
+        activeDic[tup.Power] = str(tup.Descriptor).split(";")
+        powers += 1
+
+    if str(tup.Rank) != str("nan") and str(tup.Task) != str("nan"):
+        activeDic.setdefault(tup.Rank, [])
+        activeDic[tup.Rank].append(str(tup.Task).split(";"))
+        ranks += 1
+
+    if str(tup.Person) != str("nan") and str(tup.Gender) != str("nan"):
+        activeDic.setdefault("person", [])
+        activeDic["person"].append([tup.Person, tup.Gender])
+
+logP.debug(
+    (
+        f"Imported for Interactive Tasks: {powers} Powers, "
+        f"{len(activeDic['person'])} Peeps, {ranks} Ranks"
+    )
+)
 logP.info("Finished csv download and input.")
