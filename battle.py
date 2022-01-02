@@ -314,7 +314,7 @@ class player:
             self.defending = ""
             addOn = "no longer "
 
-        ret = f"{self.n} is {addOn}defending from {defType} attacks.\n"
+        ret = f"{self.n} is {addOn}defending from {defType} attacks.\n\n"
         if not defAlr:
             self.recSta()
         return ret
@@ -322,8 +322,8 @@ class player:
     def recSta(self, val: int = 1) -> int:
         staStrt = self.sta
         self.sta += val
-        if self.sta > self.totSta:
-            self.sta = self.totSta
+        while self.sta > self.totSta:
+            self.focus()
         staEnd = self.sta
         return staEnd - staStrt
 
@@ -379,13 +379,13 @@ class player:
             self.pd = self.pd / 2
             self.md = self.md / 2
             mes += (
-                f"with {self.hpPer()}% HP and has halved "
-                "defenses until their next turn. Their attack is"
+                f" with {self.hpPer()}% HP and has halved "
+                "defenses until their next turn. Their attack is "
             )
         else:
             self.md = self.md * 2
             self.pd = self.pd * 2
-            mes += f"{self.n} no longer has lowered defenses.\n"
+            mes += f"{self.n} no longer has lowered defenses.\n\n"
         return mes
 
     def focus(self, add: bool = True):
@@ -524,16 +524,15 @@ class battler:
         mes = ""
         if peep.focusNumNow or peep.focusNumLast:
             mes += (
-                f"{peep.n} is focused x{peep.focusNumLast+peep.focusNumNow}\n"
+                f"{peep.n} starts the turn with "
+                f"{peep.focusNumLast+peep.focusNumNow} focus.\n\n"
             )
         if peep.missTurn:
             extraSta = 1
-            mes += f"{peep.n} misses this turn due to exhaustion!\n"
-            mes += (
-                f"{peep.n} recovers an "
-                f"additional {peep.recSta(extraSta)} stamina this turn.\n"
-            )
-        elif peep.weak:
+            mes += f"{peep.n} misses this turn due to exhaustion!\n\n"
+            peep.recSta(extraSta)
+
+        if peep.weak:
             mes += peep.beWeak(False)
         # if peep.defending:
         #     mes += peep.defend()
@@ -549,7 +548,9 @@ class battler:
         else:
             if not peep.missTurn:
                 staRec = 7
-                mes += f"{peep.n} recovered this turn for {staRec} stamina.\n"
+                mes += (
+                    f"{peep.n} recovered this turn for {staRec} stamina.\n\n"
+                )
                 peep.sta += staRec
 
         peep.focus(False)
@@ -559,17 +560,23 @@ class battler:
             peep.tired += 1
             mes += (
                 f"{peep.n} has exhausted themself ({peep.tired}) "
-                "and will miss a turn.\n"
+                "and will miss a turn.\n\n"
             )
 
         mes += self.recover(peep)
 
         if peep.tired == 5:
-            mes += f"{peep.n} has exhausted themself for the fifth time!"
+            mes += f"{peep.n} has exhausted themself for the fifth time!\n\n"
             if attPeep.hp < 0:
                 peep.hp = attPeep.hp
             else:
                 peep.hp = float(0)
+
+        if peep.focusNumNow or peep.focusNumLast:
+            mes += (
+                f"{peep.n} ends the turn with "
+                f"{peep.focusNumLast+peep.focusNumNow} focus.\n\n"
+            )
 
         if peep.missTurn:
             peep.missTurn -= 1
@@ -796,7 +803,7 @@ class battler:
 
         heal = peep.recHP(peep.rec)
         if heal:
-            mes += f"{peep.n} heals for {heal:0.3g}.\n"
+            mes += f"{peep.n} heals for {heal:0.3g}.\n\n"
         peep.t += 1
         return mes
 
@@ -818,9 +825,9 @@ class battler:
             staCost = moveOpt["physA"]["cost"]
         if not riposte:
             attacker.sta -= staCost
-            mes += f"{attacker.n} {typeAtt}attacks, "
+            mes += f"{attacker.n} {typeAtt}attacks"
         else:
-            mes += f"{attacker.n} {typeAtt}counterattacks, "
+            mes += f"{attacker.n} {typeAtt}counterattacks"
 
         if not attMove:
             if attacker.pa - defender.pd > attacker.ma - defender.md:
@@ -831,7 +838,7 @@ class battler:
         if not riposte and desperate and attacker.hpPer() > 50:
             mes += attacker.beWeak(True)
         else:
-            mes += "it is "
+            mes += ", it is "
 
         bacc = attacker.bacc()
         beva = defender.beva()
@@ -926,7 +933,7 @@ class battler:
                 if attDmg < int(0):
                     attDmg = float(0)
                 defender.hp = defender.hp - attDmg
-                mes += f" for {attDmg:0.3g} physical damage.\n"
+                mes += f" for {attDmg:0.3g} physical damage.\n\n"
                 logP.debug(f"physical attack is a: {typHit}, for: {attDmg}")
             if attMove == "mental":
                 attDmg = attackCalc(
@@ -938,7 +945,7 @@ class battler:
                 if attDmg < int(0):
                     attDmg = float(0)
                 defender.hp = defender.hp - attDmg
-                mes += f" for {attDmg:0.3g} mental damage.\n"
+                mes += f" for {attDmg:0.3g} mental damage.\n\n"
                 logP.debug(f"mental attack is a: {typHit}, for: {attDmg}")
         else:
             typDesp = 0 if multi < -1 else 1
