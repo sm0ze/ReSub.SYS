@@ -7,6 +7,7 @@ import time
 import typing
 
 import discord
+from discord.errors import HTTPException
 from discord.ext import commands, tasks
 from discord.utils import get
 
@@ -1292,7 +1293,14 @@ async def playerDuelInput(
     msg = await peep.p.send(embed=mes)
     if not peep.missTurn:
         for reac in reactionList:
-            await msg.add_reaction(reac)
+            tryAgain = 5
+            if tryAgain:
+                try:
+                    await msg.add_reaction(reac)
+                    tryAgain = 0
+                except HTTPException:
+                    tryAgain -= 1
+                    time.sleep(2)
 
     def check(reaction, user):
         return user.id == peep.p.id and str(reaction.emoji) in reactionList
