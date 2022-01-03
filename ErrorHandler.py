@@ -1,5 +1,6 @@
 # ErrorHandler.py
 
+import datetime
 import discord
 from discord.ext import commands
 
@@ -46,14 +47,13 @@ class ErrorHandler(commands.Cog):
             )
         elif isinstance(error, commands.CommandOnCooldown):
             dupeEr = False
-            cdTime = round(error.retry_after, 2)
+            cdTimeStr = str(datetime.timedelta(seconds=error.retry_after))
             if str(command) == "task":
                 mes = discord.Embed(
                     title="No Tasks",
                     description=(
                         "You have no available tasks at this time. "
-                        f"Please search again in {round(cdTime / 60, 2)} "
-                        f"minutes or {cdTime} seconds."
+                        f"Please search again in {cdTimeStr}."
                     ),
                 )
             else:
@@ -61,7 +61,7 @@ class ErrorHandler(commands.Cog):
                     title="Error!!!",
                     description=(
                         f"Command: {str(command)}, on cooldown for "
-                        f"{round(cdTime / 60, 2)} minutes or {cdTime} seconds"
+                        f"{cdTimeStr}."
                     ),
                 )
         elif isinstance(error, commands.CommandInvokeError):

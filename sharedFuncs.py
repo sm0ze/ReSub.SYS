@@ -629,16 +629,13 @@ async def pointsLeft(
         pointTot = await count(group[0])
 
         if hideFull:
-            if group[1] >= pointTot[0]:
+            if group[1] == pointTot[0]:
                 skipped += 1
                 continue
         await ctx.send(
             (
-                f"{nON(group[0])} has {group[1]} "
-                f"enhancement{pluralInt(group[1])} active out "
-                f"of {pointTot[0]} "
-                f"enhancement{pluralInt(pointTot[0])} "
-                "available."
+                f"{nON(group[0])} has {pointTot[0]- group[1]} "
+                "spare enhancement points."
             )
         )
     if skipped:
@@ -723,7 +720,11 @@ async def count(
         MEE6xp = int(0)
         TATSUxp = int(0)
 
+        if pickle_file and peep.id not in pickle_file.keys():
+            pickle_file.setdefault(peep.id, {})
+
         if pickle_file and peep.id in pickle_file.keys():
+            pickle_file[peep.id].setdefault("invXP", [0, 0, 0])
             ReSubXP = float(pickle_file[peep.id]["invXP"][-1])
         else:
             ReSubXP = float(0)

@@ -80,6 +80,7 @@ class managerCommands(
             await ctx.send("Give me a peep to wipe next time...")
             return
         members = await memGrab(ctx, memberList)
+        await ctx.send(f"Wiping {len(members)} peeps.")
         for peep in members:
             toCut = [
                 x.name
@@ -93,6 +94,7 @@ class managerCommands(
             ]
             logP.debug(toCut)
             await cut(ctx, [peep], toCut)
+        await ctx.send(f"Finished wiping {len(members)} peeps.")
 
     @commands.command(
         enabled=COMON,
