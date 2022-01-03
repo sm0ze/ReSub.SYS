@@ -341,14 +341,12 @@ class player:
         elif self.p.bot:
             return
 
-        peepNameList = []
         reactionList = ["✅", "❌"]
+
+        mes = discord.Embed(title="Do you wish to play a duel?")
         for peep in duelList:
             if isinstance(peep, player):
-                peepNameList.append(peep.n)
-        mes = discord.Embed(
-            title="Do you wish to play a duel?", description=f"{peepNameList}"
-        )
+                mes.add_field(name=peep.n, value=peep.statMessage())
         msg = await self.p.send(embed=mes)
         for reac in reactionList:
             await msg.add_reaction(reac)

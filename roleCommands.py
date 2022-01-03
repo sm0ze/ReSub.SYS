@@ -639,8 +639,19 @@ class roleCommands(
         description=getDesc("generate"),
     )
     async def generate(
-        self, ctx: commands.Context, val: int = 5, typ: str = ""
+        self,
+        ctx: commands.Context,
+        val: int = 5,
+        typ: str = "",
+        *,
+        typeRank: str = "",
     ):
+        if typeRank:
+            fixArg = typeRank.replace(" ", ",")
+            fixArg = fixArg.replace(";", ",")
+            iniBuild = [x.strip() for x in fixArg.split(",") if x.strip()]
+        else:
+            iniBuild = typeRank.split()
         if typ:
             typ = typ.lower()
         if val < 0:
@@ -653,7 +664,7 @@ class roleCommands(
                     typ = typ[0]
             else:
                 typ = ""
-        build = genBuild(val, typ)
+        build = genBuild(val, typ, iniBuild)
         logP.debug(f"For {val} points build {build} was generated")
         mes = discord.Embed(title="Generated Build")
         if build:
@@ -1160,14 +1171,24 @@ class roleCommands(
             peepName = peepName[0].upper() + peepName[1:]
 
         FPC = NPCFromBuild(self.bot, build, peepName)
-        await ctx.send(f"Creating a duel against {FPC.n}")
+        mes = f"Creating a duel against {FPC.n}\n**Enhancements**\n"
+
+        playerEhnList = [masterEhnDict[x]["Name"] for x in FPC.bL]
+        for ehn in sorted(
+            playerEhnList,
+            key=lambda x: int(x.split()[1]),
+            reverse=True,
+        ):
+            mes += f"{ehn}\n"
+
+        await sendMessage(mes, ctx)
 
         bat = battler(self.bot, [ctx.author, FPC])
         await bat.findPlayers(0)
         await startDuel(self, ctx, bat)
 
     @commands.command(
-        enabled=COMON,
+        enabled=True,
         aliases=["d"],
         brief=getBrief("duel"),
         description=getDesc("duel"),

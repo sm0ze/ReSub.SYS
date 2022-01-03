@@ -138,9 +138,10 @@ def trim(pList, inDict=masterEhnDict):
         trimList.append([val, key])
 
     # return sorted trimmed list of highest ranked enhancements, descending
+    trimList = sorted(trimList, reverse=True, key=lambda x: x[0])
     logP.debug(f"dict tierDict: {tierDict}")
     logP.debug(f"trimList: {trimList}")
-    return sorted(trimList, reverse=True, key=lambda x: x[0])
+    return trimList
 
 
 # function to turn given list of [rank, enhancment]
@@ -957,9 +958,9 @@ def genBuild(val: int = 0, typ: str = "", iniBuild: list = []) -> list[str]:
     if not iniBuild:
         searchBuild = [typ + str(checkInt)]
     else:
-        searchBuild = iniBuild.copy()
+        searchBuild = [typ + str(checkInt)] + iniBuild.copy()
     nextLargest = 0
-    secondLoop = 0
+    smaller = False
     prevBuild = []
     maxTyp = []
 
@@ -1012,29 +1013,27 @@ def genBuild(val: int = 0, typ: str = "", iniBuild: list = []) -> list[str]:
             building = False
             build = want[2]
         else:
-            nextLargest += 1
-            if nextLargest > len(want[2]) - 1:
-                nextLargest = 0
-                if secondLoop < 1:
-                    secondLoop += 1
-                else:
-                    build = funcBuild(prevBuild)
-                    build = build[2]
-                    building = False
-
-            name = want[2][nextLargest][1]
-            rank = want[2][nextLargest][0]
+            failedBuild = prevBuildsDict.setdefault(
+                tuple([typ + str(checkInt)]), funcBuild([typ + str(checkInt)])
+            )
+            name = failedBuild[2][nextLargest][1]
+            rank = failedBuild[2][nextLargest][0]
             shrt = [x for x in leader.keys() if leader[x] == name][0]
             searchBuild = prevBuild.copy()
             splitBuild = [[x[:3], x[3:]] for x in searchBuild]
-            for typeOf, rankOf in splitBuild:
-                if shrt == typeOf:
-                    rank = int(rankOf) + 1
-                    if name in restrictedList:
-                        rank = 0
-                    if rank > 10:
-                        rank = 10
-                    break
+            if smaller:
+                for typeOf, rankOf in splitBuild:
+                    if shrt == typeOf:
+                        rank = int(rankOf) - 1
+                        if name in restrictedList:
+                            rank = int(rankOf)
+                        elif rank > 1:
+                            rank = 1
+                        break
+            nextLargest += 1
+            if nextLargest > len(failedBuild[2]):
+                smaller = True
+                nextLargest = 0
             searchBuild.append(shrt + str(rank))
 
     for group in build:

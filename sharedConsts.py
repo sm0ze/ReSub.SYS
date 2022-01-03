@@ -21,7 +21,7 @@ def askToken(var: str) -> str:
 HOSTNAME = socket.gethostname().lower()
 logP.info(f"Name of host for program is: {HOSTNAME}")
 
-COMON = True
+COMON = False
 
 # .env variables that are not shared with github and other users.
 # Use your own if testing this with your own bot
@@ -77,7 +77,7 @@ TIMTILLONCALL = TASKCD * 4 + 60 * 60
 ACTIVESEC = 60 * 60 * 24 * 7
 
 DEFDUELOPP = 572301609305112596
-ROUNDLIMIT = 50
+ROUNDLIMIT = 100
 PLAYERTURNWAIT = 30
 BOTTURNWAIT = 60
 
