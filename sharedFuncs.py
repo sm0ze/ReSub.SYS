@@ -1032,11 +1032,12 @@ def genBuild(val: int = 0, typ: str = "", iniBuild: list = []) -> list[str]:
                 for typeOf, rankOf in splitBuild:
                     if shrt == typeOf:
                         rank = int(rankOf) - 1
-                        if name in restrictedList:
-                            rank = int(rankOf)
-                        elif rank > 1:
-                            rank = 1
                         break
+                if not rank and name not in restrictedList:
+                    rank = 1
+                elif name in restrictedList:
+                    rank = 0
+
             nextLargest += 1
             if nextLargest >= len(failedBuild[2]):
                 smaller = True
