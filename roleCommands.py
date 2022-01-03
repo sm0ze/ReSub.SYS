@@ -1300,7 +1300,7 @@ async def playerDuelInput(
                     tryAgain = 0
                 except HTTPException:
                     tryAgain -= 1
-                    time.sleep(2)
+                    await asyncio.sleep(2)
 
     def check(reaction, user):
         return user.id == peep.p.id and str(reaction.emoji) in reactionList
