@@ -19,7 +19,7 @@ from sharedDicts import (
     replaceDict,
     statCalcDict,
 )
-from sharedFuncs import funcBuild, nON, sendMessage, spent
+from sharedFuncs import funcBuild, intNPC, nON, sendMessage, spent
 
 logP = log.get_logger(__name__)
 
@@ -73,7 +73,7 @@ class NPC:
 class player:
     def __init__(
         self,
-        member: typing.Union[discord.Member, NPC],
+        member: typing.Union[discord.Member, NPC, intNPC],
         bot,
     ) -> None:
         self.bot = bot
@@ -86,6 +86,13 @@ class player:
             self.npc = False
             self.pic = self.p.display_avatar
         elif isinstance(member, NPC):
+            self.p = None
+            self.n = member.n
+            self.sG = None
+            self.bL = member.bL
+            self.npc = True
+            self.pic = member.pic
+        elif isinstance(member, intNPC):
             self.p = None
             self.n = member.n
             self.sG = None
@@ -418,7 +425,7 @@ class battler:
     def __init__(
         self,
         bot,
-        memberList: list[typing.Union[discord.Member, NPC]],
+        memberList: list[typing.Union[discord.Member, NPC, intNPC]],
     ) -> None:
 
         self.playerList = []
@@ -438,12 +445,12 @@ class battler:
 
     async def findPlayers(self, dontAsk):
         for peep in self.playerList:
-            if not peep.npc:
-                if not peep.p.bot:
-                    if dontAsk == ASKSELF and (peep is self.playerList[0]):
-                        await peep.ask(self.playerList)
-                    elif dontAsk in [ASKALL, ASKNPC]:
-                        if isinstance(peep, player):
+            if isinstance(peep, player):
+                if not peep.npc:
+                    if not peep.p.bot:
+                        if dontAsk == ASKSELF and (peep is self.playerList[0]):
+                            await peep.ask(self.playerList)
+                        elif dontAsk in [ASKALL, ASKNPC]:
                             await peep.ask(self.playerList)
 
     def nextRound(self) -> player:

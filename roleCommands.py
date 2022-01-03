@@ -49,12 +49,15 @@ from sharedDicts import (
     activeDic,
 )
 from sharedFuncs import (
+    aOrAn,
+    blToStr,
     count,
     cut,
     finOnCall,
     finPatrol,
     funcBuild,
     genBuild,
+    genderPick,
     getBrief,
     getDesc,
     isSuper,
@@ -68,6 +71,7 @@ from sharedFuncs import (
     pointsLeft,
     rAddFunc,
     reqEnd,
+    rollTask,
     save,
     sendMessage,
     spent,
@@ -198,16 +202,7 @@ class roleCommands(
                 )
 
                 if NPCid:
-                    playerEhnList = [
-                        masterEhnDict[x]["Name"] for x in foundPlayer.bL
-                    ]
-                    playerEhnListStr = ""
-                    for ehn in sorted(
-                        playerEhnList,
-                        key=lambda x: int(x.split()[1]),
-                        reverse=True,
-                    ):
-                        playerEhnListStr += f"{ehn}\n"
+                    playerEhnListStr = blToStr(foundPlayer.bL)
                     newMes.add_field(
                         name="Enhancements", value=playerEhnListStr
                     )
@@ -458,7 +453,7 @@ class roleCommands(
             emptMes.add_field(inline=False, name="Patrolling", value=patrolMes)
 
         save(ctx.author.guild.id, cached_file)
-        stateL = await count(ctx.author)
+        stateL = count(ctx.author)
         currEnhP = stateL[0]
         logP.debug(
             f"{nON(ctx.author)} has {currEnhP} available" " enhancements"
@@ -487,6 +482,26 @@ class roleCommands(
         await ctx.send(embed=emptMes)
         await ctx.message.delete(delay=1)
         return
+
+    @commands.command(
+        enabled=True,
+        aliases=["it", "intTask"],
+        brief=getBrief("interactiveTask"),
+        description=getDesc("interactiveTask"),
+    )
+    async def interactiveTask(self, ctx: commands.Context):
+        opp = rollTask(self.bot, ctx.author)
+        await ctx.send(
+            (
+                f"It is {aOrAn(opp.rank).lower()} {opp.rank} task to stop the "
+                f"{opp.desc} {opp.n} {opp.task}.\n"
+                f"{genderPick(opp.gender, 'their').capitalize()} enhancements "
+                f"are:\n{blToStr(opp.bL)}"
+            )
+        )
+        bat = battler(self.bot, [ctx.author, opp])
+        bat.playerList[0].play = True
+        await startDuel(self, ctx, bat)
 
     @commands.command(
         enabled=COMON,
@@ -561,11 +576,7 @@ class roleCommands(
                     continue
                 FPC = playerFromBuild(self.bot, val, name)
                 valStr = FPC.statMessage() + "\n\n"
-                nameList = [masterEhnDict[x]["Name"] for x in val]
-                for item in sorted(
-                    nameList, key=lambda x: int(x.split()[1]), reverse=True
-                ):
-                    valStr += f"{item}\n"
+                valStr += blToStr(val)
                 mes.add_field(
                     name=f"Build ({FPC.fB[0]}): {name}", value=valStr
                 )
@@ -602,7 +613,7 @@ class roleCommands(
                     f"Build {buildName} not found in saved build list"
                 )
                 return
-            authCount = await count(ctx.author)
+            authCount = count(ctx.author)
             buildToAdd = funcBuild(builds[buildName])
             if authCount[0] < buildToAdd[0]:
                 await ctx.send(
@@ -673,10 +684,7 @@ class roleCommands(
                 top = leader[highestEhn(build, False)]
             else:
                 top = leader[typ]
-            buildNames = [masterEhnDict[x]["Name"] for x in build]
-            buildStr = ""
-            for x in buildNames:
-                buildStr += f"{x} \n"
+            buildStr = blToStr(build)
             mes.add_field(
                 name=f"{top} build for {costBuild[0]} points",
                 value=f"{buildStr}",
@@ -707,7 +715,7 @@ class roleCommands(
             else True
         )
 
-        pointTot = await count(user)
+        pointTot = count(user)
         if pointTot[0] <= userHas[0]:
             await ctx.send("User has no spare enhancement points.")
             return
@@ -1055,7 +1063,7 @@ class roleCommands(
         i = 0
         for peep in typeMem:
             mes = discord.Embed(title=f"{nON(peep)} Stats")
-            stuff = await count(peep)
+            stuff = count(peep)
             group = pointList[i]
             unspent = stuff[0] - group[1]
 
@@ -1159,7 +1167,7 @@ class roleCommands(
         description=getDesc("generateDuel"),
     )
     async def generateDuel(self, ctx: commands.Context, diffVal: int = 0):
-        authCount = await count(ctx.author)
+        authCount = count(ctx.author)
         genVal = authCount[0] + diffVal
         build = genBuild(genVal)
 
@@ -1173,13 +1181,7 @@ class roleCommands(
         FPC = NPCFromBuild(self.bot, build, peepName)
         mes = f"Creating a duel against {FPC.n}\n**Enhancements**\n"
 
-        playerEhnList = [masterEhnDict[x]["Name"] for x in FPC.bL]
-        for ehn in sorted(
-            playerEhnList,
-            key=lambda x: int(x.split()[1]),
-            reverse=True,
-        ):
-            mes += f"{ehn}\n"
+        mes += blToStr(FPC.bL)
 
         await sendMessage(mes, ctx)
 

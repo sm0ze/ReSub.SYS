@@ -32,6 +32,10 @@ from sharedDicts import (
     remList,
     reqResList,
     restrictedList,
+    activeDic,
+    taskVar,
+    powerTypes,
+    genDictAll,
 )
 
 logP = log.get_logger(__name__)
@@ -626,7 +630,7 @@ async def pointsLeft(
     # return result
     for group in pointList:
         logP.debug(f"group in level is: {group}")
-        pointTot = await count(group[0])
+        pointTot = count(group[0])
 
         if hideFull:
             if group[1] == pointTot[0]:
@@ -702,7 +706,7 @@ async def tatsuXpGrab(roleTo: discord.Role):
 
 
 # function to get specified user's enhancement points
-async def count(
+def count(
     peepList: typing.Union[list[discord.Member], discord.Member]
 ) -> tuple[int, float, float, list[int, int, float], dict, dict]:
 
@@ -912,14 +916,14 @@ async def rAddFunc(
     for user in userList:
         incAmount = iniInc
         if not incAmount:
-            pointTot = await count(user)
+            pointTot = count(user)
             incAmount = pointTot[0]
         while incAmount:
             incAmount -= 1
             userSpent = spent([user])
             userEnhancements = userSpent[0][2]
             userHas = funcBuild(userEnhancements)
-            pointTot = await count(user)
+            pointTot = count(user)
             if pointTot[0] < userHas[0] + 1:
                 await ctx.send(
                     (
@@ -1034,7 +1038,7 @@ def genBuild(val: int = 0, typ: str = "", iniBuild: list = []) -> list[str]:
                             rank = 1
                         break
             nextLargest += 1
-            if nextLargest > len(failedBuild[2]):
+            if nextLargest >= len(failedBuild[2]):
                 smaller = True
                 nextLargest = 0
             searchBuild.append(shrt + str(rank))
@@ -1237,6 +1241,18 @@ def pickWeightedSupe(
     return toRet
 
 
+def blToStr(buildList):
+    ret = ""
+    playerEhnList = [masterEhnDict[x]["Name"] for x in buildList]
+    for ehn in sorted(
+        playerEhnList,
+        key=lambda x: int(x.split()[1]),
+        reverse=True,
+    ):
+        ret += f"{ehn}\n"
+    return ret
+
+
 def strList(dualList):
     retList = []
     for item in dualList:
@@ -1247,3 +1263,61 @@ def strList(dualList):
             shrtTyp = shrtTyp[0]
         retList.append(f"{shrtTyp}{rank}")
     return retList
+
+
+class intNPC:
+    def __init__(
+        self,
+        bot: typing.Union[commands.bot.Bot, commands.bot.AutoShardedBot],
+        baseVal,
+    ) -> None:
+        self.bot = bot
+        self.pic = self.bot.user.display_avatar
+        self.rank, self.task = self.rollRank()
+        self.power, self.desc = self.rollPower()
+        self.n, self.gender = self.rollName()
+        self.bV = baseVal + int(taskVar["addP"][self.rank])
+        self.bL = genBuild(
+            self.bV, [x for x in leader if leader[x] == self.power][0]
+        )
+
+    def rollName(self):
+        roll = random.choice(activeDic["person"])
+        return str(roll[0]), str(roll[1])
+
+    def rollPower(self):
+        retPower = random.choice(list(powerTypes.keys())[:15])
+        retDesc = random.choice(activeDic[retPower])
+        if retDesc[0] == " ":
+            retDesc = retDesc[1:]
+        return str(retPower), str(retDesc)
+
+    def rollRank(self):
+        roll = random.choices(
+            taskVar["taskOpt"][0],
+            cum_weights=taskVar["taskWeight"],
+        )
+        if isinstance(roll, list):
+            roll = roll[0]
+        retRank = roll
+        retTask = random.choice(random.choice(activeDic[str(roll).lower()]))
+        if retTask[0] == " ":
+            retTask = retTask[1:]
+        return str(retRank), str(retTask)
+
+
+def rollTask(bot, peep: discord.member):
+    peepCount = count(peep)
+    opponent = intNPC(bot, peepCount[0])
+    return opponent
+
+
+def genderPick(gender: str, typ: str):
+    genDict = genDictAll[typ]
+    ret = ""
+    if gender[0] in genDict.keys() and gender not in ["random", "r"]:
+        ret = genDict[gender[0]]
+    if not ret:
+        ret = random.choice(genDict["r"])
+
+    return str(ret)

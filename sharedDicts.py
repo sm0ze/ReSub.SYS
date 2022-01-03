@@ -25,6 +25,13 @@ taskVar = {
         ],
     ],
     "taskWeight": [60, 85, 95, 100],
+    "addP": {"Minor": 0, "Moderate": 1, "Major": 3, "Imperative": 5},
+}
+
+genDictAll = {
+    "they": {"m": "he", "f": "she", "r": ["he", "she", "they"]},
+    "their": {"m": "his", "f": "her", "r": ["his", "her", "their"]},
+    "them": {"m": "him", "f": "her", "r": ["him", "her", "them"]},
 }
 
 rsltDict = {
