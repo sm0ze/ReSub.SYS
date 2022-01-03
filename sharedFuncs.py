@@ -958,6 +958,8 @@ def genBuild(val: int = 0, typ: str = "", iniBuild: list = []) -> list[str]:
     if not iniBuild:
         searchBuild = [typ + str(checkInt)]
     else:
+        if funcBuild(iniBuild)[0] > val:
+            return iniBuild
         searchBuild = [typ + str(checkInt)] + iniBuild.copy()
     nextLargest = 0
     smaller = False
