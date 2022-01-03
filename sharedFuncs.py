@@ -1040,7 +1040,7 @@ def genBuild(val: int = 0, typ: str = "", iniBuild: list = []) -> list[str]:
                     if shrt == typeOf:
                         rank = int(rankOf) - subtract
                         break
-                if not rank and name not in restrictedList:
+                if 0 >= rank and name not in restrictedList:
                     rank = 1
                 elif name in restrictedList:
                     rank = 0
