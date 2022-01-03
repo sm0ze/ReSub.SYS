@@ -968,7 +968,7 @@ def genBuild(val: int = 0, typ: str = "", iniBuild: list = []) -> list[str]:
         searchBuild = [typ + str(checkInt)] + iniBuild.copy()
     nextLargest = 0
     smaller = False
-    prevBuild = []
+    prevBuild = iniBuild.copy()
     maxTyp = []
 
     testMax = True
@@ -1021,8 +1021,14 @@ def genBuild(val: int = 0, typ: str = "", iniBuild: list = []) -> list[str]:
             build = want[2]
         else:
             failedBuild = prevBuildsDict.setdefault(
-                tuple([typ + str(checkInt)]), funcBuild([typ + str(checkInt)])
+                tuple([typ + str(checkInt)] + maxTyp),
+                funcBuild([typ + str(checkInt)] + maxTyp),
             )
+            checkPrev = prevBuildsDict.setdefault(
+                tuple(prevBuild), funcBuild(prevBuild)
+            )
+            if checkPrev[0] > val:
+                return iniBuild
             name = failedBuild[2][nextLargest][1]
             rank = failedBuild[2][nextLargest][0]
             shrt = [x for x in leader.keys() if leader[x] == name][0]
