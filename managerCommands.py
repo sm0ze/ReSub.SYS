@@ -358,7 +358,7 @@ class managerCommands(
         description=getDesc("trimAll"),
     )
     # manager command to role trim all users bot has access to
-    async def trimAll(self, ctx: commands.Context, memStr: str = ""):
+    async def trimAll(self, ctx: commands.Context, memStr: str = SUPEROLE):
         memList = await memGrab(ctx, memStr)
         await cut(ctx, memList)
         await ctx.send(f"Finished trimAll for {len(memList)} members.")

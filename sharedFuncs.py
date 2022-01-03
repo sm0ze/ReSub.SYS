@@ -1109,14 +1109,24 @@ async def sendMessage(mes, location: Messageable):
                 await location.send(message)
 
 
-def embedBelowMaxLen(mes: discord.Embed, lenCheck=6000):
-    if embedLen(mes) < lenCheck:
+def embedBelowMaxLen(
+    mes: discord.Embed, addField: discord.embeds.EmbedProxy, lenCheck=6000
+):
+    if embedLen(mes, addField) < lenCheck:
         return True
     return False
 
 
-def embedLen(emb: discord.Embed):
-    fields = [emb.title, emb.description, emb.footer.text, emb.author.name]
+def embedLen(emb: discord.Embed, addField: discord.embeds.EmbedProxy = None):
+    fields = [
+        emb.title,
+        emb.description,
+        emb.footer.text,
+        emb.author.name,
+    ]
+    if addField:
+        fields.extend([addField.name])
+        fields.extend([addField.value])
     fields.extend([field.name for field in emb.fields])
     fields.extend([field.value for field in emb.fields])
     total = ""
@@ -1139,7 +1149,12 @@ def pageEmbed(mes: discord.Embed, maxFields=24):
     newMes.set_footer(text=mes.footer.text, icon_url=mes.footer.icon_url)
 
     for field in mes.fields:
-        if totFields + 1 > maxFields or not embedBelowMaxLen:
+        if not field:
+            continue
+        if totFields + 1 > maxFields or not embedBelowMaxLen(
+            newMes,
+            field,
+        ):
             yield newMes
             totFields = 0
             newMes.clear_fields()
