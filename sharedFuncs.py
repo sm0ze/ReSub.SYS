@@ -50,8 +50,8 @@ SLEEP = False
 # TODO rewrite messy implementation ?and? every call of this function
 def eleCountUniStr(varList, reqursion: bool = False):
     uniList = []
-    if not reqursion:
-        logP.debug(f"List of {len(varList)} elements to make unique")
+    # if not reqursion:
+    # logP.debug(f"List of {len(varList)} elements to make unique")
     for ele in varList:
         if isinstance(ele, list):
             if ele:
@@ -62,8 +62,8 @@ def eleCountUniStr(varList, reqursion: bool = False):
         else:
             if ele and ele not in uniList:
                 uniList.append(ele)
-    if not reqursion:
-        logP.debug(f"List of {len(uniList)} elements to return")
+    # if not reqursion:
+    # logP.debug(f"List of {len(uniList)} elements to return")
     return len(uniList), uniList
 
 
@@ -71,15 +71,15 @@ def eleCountUniStr(varList, reqursion: bool = False):
 def cost(inName: str, inDict: dict = masterEhnDict):
     required = []
 
-    logP.debug(f"{inName} has requisites: {inDict[inName]['Prereq']}")
+    # logP.debug(f"{inName} has requisites: {inDict[inName]['Prereq']}")
 
     # for each prereq given enhancement has
     for req in inDict[inName]["Prereq"]:
         # check for restricted enhancement, as those are not counted
         if req not in required:
-            logP.debug(
-                str(req) + " requisite has name: " + str(inDict[req]["Name"])
-            )
+            # logP.debug(
+            #    str(req) + " requisite has name: " + str(inDict[req]["Name"])
+            # )
 
             # save prereq full name for later
             required.append(inDict[req]["Name"])
@@ -93,7 +93,7 @@ def cost(inName: str, inDict: dict = masterEhnDict):
 
     # trim list of prereqs to remove duplicates
     ans = eleCountUniStr(required)
-    logP.debug(f"ans before restricted list length: {len(ans)}")
+    # logP.debug(f"ans before restricted list length: {len(ans)}")
 
     # total cost of given enhancement
     ansTot = ans[0]
@@ -122,19 +122,19 @@ def trim(pList, inDict=masterEhnDict):
             for x in inDict.keys()
             if inDict[x]["Name"] == pow
         ][0]
-        logP.debug(f"Enhancement: {pow}, Type: {powType}, Rank: {powRank}")
+        # logP.debug(f"Enhancement: {pow}, Type: {powType}, Rank: {powRank}")
 
         # if enhancement not already counted, add it to dictionary
         if powType not in tierDict.keys():
             tierDict[powType] = powRank
-            logP.debug(f"{powType} of rank {powRank} added to dict")
+            # logP.debug(f"{powType} of rank {powRank} added to dict")
 
         # else if enhancment greater in rank than already counted enhancement
         # edit dictionary
         elif powRank > tierDict[powType]:
-            logP.debug(
-                f"{powType} of rank {tierDict[powType]} increased to {powRank}"
-            )
+            # logP.debug(
+            #   f"{powType} of rank {tierDict[powType]} increased to {powRank}"
+            # )
             tierDict[powType] = powRank
 
     # add key value pairs in dictionary to a list of lists
@@ -143,7 +143,7 @@ def trim(pList, inDict=masterEhnDict):
 
     # return sorted trimmed list of highest ranked enhancements, descending
     trimList = sorted(trimList, reverse=True, key=lambda x: x[0])
-    logP.debug(f"dict tierDict: {tierDict}")
+    # logP.debug(f"dict tierDict: {tierDict}")
     logP.debug(f"trimList: {trimList}")
     return trimList
 
@@ -186,10 +186,10 @@ def funcBuild(
 
     # iterate through shorthand enhancements
     for item in buildList:
-        logP.debug(f"Build command item: {item}")
+        # logP.debug(f"Build command item: {item}")
         # fetch enhancement prereqs and cost
         temCost = cost(item)
-        logP.debug(f"Build command prereq cost length: {len(temCost)}")
+        # logP.debug(f"Build command prereq cost length: {len(temCost)}")
 
         # add this enhancement's prereqs to list
         reqList.append(temCost[2])
@@ -964,9 +964,10 @@ def genBuild(val: int = 0, typ: str = "", iniBuild: list = []) -> list[str]:
     if not iniBuild:
         searchBuild = [typ + str(checkInt)]
     else:
+        iniBuild = trimShrtList(iniBuild)
         if funcBuild(iniBuild)[0] > val:
             return iniBuild
-        searchBuild = [typ + str(checkInt)] + iniBuild.copy()
+        searchBuild = trimShrtList([typ + str(checkInt)] + iniBuild.copy())
     nextLargest = 0
     smaller = False
     prevBuild = iniBuild.copy()
@@ -975,7 +976,7 @@ def genBuild(val: int = 0, typ: str = "", iniBuild: list = []) -> list[str]:
     testMax = True
     maxSearch = [typ + str(10)] + searchBuild
     while testMax:
-        maxBuild = funcBuild(maxSearch)
+        maxBuild = funcBuild(trimShrtList(maxSearch))
         if val > maxBuild[0]:
             logP.debug(f"with {val} points {typ} can be maxed")
             maxTyp.append(typ + str(10))
@@ -995,8 +996,10 @@ def genBuild(val: int = 0, typ: str = "", iniBuild: list = []) -> list[str]:
 
     prevBuildsDict = {}
     while building:
+        searchBuild = trimShrtList(searchBuild)
         want = prevBuildsDict.setdefault(
-            tuple(searchBuild), funcBuild(searchBuild)
+            tuple(searchBuild),
+            funcBuild(searchBuild),
         )
         trimmed = trim(want[1])
 
@@ -1009,6 +1012,7 @@ def genBuild(val: int = 0, typ: str = "", iniBuild: list = []) -> list[str]:
             if shrt:
                 shrt = shrt[0]
             searchBuild.append(str(shrt) + str(rank))
+        searchBuild = trimShrtList(searchBuild)
 
         logP.debug(f"Testing {want[0]} build: {searchBuild}, {want[2]}")
         if want[0] < val:
@@ -1021,38 +1025,43 @@ def genBuild(val: int = 0, typ: str = "", iniBuild: list = []) -> list[str]:
             building = False
             build = want[2]
         else:
+
+            temp = trimShrtList([typ + str(checkInt)] + maxTyp)
             failedBuild = prevBuildsDict.setdefault(
-                tuple([typ + str(checkInt)] + maxTyp),
-                funcBuild([typ + str(checkInt)] + maxTyp),
+                tuple(temp),
+                funcBuild(temp),
             )
             checkPrev = prevBuildsDict.setdefault(
-                tuple(prevBuild), funcBuild(prevBuild)
+                tuple(prevBuild),
+                funcBuild(prevBuild),
             )
             if checkPrev[0] > val:
                 return iniBuild
+            if nextLargest >= len(failedBuild[2]):
+                if smaller:
+                    subtract += 1
+                if subtract == 4:
+                    return prevBuild
+                smaller = True
+                nextLargest = 0
             name = failedBuild[2][nextLargest][1]
             rank = failedBuild[2][nextLargest][0]
             shrt = [x for x in leader.keys() if leader[x] == name][0]
             searchBuild = prevBuild.copy()
-            splitBuild = [[x[:3], x[3:]] for x in searchBuild]
+            splitBuild = [[x[:3], int(x[3:])] for x in searchBuild]
             if smaller:
                 for typeOf, rankOf in splitBuild:
                     if shrt == typeOf:
                         rank = int(rankOf) - subtract
+                        searchBuild.remove(f"{typeOf}{rankOf}")
                         break
-                if 0 >= rank and name not in restrictedList:
-                    rank = 1
-                elif name in restrictedList:
-                    rank = 0
+            if 0 >= rank and name not in restrictedList:
+                rank = 1
+            elif name in restrictedList:
+                rank = 0
 
             nextLargest += 1
-            if nextLargest >= len(failedBuild[2]):
-                if smaller:
-                    subtract += 1
-                if subtract == 5:
-                    return iniBuild
-                smaller = True
-                nextLargest = 0
+            checkInt -= 1
             searchBuild.append(shrt + str(rank))
 
     for group in build:
@@ -1333,3 +1342,14 @@ def genderPick(gender: str, typ: str):
         ret = random.choice(genDict["r"])
 
     return str(ret)
+
+
+def trimShrtList(buildList: list[str]):
+    foundDict = {}
+    for item in buildList:
+        typ = item[:3]
+        rank = int(item[3:])
+        if typ not in foundDict.keys() or rank > foundDict[typ]:
+            foundDict[typ] = rank
+    retList = [f"{x}{foundDict[x]}" for x in foundDict.keys()]
+    return sorted(retList, key=lambda x: (-int(x[3:]), x[:3]))

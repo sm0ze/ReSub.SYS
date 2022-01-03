@@ -1093,7 +1093,7 @@ def NPCFromBuild(
     FPC["name"] = name
     for item in buildList:
         typ = item[:3]
-        rank = item[3:]
+        rank = int(item[3:])
         FPC[typ] = int(rank)
     genNPC = NPC(
         bot,

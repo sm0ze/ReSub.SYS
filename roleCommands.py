@@ -485,7 +485,7 @@ class roleCommands(
         return
 
     @commands.command(
-        enabled=True,
+        enabled=COMON,
         aliases=["it", "intTask"],
         brief=getBrief("interactiveTask"),
         description=getDesc("interactiveTask"),
