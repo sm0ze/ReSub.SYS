@@ -21,7 +21,7 @@ def askToken(var: str) -> str:
 HOSTNAME = socket.gethostname().lower()
 logP.info(f"Name of host for program is: {HOSTNAME}")
 
-COMON = False
+COMON = True
 
 # .env variables that are not shared with github and other users.
 # Use your own if testing this with your own bot

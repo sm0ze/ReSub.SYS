@@ -1188,7 +1188,7 @@ class roleCommands(
         await startDuel(self, ctx, bat)
 
     @commands.command(
-        enabled=True,
+        enabled=COMON,
         aliases=["d"],
         brief=getBrief("duel"),
         description=getDesc("duel"),
