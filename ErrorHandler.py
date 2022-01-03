@@ -47,9 +47,8 @@ class ErrorHandler(commands.Cog):
             )
         elif isinstance(error, commands.CommandOnCooldown):
             dupeEr = False
-            cdTimeStr = str(
-                datetime.timedelta(seconds=round(error.retry_after, 2))
-            )
+            cdTimeStr = str(datetime.timedelta(seconds=int(error.retry_after)))
+
             if str(command) == "task":
                 mes = discord.Embed(
                     title="No Tasks",
