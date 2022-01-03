@@ -940,6 +940,7 @@ async def rAddFunc(
 def genBuild(val: int = 0, typ: str = "", iniBuild: list = []) -> list[str]:
     build = []
     buildFinal = []
+    subtract = 1
     pickList = [
         x
         for x in leader.keys()
@@ -1037,7 +1038,7 @@ def genBuild(val: int = 0, typ: str = "", iniBuild: list = []) -> list[str]:
             if smaller:
                 for typeOf, rankOf in splitBuild:
                     if shrt == typeOf:
-                        rank = int(rankOf) - 1
+                        rank = int(rankOf) - subtract
                         break
                 if not rank and name not in restrictedList:
                     rank = 1
@@ -1046,6 +1047,10 @@ def genBuild(val: int = 0, typ: str = "", iniBuild: list = []) -> list[str]:
 
             nextLargest += 1
             if nextLargest >= len(failedBuild[2]):
+                if smaller:
+                    subtract += 1
+                if subtract == 5:
+                    return iniBuild
                 smaller = True
                 nextLargest = 0
             searchBuild.append(shrt + str(rank))
