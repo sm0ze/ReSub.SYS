@@ -142,7 +142,7 @@ def trim(pList, inDict=masterEhnDict):
         trimList.append([val, key])
 
     # return sorted trimmed list of highest ranked enhancements, descending
-    trimList = sorted(trimList, reverse=True, key=lambda x: x[0])
+    trimList = sorted(trimList, key=lambda x: (-x[0], x[0]))
     # logP.debug(f"dict tierDict: {tierDict}")
     logP.debug(f"trimList: {trimList}")
     return trimList
@@ -940,7 +940,8 @@ async def rAddFunc(
 def genBuild(val: int = 0, typ: str = "", iniBuild: list = []) -> list[str]:
     build = []
     buildFinal = []
-    subtract = 1
+    # subtract = 0
+    floor = 0
     pickList = [
         x
         for x in leader.keys()
@@ -961,6 +962,11 @@ def genBuild(val: int = 0, typ: str = "", iniBuild: list = []) -> list[str]:
 
     checkInt = 1
     building = True
+    # smaller = False
+
+    iniSplit = {}
+    # iniTyps = []
+
     if not iniBuild:
         searchBuild = [typ + str(checkInt)]
     else:
@@ -968,8 +974,11 @@ def genBuild(val: int = 0, typ: str = "", iniBuild: list = []) -> list[str]:
         if funcBuild(iniBuild)[0] > val:
             return iniBuild
         searchBuild = trimShrtList([typ + str(checkInt)] + iniBuild.copy())
-    nextLargest = 0
-    smaller = False
+
+        for item in iniBuild:
+            iniSplit[item[:3]] = int(item[3:])
+        # iniTyps = iniSplit.keys()
+    # nextLargest = 0
     prevBuild = iniBuild.copy()
     maxTyp = []
 
@@ -1019,50 +1028,104 @@ def genBuild(val: int = 0, typ: str = "", iniBuild: list = []) -> list[str]:
             checkInt += 1
             if checkInt > 10:
                 checkInt = 10
+
             prevBuild = searchBuild.copy()
             searchBuild.append(typ + str(checkInt))
         elif want[0] == val:
             building = False
             build = want[2]
         else:
+            while (
+                tuple(searchBuild) in prevBuildsDict.keys()
+                and prevBuildsDict[tuple(searchBuild)][0] > val
+            ):
+                temp = trimShrtList([typ + str(checkInt)] + maxTyp)
+                failedBuild = prevBuildsDict.setdefault(
+                    tuple(temp),
+                    funcBuild(temp),
+                )
+                checkPrev = prevBuildsDict.setdefault(
+                    tuple(prevBuild),
+                    funcBuild(prevBuild),
+                )
+                if checkPrev[0] > val:
+                    return iniBuild
 
-            temp = trimShrtList([typ + str(checkInt)] + maxTyp)
-            failedBuild = prevBuildsDict.setdefault(
-                tuple(temp),
-                funcBuild(temp),
-            )
-            checkPrev = prevBuildsDict.setdefault(
-                tuple(prevBuild),
-                funcBuild(prevBuild),
-            )
-            if checkPrev[0] > val:
-                return iniBuild
-            if nextLargest >= len(failedBuild[2]):
-                if smaller:
-                    subtract += 1
-                if subtract == 4:
-                    return prevBuild
-                smaller = True
-                nextLargest = 0
-            name = failedBuild[2][nextLargest][1]
-            rank = failedBuild[2][nextLargest][0]
-            shrt = [x for x in leader.keys() if leader[x] == name][0]
-            searchBuild = prevBuild.copy()
-            splitBuild = [[x[:3], int(x[3:])] for x in searchBuild]
-            if smaller:
-                for typeOf, rankOf in splitBuild:
-                    if shrt == typeOf:
-                        rank = int(rankOf) - subtract
-                        searchBuild.remove(f"{typeOf}{rankOf}")
-                        break
-            if 0 >= rank and name not in restrictedList:
-                rank = 1
-            elif name in restrictedList:
-                rank = 0
+                searchBuild = prevBuild.copy()
+                splitBuild = [[int(x[3:]), x[:3]] for x in searchBuild]
+                toAdd = toAddToFrom(splitBuild, failedBuild[2])
+                if not toAdd:
+                    groupToAdd = []
+                    while not groupToAdd:
+                        toInc = toIncFromTo(splitBuild, failedBuild[2], floor)
+                        if toInc:
+                            groupToAdd = toInc[0]
+                        else:
+                            floor += 1
+                            if floor == 11:
+                                return exitGenBuild(prevBuildsDict, val)
+                    shrt = groupToAdd[1]
+                    rank = groupToAdd[0]
+                    """if nextLargest > len(failedBuild[2]):
+                        if smaller:
+                            subtract += 1
+                            floor += 1
+                            if subtract == 3:
+                                largestSafeBuilds = sorted(
+                                    [
+                                        [prevBuildsDict[x][0], x]
+                                        for x in prevBuildsDict.keys()
+                                        if prevBuildsDict[x][0] < val
+                                    ],
+                                    key=lambda x: -int(x[0]),
+                                )
+                                largestSafeBuild = largestSafeBuilds[0]
+                                return largestSafeBuild[1]
+                        else:
+                            smaller = True
+                        nextLargest = 0
+                    group = failedBuild[2][-nextLargest]
+                    name = group[1]
+                    rank = group[0]
+                    shrt = [x for x in leader.keys() if leader[x] == name][0]
 
-            nextLargest += 1
-            checkInt -= 1
-            searchBuild.append(shrt + str(rank))
+                    if f"{shrt}10" not in maxTyp:
+                        breakOut = False
+                        for rankOf, typeOf in splitBuild:
+                            if shrt == typeOf:
+                                rank = max(rankOf, rank)
+                                searchBuild.remove(f"{typeOf}{rankOf}")
+                                if breakOut:
+                                    break
+                                else:
+                                    breakOut = True
+                            if typeOf == typ:
+                                if checkInt > rankOf:
+                                    checkInt = rankOf
+                                if breakOut:
+                                    break
+                                else:
+                                    breakOut = True
+                        rank -= subtract
+                    if 0 >= rank and name not in restrictedList:
+                        rank = 1
+                    elif name in restrictedList:
+                        rank = 0
+
+                    if shrt in iniTyps:
+                        if rank < iniSplit[shrt]:
+                            rank = iniSplit[shrt]
+
+                    nextLargest += 1"""
+                else:
+
+                    shrt = toAdd[0]
+                    rank = 1
+                    if leader[shrt] in restrictedList:
+                        rank = 0
+                checkInt -= 1
+                searchBuild.append(shrt + str(rank))
+                searchBuild = trimShrtList(searchBuild)
 
     for group in build:
         rank = group[0]
@@ -1265,11 +1328,16 @@ def pickWeightedSupe(
 def blToStr(buildList):
     ret = ""
     playerEhnList = [masterEhnDict[x]["Name"] for x in buildList]
+    addBot = [x for x in playerEhnList if x in restrictedList]
+    for item in addBot:
+        playerEhnList.remove(item)
     for ehn in sorted(
         playerEhnList,
         key=lambda x: int(x.split()[1]),
         reverse=True,
     ):
+        ret += f"{ehn}\n"
+    for ehn in addBot:
         ret += f"{ehn}\n"
     return ret
 
@@ -1383,3 +1451,48 @@ def duelButtonType(styl: str):
         retStyl = discord.ButtonStyle.red
         retRow = 4
     return retStyl, retRow
+
+
+def toAddToFrom(toBuild: list, fromBuild: list):
+    toBuildShrt = [x[1] for x in toBuild]
+    fromBuildTyp = [x[1] for x in fromBuild]
+
+    fromBuildShrt = []
+    for item in fromBuildTyp:
+        fromBuildShrt += [x for x in leader.keys() if leader[x] == item]
+
+    toRet = list(set(fromBuildShrt) - set(toBuildShrt))
+
+    return toRet
+
+
+def toIncFromTo(toBuild: list, fromBuildList: list, floor: int):
+    fromBuild = [
+        [x[0], y]
+        for x in fromBuildList
+        for y in leader.keys()
+        if leader[y] == x[1]
+    ]
+    fromBuildDict = {}
+    for item in fromBuild:
+        fromBuildDict[item[1]] = item[0]
+    toRet = []
+    for item in toBuild:
+        rank = item[0]
+        shrt = item[1]
+        if floor > rank and floor <= fromBuildDict[shrt]:
+            toRet.append([floor, shrt])
+    return toRet
+
+
+def exitGenBuild(searchedBuilds: dict, val: int):
+    largestSafeBuilds = sorted(
+        [
+            [searchedBuilds[x][0], x]
+            for x in searchedBuilds.keys()
+            if searchedBuilds[x][0] < val
+        ],
+        key=lambda x: -int(x[0]),
+    )
+    largestSafeBuild = largestSafeBuilds[0]
+    return largestSafeBuild[1]

@@ -677,7 +677,7 @@ class roleCommands(
             else:
                 typ = ""
         build = genBuild(val, typ, iniBuild)
-        logP.debug(f"For {val} points build {build} was generated")
+
         mes = discord.Embed(title="Generated Build")
         if build:
             costBuild = funcBuild(build)
@@ -691,6 +691,9 @@ class roleCommands(
                 value=f"{buildStr}",
             )
             await ctx.send(embed=mes)
+            logP.debug(
+                f"For {costBuild[0]} points build {build} was generated"
+            )
 
     @commands.command(
         enabled=COMON,
