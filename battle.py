@@ -393,17 +393,17 @@ class player:
             mes += f"{self.n} no longer has lowered defenses.\n\n"
         return mes
 
-    def focus(self, add: bool = True):
+    def focus(self, add: bool = True, foc: float = baseDict["FOC"]):
         if add:
             self.focusNumNow += 1
             self.sta -= 1
-            self.eva += 5
-            self.acc += 5
+            self.eva += foc
+            self.acc += foc
         else:
             while self.focusNumLast:
                 self.focusNumLast -= 1
-                self.eva -= 5
-                self.acc -= 5
+                self.eva -= foc
+                self.acc -= foc
             self.focusNumLast = self.focusNumNow
             self.focusNumNow = 0
 
