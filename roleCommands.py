@@ -1189,6 +1189,7 @@ class roleCommands(
         bat = battler(self.bot, [ctx.author, FPC])
         await bat.findPlayers(0)
         await startDuel(self, ctx, bat)
+        await ctx.send("generateDuel finished")
 
     @commands.command(
         enabled=COMON,
