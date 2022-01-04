@@ -1192,7 +1192,6 @@ class roleCommands(
         bat = battler(self.bot, [ctx.author, FPC])
         await bat.findPlayers(0)
         await startDuel(self, ctx, bat)
-        await ctx.send("generateDuel finished")
 
     @commands.command(
         enabled=COMON,
@@ -1302,25 +1301,16 @@ async def playerDuelInput(
         timeOut = PLAYERTURNWAIT
     else:
         timeOut = BOTTURNWAIT
-
-    moveView = duelMoveView(reactionList)
+    moveView = None
+    if not peep.missTurn:
+        moveView = duelMoveView(reactionList)
     msg = await peep.p.send(embed=mes, view=moveView)
-    """if not peep.missTurn:
-        for reac in reactionList:
-            tryAgain = 5
-            if tryAgain:
-                try:
-                    await msg.add_reaction(reac)
-                    tryAgain = 0
-                except HTTPException:
-                    tryAgain -= 1
-                    await asyncio.sleep(2)"""
 
     def check(interaction: discord.Interaction):
         return interaction.user.id == peep.p.id
 
     moveString = ""
-    while not moveView.is_finished():
+    while not peep.missTurn and not moveView.is_finished():
         try:
             interaction: discord.Interaction = await self.bot.wait_for(
                 "interaction",
