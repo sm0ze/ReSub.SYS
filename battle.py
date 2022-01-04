@@ -109,31 +109,31 @@ class player:
 
         self.iniCalc()
 
-        addHP = float(int(baseDict["HP"]) + self.calcStat("HP"))
+        addHP = baseDict["HP"] + self.calcStat("HP")
 
         self.hp = addHP
         self.totHP = addHP
 
-        self.rec = int(baseDict["REC"]) + self.calcStat("Rec")
+        self.rec = baseDict["REC"] + self.calcStat("Rec")
 
-        self.sta = int(baseDict["STA"]) + self.calcStat("Sta")
-        self.totSta = int(baseDict["STATOT"]) + self.calcStat("StaTot")
-        self.staR = int(baseDict["STAR"]) + self.calcStat("StaR")
+        self.sta = baseDict["STA"] + self.calcStat("Sta")
+        self.totSta = baseDict["STATOT"] + self.calcStat("StaTot")
+        self.staR = baseDict["STAR"] + self.calcStat("StaR")
 
-        self.pa = int(baseDict["PA"]) + self.calcStat("PA")
-        self.pd = float(int(baseDict["PD"]) + self.calcStat("PD"))
+        self.pa = baseDict["PA"] + self.calcStat("PA")
+        self.pd = baseDict["PD"] + self.calcStat("PD")
 
-        self.ma = int(baseDict["MA"]) + self.calcStat("MA")
-        self.md = float(int(baseDict["MD"]) + self.calcStat("MD"))
+        self.ma = baseDict["MA"] + self.calcStat("MA")
+        self.md = baseDict["MD"] + self.calcStat("MD")
 
         self.hAcc = self.calcStat("Acc")
-        self.acc = int(baseDict["ACC"]) + self.hAcc
+        self.acc = baseDict["ACC"] + self.hAcc
 
         self.hEva = self.calcStat("Eva")
-        self.eva = int(baseDict["EVA"]) + self.hEva
+        self.eva = baseDict["EVA"] + self.hEva
 
-        self.swi = int(baseDict["SWI"]) + self.calcStat("Swi")
-        self.totSwi = int(baseDict["SWITOT"])
+        self.swi = baseDict["SWI"] + self.calcStat("Swi")
+        self.totSwi = baseDict["SWITOT"]
 
         self.swiNow = int(0)
         self.defending = str("")
@@ -185,8 +185,8 @@ class player:
         self._4th = int(statDict["4th"])
         self._int = int(statDict["int"])
 
-    def calcStat(self, statType) -> int:
-        ret = int(0)
+    def calcStat(self, statType) -> float:
+        ret = float(0)
         ret += addCalc(self, statType)
         ret += addBonus(self, statType)
         logP.debug(f"Adding to: {statType}, {ret}")
@@ -1007,8 +1007,8 @@ def attackCalc(
     return ret
 
 
-def addCalc(self, statType) -> int:
-    ret = int(0)
+def addCalc(self, statType) -> float:
+    ret = float(0)
     ignore = []
     for stat in statCalcDict.keys():
         statAm = getattr(self, f"_{stat}")
@@ -1037,11 +1037,11 @@ def addCalc(self, statType) -> int:
         if not statAm or stat in ignore:
             continue
         try:
-            addStat = statCalcDict[stat][statType]
+            addStat = float(statCalcDict[stat][statType])
         except KeyError:
-            addStat = None
+            addStat = 0.0
         if addStat:
-            ret += statAm * addStat
+            ret += float(statAm) * float(addStat)
             logP.debug(
                 (
                     f"Adding rank {statAm} {stat} * {addStat} = "
@@ -1051,14 +1051,14 @@ def addCalc(self, statType) -> int:
     return ret
 
 
-def addBonus(self, bonusType) -> int:
-    ret = int(0)
+def addBonus(self, bonusType) -> float:
+    ret = float(0)
     for stat in bonusDict.keys():
         addBonus = bonusDict[stat][bonusType]
         if addBonus:
             bonusStat = getattr(self, f"_{stat}")
-            if bonusStat == 10:
-                ret += addBonus
+            if int(bonusStat) == 10:
+                ret += float(addBonus)
                 logP.debug(
                     (
                         f"Adding a bonus of {addBonus} to {bonusType} "

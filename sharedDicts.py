@@ -336,7 +336,7 @@ urlBase = urltoAdd.format(statsToken, baseName)
 statCalcDict = {}
 bonusDict = {}
 replaceDict = {}
-baseDict = {}
+baseDict: dict[str, float] = {}
 
 urlList = [
     [urlStats, statCalcDict, "statCalcDict"],
@@ -383,7 +383,7 @@ except Exception as e:
     logP.warning(e)
 
 for tup in frame.itertuples():
-    baseDict[tup.Constant] = tup.BaseStat
+    baseDict[tup.Constant] = float(tup.BaseStat)
     logP.debug(f"Adding Base: {tup.Constant} of {tup.BaseStat}, to dict")
 
 npcDict = {}
