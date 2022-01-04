@@ -940,7 +940,6 @@ async def rAddFunc(
 def genBuild(val: int = 0, typ: str = "", iniBuild: list = []) -> list[str]:
     build = []
     buildFinal = []
-    # subtract = 0
     floor = 0
     pickList = [
         x
@@ -962,10 +961,8 @@ def genBuild(val: int = 0, typ: str = "", iniBuild: list = []) -> list[str]:
 
     checkInt = 1
     building = True
-    # smaller = False
 
     iniSplit = {}
-    # iniTyps = []
 
     if not iniBuild:
         searchBuild = [typ + str(checkInt)]
@@ -977,8 +974,6 @@ def genBuild(val: int = 0, typ: str = "", iniBuild: list = []) -> list[str]:
 
         for item in iniBuild:
             iniSplit[item[:3]] = int(item[3:])
-        # iniTyps = iniSplit.keys()
-    # nextLargest = 0
     prevBuild = iniBuild.copy()
     maxTyp = []
 
@@ -1066,57 +1061,7 @@ def genBuild(val: int = 0, typ: str = "", iniBuild: list = []) -> list[str]:
                                 return exitGenBuild(prevBuildsDict, val)
                     shrt = groupToAdd[1]
                     rank = groupToAdd[0]
-                    """if nextLargest > len(failedBuild[2]):
-                        if smaller:
-                            subtract += 1
-                            floor += 1
-                            if subtract == 3:
-                                largestSafeBuilds = sorted(
-                                    [
-                                        [prevBuildsDict[x][0], x]
-                                        for x in prevBuildsDict.keys()
-                                        if prevBuildsDict[x][0] < val
-                                    ],
-                                    key=lambda x: -int(x[0]),
-                                )
-                                largestSafeBuild = largestSafeBuilds[0]
-                                return largestSafeBuild[1]
-                        else:
-                            smaller = True
-                        nextLargest = 0
-                    group = failedBuild[2][-nextLargest]
-                    name = group[1]
-                    rank = group[0]
-                    shrt = [x for x in leader.keys() if leader[x] == name][0]
 
-                    if f"{shrt}10" not in maxTyp:
-                        breakOut = False
-                        for rankOf, typeOf in splitBuild:
-                            if shrt == typeOf:
-                                rank = max(rankOf, rank)
-                                searchBuild.remove(f"{typeOf}{rankOf}")
-                                if breakOut:
-                                    break
-                                else:
-                                    breakOut = True
-                            if typeOf == typ:
-                                if checkInt > rankOf:
-                                    checkInt = rankOf
-                                if breakOut:
-                                    break
-                                else:
-                                    breakOut = True
-                        rank -= subtract
-                    if 0 >= rank and name not in restrictedList:
-                        rank = 1
-                    elif name in restrictedList:
-                        rank = 0
-
-                    if shrt in iniTyps:
-                        if rank < iniSplit[shrt]:
-                            rank = iniSplit[shrt]
-
-                    nextLargest += 1"""
                 else:
 
                     shrt = toAdd[0]
