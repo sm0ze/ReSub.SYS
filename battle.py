@@ -428,7 +428,7 @@ class battler:
         memberList: list[typing.Union[discord.Member, NPC, intNPC]],
     ) -> None:
 
-        self.playerList = []
+        self.playerList: list[player] = []
         self.totSwi = int(baseDict["SWITOT"])
         for peep in memberList:
             self.playerList.append(player(peep, bot))

@@ -1353,3 +1353,33 @@ def trimShrtList(buildList: list[str]):
             foundDict[typ] = rank
     retList = [f"{x}{foundDict[x]}" for x in foundDict.keys()]
     return sorted(retList, key=lambda x: (-int(x[3:]), x[:3]))
+
+
+def duelMoveView(reactionList: list):
+    compList = discord.ui.View()
+    for reac in reactionList:
+        styl, row = duelButtonType(reac[1])
+        compList.add_item(
+            discord.ui.Button(
+                emoji=reac[0], style=styl, custom_id=reac[2], row=row
+            )
+        )
+    return compList
+
+
+def duelButtonType(styl: str):
+    retStyl = discord.ButtonStyle.grey
+    retRow = 0
+    if styl == "Attack":
+        retStyl = discord.ButtonStyle.blurple
+        retRow = 1
+    elif styl == "Defend":
+        retStyl = discord.ButtonStyle.green
+        retRow = 2
+    elif styl == "Utility":
+        retStyl = discord.ButtonStyle.grey
+        retRow = 3
+    elif styl == "Quit":
+        retStyl = discord.ButtonStyle.red
+        retRow = 4
+    return retStyl, retRow

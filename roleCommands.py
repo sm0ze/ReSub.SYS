@@ -7,7 +7,6 @@ import time
 import typing
 
 import discord
-from discord.errors import HTTPException
 from discord.ext import commands, tasks
 from discord.utils import get
 
@@ -54,6 +53,7 @@ from sharedFuncs import (
     blToStr,
     count,
     cut,
+    duelMoveView,
     finOnCall,
     finPatrol,
     funcBuild,
@@ -1270,8 +1270,12 @@ async def playerDuelInput(
     for key in moveOpt.keys():
         moveCost = moveOpt[key]["cost"]
         if moveCost <= peep.sta:
-            react = moveOpt[key]["reaction"]
-            moveStr += f"{react}: ({moveCost}) {moveOpt[key]['name']}\n"
+            react = [
+                moveOpt[key]["reaction"],
+                moveOpt[key]["type"],
+                key,
+            ]
+            moveStr += f"{react[0]}: ({moveCost}) {moveOpt[key]['name']}\n"
             moveList.append(key)
             reactionList.append(react)
 
@@ -1290,8 +1294,14 @@ async def playerDuelInput(
         value=moveStr,
     )
 
-    msg = await peep.p.send(embed=mes)
-    if not peep.missTurn:
+    if notPeep.play:
+        timeOut = PLAYERTURNWAIT
+    else:
+        timeOut = BOTTURNWAIT
+
+    moveView = duelMoveView(reactionList)
+    msg = await peep.p.send(embed=mes, view=moveView)
+    """if not peep.missTurn:
         for reac in reactionList:
             tryAgain = 5
             if tryAgain:
@@ -1300,58 +1310,39 @@ async def playerDuelInput(
                     tryAgain = 0
                 except HTTPException:
                     tryAgain -= 1
-                    await asyncio.sleep(2)
+                    await asyncio.sleep(2)"""
 
-    def check(reaction, user):
-        return user.id == peep.p.id and str(reaction.emoji) in reactionList
+    def check(interaction: discord.Interaction):
+        return interaction.user.id == peep.p.id
 
-    if notPeep.play:
-        timeOut = PLAYERTURNWAIT
-    else:
-        timeOut = BOTTURNWAIT
-
-    active = True
-    if not reactionList or peep.missTurn:
-        active = False
-
-    while active:
+    moveString = ""
+    while not moveView.is_finished():
         try:
-            reaction, user = await self.bot.wait_for(
-                "reaction_add", timeout=timeOut, check=check
+            interaction: discord.Interaction = await self.bot.wait_for(
+                "interaction",
+                timeout=timeOut,
+                check=check,
             )
-            logP.debug(f"reaction: {reaction}, user: {user}")
-            if str(reaction.emoji) == str(moveOpt["quit"]["reaction"]):
-                peep.play = False
-                active = False
-                break
-            for move in moveList:
-                logP.debug(
-                    [
-                        str(moveOpt[move]["reaction"]),
-                        "==",
-                        str(reaction.emoji),
-                        str(reaction.emoji) == str(moveOpt[move]["reaction"]),
-                    ]
-                )
-                if str(reaction.emoji) == str(moveOpt[move]["reaction"]):
-                    logP.debug(f"{reaction.emoji} found")
-                    chosenMove = True
-                    desperate = moveOpt[move]["desperate"]
-                    typeMove = moveOpt[move]["type"]
-                    moveString = moveOpt[move]["moveStr"]
-                    # await msg.remove_reaction(reaction, user)
-                    active = False
-                    break
+            move = interaction.data["custom_id"]
+            desperate = moveOpt[move]["desperate"]
+            typeMove = moveOpt[move]["type"]
+            moveString = moveOpt[move]["moveStr"]
+            chosenMove = True
+            moveView.stop()
+            await msg.edit(view=None)
 
         except asyncio.TimeoutError:
-            active = False
-    if chosenMove:
+            moveView.stop()
+            await msg.edit(view=None)
+    if chosenMove and moveString != "MakeBot":
         if "Focus" == moveString:
             peep.focus()
             [desperate, typeMove, moveString], notPeep = await playerDuelInput(
                 self, ctx, totRounds, peep, battle
             )
     else:
+        if moveString == "MakeBot":
+            peep.play = False
         desperate, typeMove, moveString = battle.moveSelf(peep, notPeep)
     return [desperate, typeMove, moveString], notPeep
 
