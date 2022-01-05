@@ -146,6 +146,8 @@ class player:
         self.focusNumNow = int(0)
         self.focusNumLast = int(0)
 
+        self.dT = 0.0
+
     def iniCalc(self) -> None:
         statDict = {}
         for enhan in self.bL:
@@ -931,6 +933,7 @@ class battler:
                 if attDmg < int(0):
                     attDmg = float(0)
                 defender.hp = defender.hp - attDmg
+                defender.dT += attDmg
                 mes += f" for {attDmg:0.3g} physical damage.\n\n"
                 logP.debug(f"physical attack is a: {typHit}, for: {attDmg}")
             if attMove == "mental":
@@ -943,6 +946,7 @@ class battler:
                 if attDmg < int(0):
                     attDmg = float(0)
                 defender.hp = defender.hp - attDmg
+                defender.dT += attDmg
                 mes += f" for {attDmg:0.3g} mental damage.\n\n"
                 logP.debug(f"mental attack is a: {typHit}, for: {attDmg}")
         else:

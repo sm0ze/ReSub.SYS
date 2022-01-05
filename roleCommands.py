@@ -1485,13 +1485,16 @@ async def startDuel(
             if not winner == "Noone":
                 totRounds = winner.t
 
+    damageMes = ""
+    for peep in bat.playerList:
+        damageMes += f"{peep.n} took {peep.dT:.4g} damage.\n"
     mes.clear_fields()
     mes.add_field(
         name=(
             f"Winner is {winner.n if isinstance(winner, player) else winner}"
             f" after {totRounds} move{pluralInt(totRounds)}."
         ),
-        value="Prize to be implemented.",
+        value=("Prize to be implemented.\n" + damageMes),
     )
     if isinstance(winner, player):
         mes.set_thumbnail(url=winner.pic)
