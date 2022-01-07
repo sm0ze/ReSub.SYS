@@ -848,31 +848,15 @@ class battler:
         dodge = max(100 - (bacc - defender.eva), 0)
         hdodge = max((100 - (bacc - beva)) - dodge, 0)
 
-        tripCrit = max(hcrit + crit - 200, 0)
-        if tripCrit:
-            doubCrit = 100 - tripCrit
-            hcrit = 0
-            crit = 0
-        else:
-            doubCrit = max(hcrit + crit - 100, 0)
-            if doubCrit:
-                hcrit = 100 - doubCrit - crit
-                if hcrit < 0:
-                    crit = 100 - doubCrit
-                    hcrit = 0
+        hcrit, crit, doubCrit, tripCrit = self.hitCalcFourLvl(
+            hcrit,
+            crit,
+        )
 
-        despRiposte = max(hdodge + dodge - 200, 0)
-        if despRiposte:
-            normRiposte = 100 - despRiposte
-            hdodge = 0
-            dodge = 0
-        else:
-            normRiposte = max(hdodge + dodge - 100, 0)
-            if normRiposte:
-                hdodge = 100 - normRiposte - dodge
-                if hdodge < 0:
-                    dodge = 100 - normRiposte
-                    hdodge = 0
+        hdodge, dodge, normRiposte, despRiposte = self.hitCalcFourLvl(
+            hdodge,
+            dodge,
+        )
 
         norm = max(
             100
@@ -966,6 +950,21 @@ class battler:
             mes += "\n" + self.attack(defender, attacker, "", typDesp, True)
 
         return mes
+
+    def hitCalcFourLvl(self, lvl1: int, lvl2: int):
+        lvl4 = max(lvl1 + lvl2 - 200, 0)
+        if lvl4:
+            lvl3 = 100 - lvl4
+            lvl1 = int(0)
+            lvl2 = int(0)
+        else:
+            lvl3 = max(lvl1 + lvl2 - 100, 0)
+            if lvl3:
+                lvl1 = 100 - lvl3 - lvl2
+                if lvl1 < 0:
+                    lvl2 = 100 - lvl3
+                    lvl1 = int(0)
+        return lvl1, lvl2, lvl3, lvl4
 
     def adp(self, at1: player, at2: player):
         adpStats = namedtuple("adpStats", ["hitChance", "phys", "ment"])
