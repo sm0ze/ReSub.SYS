@@ -1425,7 +1425,7 @@ def toIncFromTo(toBuild: list, fromBuildList: list, floor: int):
     for item in toBuild:
         rank = item[0]
         shrt = item[1]
-        if floor > rank and floor <= fromBuildDict.setdefault(shrt, floor):
+        if floor > rank and floor <= fromBuildDict.setdefault(shrt, rank):
             toRet.append([floor, shrt])
     return toRet
 
