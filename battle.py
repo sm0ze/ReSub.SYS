@@ -875,7 +875,18 @@ class battler:
                     hdodge = 0
 
         norm = max(
-            100 - tripCrit - doubCrit - crit - hcrit - dodge - hdodge, 0
+            100
+            - (
+                tripCrit
+                + doubCrit
+                + crit
+                + hcrit
+                + dodge
+                + hdodge
+                + normRiposte
+                + despRiposte
+            ),
+            0,
         )
 
         weights = [
