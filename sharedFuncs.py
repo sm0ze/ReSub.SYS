@@ -142,7 +142,7 @@ def trim(pList, inDict=masterEhnDict):
         trimList.append([val, key])
 
     # return sorted trimmed list of highest ranked enhancements, descending
-    trimList = sorted(trimList, key=lambda x: (-x[0], x[0]))
+    trimList = sorted(trimList, key=lambda x: (-int(x[0]), str(x[1])))
     # logP.debug(f"dict tierDict: {tierDict}")
     logP.debug(f"trimList: {trimList}")
     return trimList
@@ -1365,7 +1365,7 @@ def trimShrtList(buildList: list[str]):
         if typ not in foundDict.keys() or rank > foundDict[typ]:
             foundDict[typ] = rank
     retList = [f"{x}{foundDict[x]}" for x in foundDict.keys()]
-    return sorted(retList, key=lambda x: (-int(x[3:]), x[:3]))
+    return sorted(retList, key=lambda x: (-int(x[3:]), str(x[:3])))
 
 
 def duelMoveView(reactionList: list):
