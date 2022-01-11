@@ -9,7 +9,15 @@ import discord
 from discord.ext import commands
 
 import log
-from sharedConsts import ASKALL, ASKNPC, ASKSELF
+from sharedConsts import (
+    ASKALL,
+    ASKNPC,
+    ASKSELF,
+    AVHIT,
+    HIHIT,
+    HITRANGE,
+    LOHIT,
+)
 from sharedDicts import (
     baseDict,
     bonusDict,
@@ -18,6 +26,8 @@ from sharedDicts import (
     moveOpt,
     replaceDict,
     statCalcDict,
+    attackRollDict,
+    multiTypDict,
 )
 from sharedFuncs import funcBuild, intNPC, nON, sendMessage, spent
 
@@ -28,14 +38,14 @@ HP: {0:0.3g}/{9:0.3g} (**{13}%**) + {5:0.3g} ({18}%)
 Sta: **{10:0.3g}**/{12:0.3g} +{11:0.3g}
 P: {1:0.3g}A/{2:0.3g}D
 M: {3:0.3g}A/{4:0.3g}D
-Acc/Eva({16}+{19}): {6:0.3g}({20:0.3g})/{7:0.3g}({21:0.3g})
+Acc/Eva({16}): {6:0.3g}/{7:0.3g}
 Swi: {14:0.3g}/{15:0.3g} +{8:0.3g}"""
 
 
-adpMes = """Acc%: PA🗡️/MA😠, Want > 0
-{}%: {:0.3g}/{:0.3g}
-Eva%: PD🛡️/MD😎, Want < 0
-{}%: {:0.3g}/{:0.3g}"""
+adpMes = """Acc: PA🗡️/MA😠
+Eva: PD🛡️/MD😎
+```{:> #04.2f}: {:> 02.3g}/{:> 02.3g}
+{:> #04.2f}: {:> 02.3g}/{:> 02.3g}```"""
 
 DELIM = 16
 
@@ -137,6 +147,7 @@ class player:
 
         self.swiNow = int(0)
         self.defending = str("")
+        self.conDef = int(0)
         self.noDef = bool(False)
         self.tired = int(0)
         self.missTurn = int(0)
@@ -214,12 +225,9 @@ class player:
                 "percentHP",
                 "swiNow",
                 "totSwi",
-                "focusNumNow",
+                "focusNum",
                 "hpRender",
                 "hpRecPer",
-                "focusNumLast",
-                "sumHit",
-                "sumDodge",
             ],
         )
         ret = stats(
@@ -239,12 +247,9 @@ class player:
             self.hpPer(),
             self.swiNow,
             self.totSwi,
-            self.focusNumNow,
+            self.focusNumNow + self.focusNumLast,
             self.hpRender(),
             self.recPer(),
-            self.focusNumLast,
-            self.hAcc + self.acc,
-            self.hEva + self.eva,
         )
         return ret
 
@@ -294,6 +299,7 @@ class player:
         if not self.defending:
             self.defending = defType
             val = float(2)
+            self.conDef += 1
         else:
             defType = self.defending
             val = float(0.5)
@@ -413,14 +419,6 @@ class player:
         if self.sta > num:
             while self.sta > num:
                 self.focus()
-
-    def bacc(self):
-        bacc = max(self.acc * 2 - int(baseDict["ACC"]), 0)
-        return bacc
-
-    def beva(self):
-        beva = max(self.eva * 2 - int(baseDict["EVA"]), 0)
-        return beva
 
 
 class battler:
@@ -587,6 +585,15 @@ class battler:
 
         if peep.missTurn:
             peep.missTurn -= 1
+        if peep.conDef >= 20:
+            mes += (
+                f"{peep.n} has defended for 20 consecutive turns "
+                "without attacking and lost this fight."
+            )
+            if attPeep.hp < 0:
+                peep.hp = attPeep.hp - 1
+            else:
+                peep.hp = float(0)
         return mes
 
     def decAtk(self, Attack, peep):
@@ -595,7 +602,7 @@ class battler:
             [[Attack.phys, "physical"], [Attack.ment, "mental"]],
             key=lambda x: x[0],
         )
-        atk = decAtk[0]
+        atk = float(decAtk[0])
         atkStr = decAtk[1]
 
         # desperate attack value
@@ -606,7 +613,7 @@ class battler:
             ],
             key=lambda x: x[0],
         )
-        dAtk = decDAtk[0]
+        dAtk = float(decDAtk[0])
         dAtkStr = decDAtk[1]
 
         return atk, atkStr, dAtk, dAtkStr
@@ -631,7 +638,7 @@ class battler:
             ],
             key=lambda x: x[0],
         )
-        critDesp = decCritDesp[0]
+        critDesp = float(decCritDesp[0])
         critDespStr = decCritDesp[1]
 
         # peep stamina after norm attack
@@ -661,30 +668,32 @@ class battler:
         canAt = bool(staAftA >= 0)
         canDespAt = bool(staAftD >= 0)
 
-        if Attack.hitChance <= 50:
+        HPS = notPeep.rec * (peep.totSta / (peep.staR + 1))
+
+        if Attack.hitChance <= LOHIT:
             # lowhit func
             logP.debug(f"lowHit: {Attack.hitChance}")
             if oneHit and Attack.hitChance + baseDict["FOC"] * fAA > 50:
-                while Attack.hitChance < 50 and peep.sta > normSta:
+                while Attack.hitChance < LOHIT and peep.sta > normSta:
                     peep.focus()
                     Attack = self.adp(peep, notPeep)
                 # then normal attack
             elif oneDespHit and Attack.hitChance + baseDict["FOC"] * fAD > 50:
-                while Attack.hitChance < 50 and peep.sta > despSta:
+                while Attack.hitChance < LOHIT and peep.sta > despSta:
                     peep.focus()
                     Attack = self.adp(peep, notPeep)
                 desperate = 1
                 # then desp attaack
             elif maxSta:
-                if oneHit or (
-                    atk > notPeep.rec * (peep.totSta / (peep.staR + 1))
-                ):
-                    while Attack.hitChance < 75 and peep.sta >= normSta:
+                if atk < HPS and dAtk < HPS:
+                    typeMove = "Defend"
+                elif oneHit or atk > HPS:
+                    while Attack.hitChance < LOHIT and peep.sta >= normSta:
                         peep.focus()
                         Attack = self.adp(peep, notPeep)
                     # then normal attack
                 else:
-                    while Attack.hitChance < 75 and peep.sta > despSta:
+                    while Attack.hitChance < AVHIT and peep.sta > despSta:
                         peep.focus()
                         Attack = self.adp(peep, notPeep)
                     desperate = 1
@@ -694,7 +703,7 @@ class battler:
 
             atk, atkStr, dAtk, dAtkStr = self.decAtk(Attack, peep)
 
-        elif Attack.hitChance < 75:
+        elif Attack.hitChance <= AVHIT:
             # avhit func
             logP.debug(f"avHit: {Attack.hitChance}")
             if oneHit and canAt:
@@ -705,7 +714,9 @@ class battler:
                 desperate = 1
                 # then desperate attack
             elif maxSta:
-                if nextHP <= dAtk * 2:
+                if atk < HPS and dAtk < HPS:
+                    typeMove = "Defend"
+                elif nextHP <= dAtk * 2:
                     desperate = 1
                     # then desperate attack
                 else:
@@ -717,7 +728,7 @@ class battler:
             else:
                 typeMove = "Defend"
 
-        elif Attack.hitChance < 150:
+        elif Attack.hitChance < HIHIT:
             # highhit func
             logP.debug(f"highHit: {Attack.hitChance}")
             if oneHit and canAt:
@@ -728,7 +739,9 @@ class battler:
                 desperate = 1
                 # then desperate attack
             elif maxSta:
-                if nextHP <= dAtk * 2:
+                if atk < HPS and dAtk < HPS:
+                    typeMove = "Defend"
+                elif nextHP <= dAtk * 2:
                     desperate = 1
                     # then desperate attack
                 elif dAtk < notPeep.rec * ((despSta * 2) / (peep.staR + 1)):
@@ -756,7 +769,9 @@ class battler:
                 moveStr = critDespStr
                 # then desperate attack
             elif maxSta:
-                if critDesp * 2 >= nextHP:
+                if atk < HPS and dAtk < HPS and critDesp < HPS:
+                    typeMove = "Defend"
+                elif critDesp * 2 >= nextHP:
                     desperate = 1
                     moveStr = critDespStr
                     # then desperate attack
@@ -817,6 +832,8 @@ class battler:
     ) -> str:
         mes = ""
 
+        attacker.conDef = int(0)
+
         if desperate:
             typeAtt = "desperately "
             staCost = moveOpt["dPhysA"]["cost"]
@@ -840,82 +857,21 @@ class battler:
         else:
             mes += ", it is "
 
-        bacc = attacker.bacc()
-        beva = defender.beva()
+        multiBase = int(baseDict["FOC"] + attacker.acc - defender.eva)
+        multiRangeStart = multiBase - HITRANGE
+        multiRangeStop = multiBase + HITRANGE
 
-        crit = max((attacker.acc - beva) - 100, 0)
-        hcrit = max(((bacc - beva) - 100) - crit, 0)
-        dodge = max(100 - (bacc - defender.eva), 0)
-        hdodge = max((100 - (bacc - beva)) - dodge, 0)
-
-        hcrit, crit, doubCrit, tripCrit = self.hitCalcFourLvl(
-            hcrit,
-            crit,
-        )
-
-        hdodge, dodge, normRiposte, despRiposte = self.hitCalcFourLvl(
-            hdodge,
-            dodge,
-        )
-
-        norm = max(
-            100
-            - (
-                tripCrit
-                + doubCrit
-                + crit
-                + hcrit
-                + dodge
-                + hdodge
-                + normRiposte
-                + despRiposte
-            ),
-            0,
-        )
-
-        weights = [
-            tripCrit,
-            doubCrit,
-            crit,
-            hcrit,
-            norm,
-            hdodge,
-            dodge,
-            normRiposte,
-            despRiposte,
+        multiRange = [
+            float(attackRollDict[x])
+            for x in range(multiRangeStart, multiRangeStop)
         ]
 
-        weightNames = [
-            ["triple critical", 4],
-            ["double critical", 3],
-            ["critical", 2],
-            ["powerful", 1.5],
-            ["normal", 1],
-            ["poor", 0.5],
-            ["missed", 0],
-            ["failed", -1],
-            ["spectacularly failed", -2],
-        ]
+        multi = round(random.choice(multiRange), 3)
+        typHit = multiTypDict.get(multi, "mistaken")
 
-        debugWeights = (
-            f"Weights are {sum(weights)}:"
-            f"{[[weightNames[x][0], y] for x,y in enumerate(weights)]}"
-        )
-        logP.debug(debugWeights)
-        if sum(weights) != 100:
-            mes += "\n***" + debugWeights + "***\n\n"
+        logP.debug(f"Hit is '{typHit}' for '{multi}'")
 
-        hit = random.choices(
-            weightNames,
-            weights,
-        )
-
-        typHit = hit[0][0]
-        multi = hit[0][1]
-
-        logP.debug(f"Hit is a {typHit}")
-
-        mes += f"a {typHit} {'hit' if not riposte else 'riposte'}"
+        mes += f"a {typHit}:{multi} {'hit' if not riposte else 'riposte'}"
         if multi >= 0:
 
             if attMove == "physical":
@@ -945,32 +901,17 @@ class battler:
                 mes += f" for {attDmg:0.3g} mental damage.\n\n"
                 logP.debug(f"mental attack is a: {typHit}, for: {attDmg}")
         else:
-            typDesp = 0 if multi < -1 else 1
+            typDesp = 1 if multi <= -1 else 0
             mes += ".\n"
             mes += "\n" + self.attack(defender, attacker, "", typDesp, True)
 
         return mes
 
-    def hitCalcFourLvl(self, lvl1: int, lvl2: int):
-        lvl4 = max(lvl1 + lvl2 - 200, 0)
-        if lvl4:
-            lvl3 = 100 - lvl4
-            lvl1 = int(0)
-            lvl2 = int(0)
-        else:
-            lvl3 = max(lvl1 + lvl2 - 100, 0)
-            if lvl3:
-                lvl1 = 100 - lvl3 - lvl2
-                if lvl1 < 0:
-                    lvl2 = 100 - lvl3
-                    lvl1 = int(0)
-        return lvl1, lvl2, lvl3, lvl4
-
     def adp(self, at1: player, at2: player):
         adpStats = namedtuple("adpStats", ["hitChance", "phys", "ment"])
         phys = at1.pa - at2.pd
         ment = at1.ma - at2.md
-        hitChance = at1.bacc() - at2.beva()
+        hitChance = at1.acc - at2.eva
 
         ret = adpStats(hitChance, phys, ment)
         return ret
@@ -987,7 +928,7 @@ class battler:
             adaptedDef.phys,
             adaptedDef.ment,
         ]
-        ret = f"{at1.n} Vs. {at2.n}\n{adpMes.format(*retList)}\n"
+        ret = f"*{at1.n} Vs. {at2.n}*\n{adpMes.format(*retList)}\n"
         return ret
 
     def adpList(self, statsFor: player) -> str:
@@ -1003,15 +944,13 @@ class battler:
 
 
 def attackCalc(
-    multi: int = 0,
-    attckDmg: int = 0,
+    multi: float = 0,
+    attckDmg: float = 0,
     defense: float = 0,
     desperate: bool = 0,
 ) -> float:
-    if multi and desperate:
-        multi += 1
-    ret = multi * attckDmg - defense
-    return ret
+    ret = (1 + multi + int(desperate)) * attckDmg - defense
+    return round(ret, 3)
 
 
 def addCalc(self, statType) -> float:

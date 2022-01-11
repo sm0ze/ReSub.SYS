@@ -11,9 +11,9 @@ urltoAdd = (
     "https://docs.google.com/spreadsheets/d/{}/gviz/tq?tqx=out:csv&sheet={}"
 )
 
-statsheetNom = [
-    ["Requirements", "1JIJjDzFjtuIU2k0jk1aHdMr2oErD_ySoFm7-iFEBOV0"]
-]
+
+statsToken = "1JIJjDzFjtuIU2k0jk1aHdMr2oErD_ySoFm7-iFEBOV0"
+statsheetNom = [["Requirements", statsToken]]
 taskVar = {
     "taskOpt": [
         ["Minor", "Moderate", "Major", "Imperative"],
@@ -42,6 +42,21 @@ rsltDict = {
     "spectacular": [0.8, 0.9],
     "superlative": [0.9, 1.0],
 }
+
+multiTypDict = {
+    -2: "parried",
+    -1: "deflected",
+    -0.66: "blocked",
+    -0.33: "weak",
+    0: "normal",
+    0.33: "good",
+    0.66: "great",
+    1: "spectacular",
+    1.5: "superlative",
+    2: "flawless",
+}
+
+
 posTask = {
     "Minor": {
         "Worth": [200, 400],
@@ -318,8 +333,6 @@ for statsheet in statsheetNom:
         logP.debug(sett)
 
 
-statsToken = "1JIJjDzFjtuIU2k0jk1aHdMr2oErD_ySoFm7-iFEBOV0"
-
 statsName = "BotStats"
 bonusName = "BotBonus"
 
@@ -461,4 +474,23 @@ logP.debug(
         f"{len(activeDic['person'])} Peeps, {ranks} Ranks"
     )
 )
+
+
+attackSheet = "BotAttack"
+attackUrl = urltoAdd.format(statsToken, attackSheet)
+
+attackRollDict = {}
+
+try:
+    frame = None
+    frame = pd.read_csv(attackUrl)
+except Exception as e:
+    logP.warning(e)
+
+for tup in frame.itertuples():
+    attackRollDict[int(tup.Roll)] = float(tup.Mod)
+
+logP.debug(f"Loaded {len(attackRollDict)} vals into attackRollDict")
+
+
 logP.info("Finished csv download and input.")
