@@ -670,7 +670,7 @@ class battler:
 
         HPS = notPeep.rec * (peep.totSta / (peep.staR + 1))
 
-        if Attack.hitChance <= LOHIT:
+        if Attack.hitChance < LOHIT:
             # lowhit func
             logP.debug(f"lowHit: {Attack.hitChance}")
             if oneHit and Attack.hitChance + baseDict["FOC"] * fAA > 50:
@@ -905,7 +905,7 @@ class battler:
             logP.debug(f"mental attack is a: {typHit}, for: {attDmg}")
 
         if multi < -0.5:
-            typDesp = 1 if multi <= -1 else 0
+            typDesp = 1 if multi == -2 else 0
             mes += "\n" + self.attack(defender, attacker, "", typDesp, True)
 
         return mes
