@@ -872,37 +872,40 @@ class battler:
         logP.debug(f"Hit is '{typHit}' for '{multi}'")
 
         mes += f"a {typHit}:{multi} {'hit' if not riposte else 'riposte'}"
-        if multi >= 0:
 
-            if attMove == "physical":
-                attDmg = attackCalc(
-                    multi,
-                    attacker.pa,
-                    defender.pd,
-                    desperate,
-                )
-                if attDmg < int(0):
-                    attDmg = float(0)
-                defender.hp = defender.hp - attDmg
-                defender.dT += attDmg
-                mes += f" for {attDmg:0.3g} physical damage.\n\n"
-                logP.debug(f"physical attack is a: {typHit}, for: {attDmg}")
-            if attMove == "mental":
-                attDmg = attackCalc(
-                    multi,
-                    attacker.ma,
-                    defender.md,
-                    desperate,
-                )
-                if attDmg < int(0):
-                    attDmg = float(0)
-                defender.hp = defender.hp - attDmg
-                defender.dT += attDmg
-                mes += f" for {attDmg:0.3g} mental damage.\n\n"
-                logP.debug(f"mental attack is a: {typHit}, for: {attDmg}")
-        else:
+        if attMove == "physical":
+            attDmg = attackCalc(
+                multi,
+                attacker.pa,
+                defender.pd,
+                desperate,
+            )
+            if attDmg < int(0):
+                attDmg = float(0)
+
+            defender.dT += attDmg if defender.hp > attDmg else defender.hp
+            defender.hp = defender.hp - attDmg
+
+            mes += f" for {attDmg:0.3g} physical damage.\n\n"
+            logP.debug(f"physical attack is a: {typHit}, for: {attDmg}")
+        if attMove == "mental":
+            attDmg = attackCalc(
+                multi,
+                attacker.ma,
+                defender.md,
+                desperate,
+            )
+            if attDmg < int(0):
+                attDmg = float(0)
+
+            defender.dT += attDmg if defender.hp > attDmg else defender.hp
+            defender.hp = defender.hp - attDmg
+
+            mes += f" for {attDmg:0.3g} mental damage.\n\n"
+            logP.debug(f"mental attack is a: {typHit}, for: {attDmg}")
+
+        if multi < -0.5:
             typDesp = 1 if multi <= -1 else 0
-            mes += ".\n"
             mes += "\n" + self.attack(defender, attacker, "", typDesp, True)
 
         return mes
@@ -949,7 +952,8 @@ def attackCalc(
     defense: float = 0,
     desperate: bool = 0,
 ) -> float:
-    ret = (1 + multi + int(desperate)) * attckDmg - defense
+    attVal = 1 + multi + int(desperate)
+    ret = attVal * attckDmg - defense
     return round(ret, 3)
 
 
