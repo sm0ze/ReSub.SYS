@@ -864,13 +864,16 @@ async def finPatrol(
 
         if lastTaskTime:
             currentlyPatrolling += 1
-            lastPatrolTime = int(round(currTime - lastTaskTime))
+            lastPatrolTaskTime = int(round(currTime - lastTaskTime))
+            patrolLength = int(
+                round(currTime - currPatrol.get("patrolStart", lastTaskTime))
+            )
             numPatrolTasks = currPatrol.get("patrolTasks", 0)
-            logP.debug(f"Time since last task is: {lastPatrolTime}")
-            if lastPatrolTime > activeTimeMax:
+            logP.debug(f"Time since last task is: {lastPatrolTaskTime}")
+            if lastPatrolTaskTime > activeTimeMax:
                 member = get(patrolRole.guild.members, id=int(key))
                 if member:
-                    notActive[member] = [lastPatrolTime, numPatrolTasks]
+                    notActive[member] = [patrolLength, numPatrolTasks]
 
     membersFinishingPatrol = set(patrolRole.members) & set(notActive.keys())
 
