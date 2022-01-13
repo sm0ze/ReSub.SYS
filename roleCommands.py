@@ -899,6 +899,19 @@ class roleCommands(
     ):
 
         xpKey = ["xp", "gdv"]
+        patrolKey = {
+            "long": "Longest Patrol",
+            "active": "Most Active Patrol",
+            "tasks": "Total Completed Tasks",
+            "patrols": "Total Completed Patrols",
+        }
+        patrolLoad = {
+            "long": "longestPatrol",
+            "active": "mostActivePatrol",
+            "tasks": "totalTasks",
+            "patrols": "totalPatrols",
+        }
+
         if MANAGER in [str(x.name) for x in ctx.author.roles]:
             leade = lead
         else:
@@ -912,20 +925,38 @@ class roleCommands(
         endLead = page * leade
 
         if enh.lower() in xpKey:
-            serverXP = load(ctx.author.guild.id)
+            serverXP = load(ctx.guild.id)
             if enh == xpKey[0]:
                 resubXPList = [
-                    [ctx.message.guild.get_member(x), serverXP[x]["invXP"][-1]]
+                    [ctx.guild.get_member(x), serverXP[x]["invXP"][-1]]
                     for x in serverXP.keys()
                 ]
             else:
                 resubXPList = [
-                    [ctx.message.guild.get_member(x), serverXP[x]["gdv"]]
+                    [ctx.guild.get_member(x), serverXP[x]["gdv"]]
                     for x in serverXP.keys()
                 ]
-            pointList = sorted(resubXPList, key=lambda x: x[1], reverse=True)
+            pointList = sorted(resubXPList, key=lambda x: -x[1])
 
             blankMessage = discord.Embed(title=f"{enh.upper()} Leaderboard")
+
+        elif enh.lower() in patrolKey.keys():
+            peepList = load(ctx.guild.id)
+            grabbedStatList = []
+
+            for peep in peepList:
+                topStats = peepList[peep].get("topStatistics", {})
+                peepScore = topStats.get(patrolLoad[enh.lower()], 0)
+                if peepScore:
+                    grabbedStatList.append(
+                        [ctx.guild.get_member(peep), peepScore]
+                    )
+
+            pointList = sorted(grabbedStatList, key=lambda x: -x[1])
+
+            blankMessage = discord.Embed(
+                title=f"{patrolKey[enh.lower()]} Leaderboard"
+            )
 
         elif enh:
             if enh not in leader.keys():
@@ -954,7 +985,7 @@ class roleCommands(
             )
 
             unsortedDict = [(x, y) for x, y in peepDict.items()]
-            pointList = sorted(unsortedDict, key=lambda x: x[1], reverse=True)
+            pointList = sorted(unsortedDict, key=lambda x: -x[1])
         else:
             # list of users bot has access to
             guildList = self.bot.users
@@ -997,21 +1028,41 @@ class roleCommands(
                 blankMessage.add_field(
                     inline=True,
                     name=f"**{i}** - {nON(group[0])}",
-                    value=f"\t{group[1]} enhancements",
+                    value=f"\t{group[1]} enhancement{pluralInt(group[1])}",
                 )
             else:
-                if not enh.lower() in xpKey:
-                    blankMessage.add_field(
-                        inline=True,
-                        name=f"**{i}** - {nON(group[0])}",
-                        value=f"\tRank {group[1]} {enh}",
-                    )
-                else:
+                if enh.lower() in xpKey:
                     blankMessage.add_field(
                         inline=True,
                         name=f"**{i}** - {nON(group[0])}",
                         value=f"\t{group[1]:,} {enh.upper()}",
                     )
+                elif enh.lower() in patrolKey.keys():
+                    if enh.lower() == "active" or enh.lower() == "tasks":
+                        blankMessage.add_field(
+                            inline=True,
+                            name=f"**{i}** - {nON(group[0])}",
+                            value=f"\t{group[1]} task{pluralInt(group[1])}",
+                        )
+                    elif enh.lower() == "long":
+                        blankMessage.add_field(
+                            inline=True,
+                            name=f"**{i}** - {nON(group[0])}",
+                            value=f"\t{datetime.timedelta(seconds=group[1])}",
+                        )
+                    elif enh.lower() == "patrols":
+                        blankMessage.add_field(
+                            inline=True,
+                            name=f"**{i}** - {nON(group[0])}",
+                            value=f"\t{group[1]} patrol{pluralInt(group[1])}",
+                        )
+                else:
+                    blankMessage.add_field(
+                        inline=True,
+                        name=f"**{i}** - {nON(group[0])}",
+                        value=f"\tRank {group[1]} {enh}",
+                    )
+
             i += 1
 
         blankMessage.set_footer(

@@ -14,9 +14,11 @@ from sharedConsts import (
     ASKNPC,
     ASKSELF,
     AVHIT,
+    DRAWDEF,
     HIHIT,
     HITRANGE,
     LOHIT,
+    WOUDMG,
 )
 from sharedDicts import (
     baseDict,
@@ -158,6 +160,8 @@ class player:
         self.focusNumLast = int(0)
 
         self.dT = 0.0
+
+        self.wou = False
 
     def iniCalc(self) -> None:
         statDict = {}
@@ -344,10 +348,17 @@ class player:
 
     def recHP(self, val: int = 1):
         strtHP = self.hp
-        self.hp += val
+
+        self.hp += (val) * (2 if self.wou else 1)
+
         if self.hp > self.totHP:
             self.hp = self.totHP
+
         endHP = self.hp
+
+        if self.wou:
+            self.wou = not self.wou
+
         return endHP - strtHP
 
     async def ask(self, duelList: list):
@@ -585,15 +596,16 @@ class battler:
 
         if peep.missTurn:
             peep.missTurn -= 1
-        if peep.conDef >= 20:
+        if peep.conDef >= DRAWDEF:
             mes += (
                 f"{peep.n} has defended for 20 consecutive turns "
-                "without attacking and lost this fight."
+                "without attacking and tied this fight."
             )
             if attPeep.hp < 0:
-                peep.hp = attPeep.hp - 1
+                peep.hp = attPeep.hp
             else:
                 peep.hp = float(0)
+                attPeep.hp = float(0)
         return mes
 
     def decAtk(self, Attack, peep):
@@ -815,7 +827,6 @@ class battler:
                 f"{peep.n} recovers {staRec} stamina for a "
                 f"running total of {peep.sta}.\n"
             )"""
-
         heal = peep.recHP(peep.rec)
         if heal:
             mes += f"{peep.n} heals for {heal:0.3g}.\n\n"
@@ -886,6 +897,9 @@ class battler:
             defender.dT += attDmg if defender.hp > attDmg else defender.hp
             defender.hp = defender.hp - attDmg
 
+            if attDmg > WOUDMG:
+                defender.wou = True
+
             mes += f" for {attDmg:0.3g} physical damage.\n\n"
             logP.debug(f"physical attack is a: {typHit}, for: {attDmg}")
         if attMove == "mental":
@@ -900,6 +914,9 @@ class battler:
 
             defender.dT += attDmg if defender.hp > attDmg else defender.hp
             defender.hp = defender.hp - attDmg
+
+            if attDmg > WOUDMG:
+                defender.wou = True
 
             mes += f" for {attDmg:0.3g} mental damage.\n\n"
             logP.debug(f"mental attack is a: {typHit}, for: {attDmg}")
@@ -1003,16 +1020,29 @@ def addCalc(self, statType) -> float:
 
 def addBonus(self, bonusType) -> float:
     ret = float(0)
+    ignore = []
+    for stat in bonusDict.keys():
+        statAm = getattr(self, f"_{stat}")
+        if not statAm:
+            continue
+        if stat in replaceDict.keys():
+            soft = getattr(self, f"_{stat}")
+            hard = getattr(self, f"_{replaceDict[stat]}")
+            if soft == 10 and hard == 10:
+                ignore.append(stat)
+
+    logP.debug(f"ignore: {ignore}")
+
     for stat in bonusDict.keys():
         addBonus = bonusDict[stat][bonusType]
         if addBonus:
             bonusStat = getattr(self, f"_{stat}")
-            if int(bonusStat) == 10:
+            if int(bonusStat) == 10 and stat not in ignore:
                 ret += float(addBonus)
                 logP.debug(
                     (
                         f"Adding a bonus of {addBonus} to {bonusType} "
-                        f"for having 10 in {bonusStat}"
+                        f"for having 10 in {stat}"
                     )
                 )
     return ret
