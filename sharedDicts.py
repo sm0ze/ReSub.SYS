@@ -44,7 +44,7 @@ rsltDict = {
 }
 
 multiTypDict = {
-    -2: "parried",
+    -1.5: "parried",
     -1: "deflected",
     -0.66: "blocked",
     -0.33: "weak",

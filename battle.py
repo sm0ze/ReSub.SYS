@@ -922,7 +922,7 @@ class battler:
             logP.debug(f"mental attack is a: {typHit}, for: {attDmg}")
 
         if multi < -0.5:
-            typDesp = 1 if multi == -2 else 0
+            typDesp = 1 if multi == 1.5 else 0
             mes += "\n" + self.attack(defender, attacker, "", typDesp, True)
 
         return mes
