@@ -434,11 +434,28 @@ class player:
     async def genBuff(self, place: discord.abc.Messageable):
         bonus = int(self.bC / 5)
         if bonus:
-            if self._str or self._mem:
+            if self._str + self._mem > 5:
                 hpBonus = 3 * bonus
                 self.totHP += hpBonus
                 self.hp = self.totHP
                 await place.send(f"Buffed HP by: {hpBonus}")
+
+            elif (
+                self._vis + self._olf + self._aur + self._spe + self._cel > 10
+            ):
+                atBonus = 0.5 * bonus
+                hpBonus = 1.5 * bonus
+
+                self.totHP += hpBonus
+                self.hp = self.totHP
+
+                self.pa += atBonus
+                self.ma += atBonus
+
+                await place.send(
+                    f"Buffed MA & PA by: {atBonus}.\nBuffed HP by: {hpBonus}"
+                )
+
             else:
                 self.pa += bonus
                 self.ma += bonus
