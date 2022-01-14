@@ -431,6 +431,18 @@ class player:
             while self.sta > num:
                 self.focus()
 
+    async def genBuff(self, place: discord.abc.Messageable):
+        bonus = int(self.bC / 5)
+        if bonus:
+            if self._str or self._mem:
+                self.totHP += 3 * bonus
+                self.hp = self.totHP
+                await place.send(f"Buffed HP by: {bonus}")
+            else:
+                self.pa += bonus
+                self.ma += bonus
+                await place.send(f"Buffed MA & PA by: {bonus}")
+
 
 class battler:
     def __init__(

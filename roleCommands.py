@@ -502,6 +502,7 @@ class roleCommands(
         )
         bat = battler(self.bot, [ctx.author, opp])
         bat.playerList[0].play = True
+        await bat.playerList[1].genBuff(ctx)
         await startDuel(self, ctx, bat)
 
     @commands.command(
@@ -1242,6 +1243,7 @@ class roleCommands(
 
         bat = battler(self.bot, [ctx.author, FPC])
         await bat.findPlayers(0)
+        await bat.playerList[1].genBuff(ctx)
         await startDuel(self, ctx, bat)
 
     @commands.command(
