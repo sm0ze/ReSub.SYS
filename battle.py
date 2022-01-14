@@ -435,9 +435,10 @@ class player:
         bonus = int(self.bC / 5)
         if bonus:
             if self._str or self._mem:
-                self.totHP += 3 * bonus
+                hpBonus = 3 * bonus
+                self.totHP += hpBonus
                 self.hp = self.totHP
-                await place.send(f"Buffed HP by: {bonus}")
+                await place.send(f"Buffed HP by: {hpBonus}")
             else:
                 self.pa += bonus
                 self.ma += bonus
