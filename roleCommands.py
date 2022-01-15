@@ -104,7 +104,7 @@ class roleCommands(
         if not HOSTNAME == "sm0ze-desktop":
             self.onCallLoop.start()
             self.patrolLoop.start()
-            self.xpLoop.start()
+        self.xpLoop.start()
 
     # Check if user has guild role
     async def cog_check(self, ctx: commands.Context):
@@ -161,6 +161,14 @@ class roleCommands(
     @patrolLoop.before_loop
     async def before_onCallLoop(self):
         await self.bot.wait_until_ready()
+
+    @commands.command(enabled=COMON, hidden=True)
+    @commands.is_owner()
+    async def forceTatsu(self, ctx: commands.Context):
+        roleGrab = get(ctx.guild.roles, name=SUPEROLE)
+        mes = await tatsuXpGrab(roleGrab)
+        if mes:
+            await sendMessage(mes, ctx)
 
     @commands.command(
         enabled=COMON,

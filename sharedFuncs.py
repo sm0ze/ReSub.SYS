@@ -684,6 +684,7 @@ async def mee6DictGrab(roleTo: discord.Role):
 
 async def tatsuXpGrab(roleTo: discord.Role):
     tat = tatsu.wrapper
+    mes = ""
     savedCache = load(roleTo.guild.id)
     peepList = sharedDyVars.tatsuUpdate.copy()
     for peep in peepList:
@@ -694,15 +695,18 @@ async def tatsuXpGrab(roleTo: discord.Role):
         except Exception as e:
             logP.warning(e)
         origXP = savedCache[peep.id]["invXP"][1]
-        savedCache[peep.id]["invXP"][0] = TATSUxp
+        savedCache[peep.id]["invXP"][1] = TATSUxp
         logP.debug(
             ("Updating TatsuXP for " f"{nON(peep)}: {origXP} -> {TATSUxp}")
         )
         try:
             sharedDyVars.tatsuUpdate.remove(peep)
+            mes += f"Updated {nON(peep)}\n"
         except ValueError as e:
             logP.warning(e)
+            mes += str(e) + "\n"
     save(roleTo.guild.id, savedCache)
+    return mes
 
 
 # function to get specified user's enhancement points
