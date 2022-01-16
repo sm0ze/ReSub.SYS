@@ -439,7 +439,7 @@ class player:
 
         if bonus:
             if ((self._str + self._mem) > (self.bC * 0.1)) or (
-                others > (self.bC * 0.4)
+                others > (self.bC * 0.5)
             ):
                 hpBonus = 3 * bonus
 
