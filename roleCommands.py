@@ -160,8 +160,8 @@ class roleCommands(
             if onCallRole:
                 await remOnCall(onCallRole, streakerRole, ACTIVESEC)
 
-    @remOnPatrolLoop.before_loop
-    async def before_remOnPatrolLoop(self):
+    @remOnCallLoop.before_loop
+    async def before_remOnCallLoop(self):
         await self.bot.wait_until_ready()
 
     @commands.command(enabled=COMON, hidden=True)
