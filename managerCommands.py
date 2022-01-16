@@ -23,7 +23,7 @@ from sharedDicts import leader, masterEhnDict
 from sharedFuncs import (
     cut,
     dupeMes,
-    finPatrol,
+    remOnPatrol,
     getBrief,
     getDesc,
     isSuper,
@@ -227,7 +227,7 @@ class managerCommands(
         onCallRole = get(ctx.guild.roles, id=int(CALLROLEID))
 
         if patrolRole and onCallRole:
-            mes = await finPatrol(patrolRole, ACTIVESEC, onCallRole)
+            mes = await remOnPatrol(patrolRole, ACTIVESEC, onCallRole)
             await ctx.send(mes)
 
     @commands.command(

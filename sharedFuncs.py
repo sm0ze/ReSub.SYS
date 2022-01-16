@@ -832,7 +832,7 @@ def getBrief(cmdName: str = ""):
     return ret
 
 
-async def finOnCall(
+async def remOnCall(
     onCallRole: discord.Role, streakerRole: discord.Role, activeTimeMax: int
 ):
     notActive = {}
@@ -869,7 +869,7 @@ async def finOnCall(
         await peep.remove_roles(onCallRole)
 
 
-async def finPatrol(
+async def remOnPatrol(
     patrolRole: discord.Role, activeTimeMax: int, onCallRole: discord.Role
 ):
     notActive = {}

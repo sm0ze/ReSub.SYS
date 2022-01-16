@@ -55,8 +55,8 @@ from sharedFuncs import (
     count,
     cut,
     duelMoveView,
-    finOnCall,
-    finPatrol,
+    remOnCall,
+    remOnPatrol,
     funcBuild,
     genBuild,
     genderPick,
@@ -103,8 +103,8 @@ class roleCommands(
     ):
         self.bot = bot
         if not HOSTNAME == "sm0ze-desktop":
-            self.onCallLoop.start()
-            self.patrolLoop.start()
+            self.remOnCallLoop.start()
+            self.remOnPatrolLoop.start()
         self.xpLoop.start()
 
     # Check if user has guild role
@@ -140,28 +140,28 @@ class roleCommands(
     async def before_xpLoop(self):
         await self.bot.wait_until_ready()
 
-    @tasks.loop(minutes=60)
-    async def patrolLoop(self):
+    @tasks.loop(minutes=10)
+    async def remOnPatrolLoop(self):
         for guild in self.bot.guilds:
             patrolRole = get(guild.roles, id=int(PATROLROLEID))
             onCallRole = get(guild.roles, id=int(CALLROLEID))
             if patrolRole and onCallRole:
-                await finPatrol(patrolRole, TIMTILLONCALL, onCallRole)
+                await remOnPatrol(patrolRole, TIMTILLONCALL, onCallRole)
 
-    @patrolLoop.before_loop
-    async def before_patrolLoop(self):
+    @remOnPatrolLoop.before_loop
+    async def before_remOnPatrolLoop(self):
         await self.bot.wait_until_ready()
 
-    @tasks.loop(minutes=10)
-    async def onCallLoop(self):
+    @tasks.loop(minutes=60)
+    async def remOnCallLoop(self):
         for guild in self.bot.guilds:
             onCallRole = get(guild.roles, id=int(CALLROLEID))
             streakerRole = get(guild.roles, name=str(STREAKER))
             if onCallRole:
-                await finOnCall(onCallRole, streakerRole, ACTIVESEC)
+                await remOnCall(onCallRole, streakerRole, ACTIVESEC)
 
-    @patrolLoop.before_loop
-    async def before_onCallLoop(self):
+    @remOnPatrolLoop.before_loop
+    async def before_remOnPatrolLoop(self):
         await self.bot.wait_until_ready()
 
     @commands.command(enabled=COMON, hidden=True)
