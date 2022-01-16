@@ -877,11 +877,12 @@ async def remOnPatrol(
             )
             numPatrolTasks = currPatrol.get("patrolTasks", 0)
             logP.debug(f"Time since last task is: {lastPatrolTaskTime}")
+            member = get(patrolRole.guild.members, id=int(key))
             if lastPatrolTaskTime > activeTimeMax:
-                member = get(patrolRole.guild.members, id=int(key))
+
                 if member:
                     notActive[member] = [patrolLength, numPatrolTasks]
-            elif lastPatrolTaskTime + 10 * 60 > activeTimeMax:
+            elif (lastPatrolTaskTime + (10 * 60)) > activeTimeMax:
                 if (
                     isinstance(member, discord.Member)
                     and streakerRole in member.roles

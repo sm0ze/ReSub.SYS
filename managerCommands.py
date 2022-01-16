@@ -11,13 +11,14 @@ import log
 from sharedConsts import (
     CALLROLEID,
     PATROLROLEID,
-    ACTIVESEC,
     COMON,
     HOSTNAME,
     LOWESTROLE,
     MANAGERROLES,
     SAVEFILE,
+    STREAKER,
     SUPEROLE,
+    TIMTILLONCALL,
 )
 from sharedDicts import leader, masterEhnDict
 from sharedFuncs import (
@@ -225,9 +226,12 @@ class managerCommands(
     async def finPatrol(self, ctx: commands.Context):
         patrolRole = get(ctx.guild.roles, id=int(PATROLROLEID))
         onCallRole = get(ctx.guild.roles, id=int(CALLROLEID))
+        streakerRole = get(ctx.guild.roles, name=STREAKER)
 
-        if patrolRole and onCallRole:
-            mes = await remOnPatrol(patrolRole, ACTIVESEC, onCallRole)
+        if patrolRole and onCallRole and streakerRole:
+            mes = await remOnPatrol(
+                patrolRole, onCallRole, streakerRole, TIMTILLONCALL
+            )
             await ctx.send(mes)
 
     @commands.command(

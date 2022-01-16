@@ -145,7 +145,7 @@ class roleCommands(
         for guild in self.bot.guilds:
             patrolRole = get(guild.roles, id=int(PATROLROLEID))
             onCallRole = get(guild.roles, id=int(CALLROLEID))
-            streakerRole = get(guild.roles, name=str(STREAKER))
+            streakerRole = get(guild.roles, name=STREAKER)
             if patrolRole and onCallRole and streakerRole:
                 await remOnPatrol(
                     patrolRole, onCallRole, streakerRole, TIMTILLONCALL
