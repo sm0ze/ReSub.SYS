@@ -764,7 +764,7 @@ class battler:
                 else:
                     desperate = 1
                     # then desperate attack
-            elif atk > notPeep.rec * 2:
+            elif staAftA > 0 and atk > notPeep.rec * 2:
                 pass
                 # then Normal attack
             else:
@@ -793,7 +793,7 @@ class battler:
                 else:
                     desperate = 1
                     # then desperate attack
-            elif staAftA >= 1 and atk > notPeep.rec * 2:
+            elif staAftA > 0 and atk > notPeep.rec * 2:
                 pass
                 # then normal attack
             else:
@@ -825,7 +825,7 @@ class battler:
                 else:
                     desperate = 1
                     moveStr = critDespStr
-            elif staAftA >= 1 and atk > notPeep.rec * 2:
+            elif staAftA > 0 and atk > notPeep.rec * 2:
                 pass
                 # then normal attack
             else:
