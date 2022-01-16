@@ -832,7 +832,9 @@ def getBrief(cmdName: str = ""):
     return ret
 
 
-async def finOnCall(onCallRole: discord.Role, activeTimeMax: int):
+async def finOnCall(
+    onCallRole: discord.Role, streakerRole: discord.Role, activeTimeMax: int
+):
     notActive = {}
     memberDict = load(onCallRole.guild.id)
     currTime = time.time()
@@ -849,6 +851,18 @@ async def finOnCall(onCallRole: discord.Role, activeTimeMax: int):
                 member = get(onCallRole.guild.members, id=int(key))
                 if member:
                     notActive[member] = sinceLastTask
+            elif sinceLastTask + 10 * 60 > activeTimeMax:
+                if (
+                    isinstance(member, discord.Member)
+                    and streakerRole in member.roles
+                ):
+                    await member.send(
+                        (
+                            f"[Attention host, system {str(member.id)[-3:]} "
+                            "reporting. Your patrol status will be ending "
+                            "shortly.]"
+                        )
+                    )
 
     membersFinishingPatrol = set(onCallRole.members) & set(notActive.keys())
     for peep in membersFinishingPatrol:

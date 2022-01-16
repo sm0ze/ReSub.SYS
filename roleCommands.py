@@ -31,6 +31,7 @@ from sharedConsts import (
     MANAGER,
     PLAYERTURNWAIT,
     ROUNDLIMIT,
+    STREAKER,
     SUPEROLE,
     TASKCD,
     TIMTILLONCALL,
@@ -155,8 +156,9 @@ class roleCommands(
     async def onCallLoop(self):
         for guild in self.bot.guilds:
             onCallRole = get(guild.roles, id=int(CALLROLEID))
+            streakerRole = get(guild.roles, name=str(STREAKER))
             if onCallRole:
-                await finOnCall(onCallRole, ACTIVESEC)
+                await finOnCall(onCallRole, streakerRole, ACTIVESEC)
 
     @patrolLoop.before_loop
     async def before_onCallLoop(self):

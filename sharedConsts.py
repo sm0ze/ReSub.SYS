@@ -59,6 +59,10 @@ def setGemDiff(var: float):
 
 SUPEROLE = "Supe"
 MANAGER = "System"  # manager role name for guild
+STREAKER = "Patrol_Reminder.exe"
+PATROLROLEID = 922408216644698162
+CALLROLEID = 925197249179418654
+
 CMDPREFIX = "~"
 STARTTIME = time.time()
 HIDE = False
@@ -69,9 +73,6 @@ LOWESTROLE = 2  # bot sorts roles by rank from position of int10 to LOWESTROLE
 LEADLIMIT = 12
 DL_ARC_DUR = 60
 
-
-PATROLROLEID = 922408216644698162
-CALLROLEID = 925197249179418654
 TASKCD = 60 * 30
 TIMTILLONCALL = TASKCD * 4 + 60 * 60
 ACTIVESEC = 60 * 60 * 24 * 7

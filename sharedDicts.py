@@ -241,7 +241,7 @@ rankColour = {
 # and cannot be added by the bot
 restrictedList = ["System", "Authors"]
 
-freeRoles = ["Ping Unto Me My Daily Quack", "Supe"]
+freeRoles = ["Ping Unto Me My Daily Quack", "Supe", "Patrol_Reminder.exe"]
 
 reqResList = ["int", "4th", "omn"]
 
