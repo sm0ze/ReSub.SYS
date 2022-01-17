@@ -675,8 +675,8 @@ class battler:
 
         decCritDesp = max(
             [
-                [Attack.phys + 2 * peep.pa, "physical"],
-                [Attack.ment + 2 * peep.ma, "mental"],
+                [Attack.phys + 1.66 * peep.pa, "physical"],
+                [Attack.ment + 1.66 * peep.ma, "mental"],
             ],
             key=lambda x: x[0],
         )
