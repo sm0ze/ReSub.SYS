@@ -1,5 +1,6 @@
 # sharedFuncs.py
 
+import datetime
 import math
 import random
 import time
@@ -877,21 +878,28 @@ async def remOnPatrol(
             )
             numPatrolTasks = currPatrol.get("patrolTasks", 0)
             logP.debug(f"Time since last task is: {lastPatrolTaskTime}")
-            member = get(patrolRole.guild.members, id=int(key))
-            if lastPatrolTaskTime > activeTimeMax:
 
+            member = get(patrolRole.guild.members, id=int(key))
+            hourlyPing = lastPatrolTaskTime % (60 * 60)
+            timeLeft = datetime.timedelta(
+                seconds=int(activeTimeMax - lastPatrolTaskTime)
+            )
+
+            if lastPatrolTaskTime > activeTimeMax:
                 if member:
                     notActive[member] = [patrolLength, numPatrolTasks]
-            elif (lastPatrolTaskTime + (10 * 60)) > activeTimeMax:
+
+            elif hourlyPing in range(50 * 60, 60 * 60):
                 if (
                     isinstance(member, discord.Member)
                     and streakerRole in member.roles
+                    and member.status != discord.Status.offline
                 ):
                     await member.send(
                         (
                             f"[Attention host, system {str(member.id)[-3:]} "
-                            "reporting. Your patrol status will be ending "
-                            "shortly.]"
+                            "reporting. Your patrol will be ending "
+                            f"in roughly {timeLeft}.]"
                         )
                     )
 
