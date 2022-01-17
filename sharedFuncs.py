@@ -670,15 +670,15 @@ async def mee6DictGrab(roleTo: discord.Role):
 
     for peep in memberList:
         peepID = int(peep["id"])
-        if peepID in savedCache:
-            origXP = savedCache[peepID]["invXP"][0]
-            savedCache[peepID]["invXP"][0] = peep["xp"]
-            logP.debug(
-                (
-                    "Updating Mee6XP for "
-                    f"{peep['username']}: {origXP} -> {peep['xp']}"
-                )
+        savedCache.setdefault(peepID, {})
+        origXP = savedCache[peepID]["invXP"][0]
+        savedCache[peepID]["invXP"][0] = peep["xp"]
+        logP.debug(
+            (
+                "Updating Mee6XP for "
+                f"{peep['username']}: {origXP} -> {peep['xp']}"
             )
+        )
 
     save(roleTo.guild.id, savedCache)
 
