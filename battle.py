@@ -729,13 +729,16 @@ class battler:
         if Attack.hitChance < LO_HIT:
             # lowhit func
             logP.debug(f"lowHit: {Attack.hitChance}")
-            if oneHit and Attack.hitChance + baseDict["FOC"] * fAA > 50:
-                while Attack.hitChance < LO_HIT and peep.sta > normSta:
+            if oneHit and Attack.hitChance + baseDict["FOC"] * fAA < AV_HIT:
+                while Attack.hitChance < AV_HIT and peep.sta > normSta:
                     peep.focus()
                     Attack = self.adp(peep, notPeep)
                 # then normal attack
-            elif oneDespHit and Attack.hitChance + baseDict["FOC"] * fAD > 50:
-                while Attack.hitChance < LO_HIT and peep.sta > despSta:
+            elif (
+                oneDespHit
+                and Attack.hitChance + baseDict["FOC"] * fAD > AV_HIT
+            ):
+                while Attack.hitChance < AV_HIT and peep.sta > despSta:
                     peep.focus()
                     Attack = self.adp(peep, notPeep)
                 desperate = 1
