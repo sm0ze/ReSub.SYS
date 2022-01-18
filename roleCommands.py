@@ -133,7 +133,7 @@ class roleCommands(
             if roleGrab:
                 await mee6DictGrab(roleGrab)
 
-            if sharedDyVars.tatsuUpdate:
+            if sharedDyVars.tatsuUpdateList:
                 await tatsuXpGrab(roleGrab)
 
     @xpLoop.before_loop
@@ -248,8 +248,8 @@ class roleCommands(
         description=getDesc("tatsuUpdate"),
     )
     async def tatsuUpdate(self, ctx: commands.Context):
-        if ctx.author not in sharedDyVars.tatsuUpdate:
-            sharedDyVars.tatsuUpdate.append(ctx.author)
+        if ctx.author not in sharedDyVars.tatsuUpdateList:
+            sharedDyVars.tatsuUpdateList.append(ctx.author)
             await ctx.send("Your tatsu xp will update on next update loop.")
         else:
             await ctx.send("You are already set to update your xp soon.")

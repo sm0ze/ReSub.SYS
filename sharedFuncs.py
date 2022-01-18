@@ -688,7 +688,7 @@ async def tatsuXpGrab(roleTo: discord.Role):
     tat = tatsu.wrapper
     mes = ""
     savedCache = load(roleTo.guild.id)
-    peepList = sharedDyVars.tatsuUpdate.copy()
+    peepList = sharedDyVars.tatsuUpdateList.copy()
     for peep in peepList:
         TATSUxp = 0
         try:
@@ -702,7 +702,7 @@ async def tatsuXpGrab(roleTo: discord.Role):
             ("Updating TatsuXP for " f"{nON(peep)}: {origXP} -> {TATSUxp}")
         )
         try:
-            sharedDyVars.tatsuUpdate.remove(peep)
+            sharedDyVars.tatsuUpdateList.remove(peep)
             mes += f"Updated {nON(peep)}\n"
         except ValueError as e:
             logP.warning(e)

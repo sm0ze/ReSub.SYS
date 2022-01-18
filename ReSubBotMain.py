@@ -130,49 +130,6 @@ async def on_message(message: discord.Message):
     if message.content.startswith(f"{CMD_PREFIX}{CMD_PREFIX}"):
         return
 
-    # # begining implementation for ~start
-    # if message.content.startswith("{}start".format(CMDPREFIX)):
-    #     if SUPEROLE not in [x.name for x in message.author.roles]:
-    #         await message.channel.send(
-    #             "You do not have the role {}.\nCome back after you use the "
-    #             "command '{}role {}'".format(
-    #                 SUPEROLE, CMDPREFIX, SUPEROLE
-    #             )
-    #         )
-    #         return
-    #     await message.channel.send(
-    #         "To begin use the command '{}list'".format(CMDPREFIX)
-    #     )
-
-    #     def check(m):
-    #         return (
-    #             m.author == message.author
-    #             and m.channel == message.channel
-    #             and m.content == "{}list".format(CMDPREFIX)
-    #         )
-
-    #     try:
-    #         msg = await bot.wait_for("message", check=check, timeout=10.0)
-    #     except asyncio.TimeoutError:
-    #         return await message.channel.send("Sorry, you took too long.")
-    #     await asyncio.sleep(2)
-    #     await message.channel.send(
-    #         (
-    #             ":point_up: These are the enhancements you can pick from. \n"
-    #             "Each rank of an enhancement costs one enhancement point and"
-    #             " there are prerequisite enhancements for higher ranks. \n"
-    #             "For example, Rank 3 Strength requires 3 enhancement points "
-    #             "and Rank 4 Strength requires 7 enhancement points."
-    #             )
-    #     )
-    #     await message.channel.send(
-    #         ("You can see how many enhancement points you "
-    #          "have with the command '{}points'").format(
-    #             CMDPREFIX
-    #         )
-    #     )
-    #     return
-
     await bot.process_commands(message)
 
 
@@ -195,40 +152,6 @@ async def update_presence():
     )
     logP.debug("Rich presence set to: " + nameSet)
     return
-
-
-"""
-@client.event
-async def on_message(self, message):
-    if message.author.id == self.user.id:
-        return
-    if message.content.startswith('{}start'.format(CMDPREFIX)):
-        await ctx.send("To begin use the command 'list'")
-
-        def check(m):
-            return (m.author == message.author and
-            m.channel == message.channel and m.content == ('{}list'
-            ).format(CMDPREFIX))
-
-        try:
-            msg = await self.wait_for('message', check=check, timeout=10.0)
-        except asyncio.TimeoutError:
-            return await message.channel.send('Sorry, you took too long.')
-        await ctx.send("next step")
-
-@bot.command(
-    aliases=['s'],
-    brief=getBrief('start'),
-    description=getDesc('start')
-    )
-async def start(self, ctx):
-    await ctx.send("To begin use the command 'list'")
-    msg = await discord.Client.wait_for('message',
-    author=ctx.author,
-    content='list')
-    await ctx.send("Next step")
-    return
-    """
 
 
 # general import protection
