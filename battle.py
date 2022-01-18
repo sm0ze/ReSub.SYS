@@ -736,7 +736,7 @@ class battler:
                 # then normal attack
             elif (
                 oneDespHit
-                and Attack.hitChance + baseDict["FOC"] * fAD > AV_HIT
+                and Attack.hitChance + baseDict["FOC"] * fAD < AV_HIT
             ):
                 while Attack.hitChance < AV_HIT and peep.sta > despSta:
                     peep.focus()
@@ -744,10 +744,10 @@ class battler:
                 desperate = 1
                 # then desp attaack
             elif maxSta:
-                if atk < HPS and dAtk < HPS:
+                if dAtk < HPS:
                     typeMove = "Defend"
                 elif oneHit or atk > HPS:
-                    while Attack.hitChance < LO_HIT and peep.sta >= normSta:
+                    while Attack.hitChance < AV_HIT and peep.sta > normSta:
                         peep.focus()
                         Attack = self.adp(peep, notPeep)
                     # then normal attack
@@ -773,15 +773,16 @@ class battler:
                 desperate = 1
                 # then desperate attack
             elif maxSta:
-                if atk < HPS and dAtk < HPS:
+                if dAtk < HPS:
                     typeMove = "Defend"
-                elif nextHP <= dAtk * 2:
+                elif nextHP > dAtk * 2:
+                    peep.focusTill(despSta+1)
                     desperate = 1
                     # then desperate attack
                 else:
                     desperate = 1
                     # then desperate attack
-            elif staAftA > 0 and atk > notPeep.rec * 2:
+            elif staAftA > 0 and atk > notPeep.rec * 3:
                 pass
                 # then Normal attack
             else:
@@ -798,19 +799,16 @@ class battler:
                 desperate = 1
                 # then desperate attack
             elif maxSta:
-                if atk < HPS and dAtk < HPS:
+                if dAtk < HPS:
                     typeMove = "Defend"
-                elif nextHP <= dAtk * 2:
-                    desperate = 1
-                    # then desperate attack
-                elif dAtk < notPeep.rec * ((despSta * 2) / (peep.staR + 1)):
-                    peep.focus()
+                elif nextHP > dAtk * 2:
+                    peep.focusTill(despSta+1)
                     desperate = 1
                     # then desperate attack
                 else:
                     desperate = 1
                     # then desperate attack
-            elif staAftA > 0 and atk > notPeep.rec * 2:
+            elif staAftA > 0 and atk > notPeep.rec * 3:
                 pass
                 # then normal attack
             else:
@@ -828,21 +826,17 @@ class battler:
                 moveStr = critDespStr
                 # then desperate attack
             elif maxSta:
-                if atk < HPS and dAtk < HPS and critDesp < HPS:
+                if critDesp < HPS:
                     typeMove = "Defend"
-                elif critDesp * 2 >= nextHP:
-                    desperate = 1
-                    moveStr = critDespStr
-                    # then desperate attack
-                elif dAtk < notPeep.rec * ((despSta * 2) / (peep.staR + 1)):
-                    peep.focus()
+                elif critDesp * 2 < nextHP:
+                    peep.focusTill(despSta+1)
                     desperate = 1
                     moveStr = critDespStr
                     # then desperate attack
                 else:
                     desperate = 1
                     moveStr = critDespStr
-            elif staAftA > 0 and atk > notPeep.rec * 2:
+            elif staAftA > 0 and atk > notPeep.rec * 3:
                 pass
                 # then normal attack
             else:
