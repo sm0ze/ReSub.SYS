@@ -5,7 +5,7 @@ import discord
 from discord.ext import commands
 
 from exceptions import notNPC, notSupeDuel
-from sharedConsts import CMDPREFIX, ERRORTHREAD
+from sharedConsts import CMD_PREFIX, ERROR_THREAD
 from sharedFuncs import dupeError, getSendLoc
 
 
@@ -18,7 +18,7 @@ class ErrorHandler(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         global ERTHRD
-        ERTHRD = await getSendLoc(ERRORTHREAD, self.bot, "thread")
+        ERTHRD = await getSendLoc(ERROR_THREAD, self.bot, "thread")
 
     @commands.Cog.listener()
     async def on_command_error(
@@ -94,7 +94,7 @@ class ErrorHandler(commands.Cog):
                     {error.args[0]}
 
                     Expected:
-                    {CMDPREFIX}{str(command)} {command.signature}"""
+                    {CMD_PREFIX}{str(command)} {command.signature}"""
                 ),
             )
 

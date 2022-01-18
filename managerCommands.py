@@ -9,16 +9,16 @@ from discord.utils import get
 
 import log
 from sharedConsts import (
-    CALLROLEID,
-    PATROLROLEID,
-    COMON,
-    HOSTNAME,
-    LOWESTROLE,
-    MANAGERROLES,
-    SAVEFILE,
+    ROLE_ID_CALL,
+    ROLE_ID_PATROL,
+    COMMANDS_ON,
+    HOST_NAME,
+    LOWEST_ROLE,
+    MANAGER_ROLES,
+    SAVE_FILE,
     STREAKER,
-    SUPEROLE,
-    TIMTILLONCALL,
+    SUPE_ROLE,
+    TIME_TILL_ON_CALL,
 )
 from sharedDicts import leader, masterEhnDict
 from sharedFuncs import (
@@ -55,14 +55,14 @@ class managerCommands(
     # Check if user has guild role
     async def cog_check(self, ctx: commands.Context):
         async def predicate(ctx: commands.Context):
-            for role in MANAGERROLES:
+            for role in MANAGER_ROLES:
                 chkRole = get(ctx.guild.roles, name=role)
                 if chkRole in ctx.author.roles:
                     return chkRole
             raise commands.CheckFailure(
                 (
                     "You do not have permission as you are missing a role in "
-                    f"this list: {MANAGERROLES}"
+                    f"this list: {MANAGER_ROLES}"
                 )
             )
 
@@ -70,7 +70,7 @@ class managerCommands(
         return commands.check(await predicate(ctx))
 
     @commands.command(
-        enabled=COMON,
+        enabled=COMMANDS_ON,
         brief=getBrief("wipe"),
         description=getDesc("wipe"),
     )
@@ -98,18 +98,18 @@ class managerCommands(
         await ctx.send(f"Finished wiping {len(members)} peeps.")
 
     @commands.command(
-        enabled=COMON,
+        enabled=COMMANDS_ON,
         brief=getBrief("roleCall"),
         description=getDesc("roleCall"),
     )
     # manager command to check if guild has role and messages
     # some information of the role
     async def roleCall(self, ctx: commands.Context, hideFull: bool = True):
-        supeRole = get(ctx.guild.roles, name=SUPEROLE)
+        supeRole = get(ctx.guild.roles, name=SUPE_ROLE)
         await pointsLeft(ctx, supeRole.members, hideFull)
 
     @commands.command(
-        enabled=COMON,
+        enabled=COMMANDS_ON,
         aliases=["fra"],
         brief=getBrief("forceRAdd"),
         description=getDesc("forceRAdd"),
@@ -133,13 +133,18 @@ class managerCommands(
         await ctx.send("Finished forcefully rAdd-ing")
 
     @commands.command(
-        enabled=COMON,
+        enabled=COMMANDS_ON,
         brief=getBrief("roleInf"),
         description=getDesc("roleInf"),
     )
     # manager command to check if guild has role and messages
     # some information of the role
-    async def roleInf(self, ctx: commands.Context, *, roleStr: str = SUPEROLE):
+    async def roleInf(
+        self,
+        ctx: commands.Context,
+        *,
+        roleStr: str = SUPE_ROLE,
+    ):
         supeGuildRoles = await orderRole(ctx)
         roleStrId = [x for x in supeGuildRoles if roleStr == x.name]
         logP.debug(f"Role string ID is: {roleStrId[0].id}")
@@ -159,17 +164,17 @@ class managerCommands(
         brief=getBrief("restart"),
         description=getDesc("restart"),
     )
-    async def restart(self, ctx: commands.Context, host: str = HOSTNAME):
+    async def restart(self, ctx: commands.Context, host: str = HOST_NAME):
         logP.debug(f"Command restart called for host: {host}")
-        if host != HOSTNAME:
+        if host != HOST_NAME:
             return
-        text = f"Restarting bot on {HOSTNAME}..."
+        text = f"Restarting bot on {HOST_NAME}..."
         await dupeMes(self.bot, ctx, text)
         logP.warning("Bot is now restarting")
         restart_bot()
 
     @commands.command(
-        enabled=COMON,
+        enabled=COMMANDS_ON,
         brief=getBrief("upload"),
         description=getDesc("upload"),
     )
@@ -177,10 +182,10 @@ class managerCommands(
         self,
         ctx: commands.Context,
         logg: typing.Optional[int] = 0,
-        host: str = HOSTNAME,
+        host: str = HOST_NAME,
     ):
         logP.debug(f"Command upload called for host: {host}")
-        if host != HOSTNAME:
+        if host != HOST_NAME:
             return
         currTime = time.localtime()
         currTimeStr = (
@@ -190,26 +195,26 @@ class managerCommands(
         )
         logP.debug(f"currTime: {currTime}")
         logP.debug("currTimeStr: " + currTimeStr)
-        nameStamp = f"{SAVEFILE}_{currTimeStr}"
+        nameStamp = f"{SAVE_FILE}_{currTimeStr}"
         if logg:
             await ctx.send(
-                f"Log File from {HOSTNAME} at: {currTimeStr}",
+                f"Log File from {HOST_NAME} at: {currTimeStr}",
                 file=discord.File(log.LOG_FILE),
             )
         else:
             await ctx.send(
-                f"File {SAVEFILE} from {HOSTNAME}",
-                file=discord.File(SAVEFILE, filename=nameStamp),
+                f"File {SAVE_FILE} from {HOST_NAME}",
+                file=discord.File(SAVE_FILE, filename=nameStamp),
             )
         logP.debug("command upload completed")
 
     @commands.command(
-        enabled=COMON,
+        enabled=COMMANDS_ON,
         brief=getBrief("leavers"),
         description=getDesc("leavers"),
     )
     async def leavers(self, ctx: commands.Context):
-        supeRole = get(ctx.guild.roles, name=SUPEROLE)
+        supeRole = get(ctx.guild.roles, name=SUPE_ROLE)
         cached_file = load(ctx.guild.id)
         mes = discord.Embed(title="Leavers")
         memberIdList = [x.id for x in supeRole.members]
@@ -219,23 +224,23 @@ class managerCommands(
         await sendMessage(mes, ctx)
 
     @commands.command(
-        enabled=COMON,
+        enabled=COMMANDS_ON,
         brief=getBrief("finPatrol"),
         description=getDesc("finPatrol"),
     )
     async def finPatrol(self, ctx: commands.Context):
-        patrolRole = get(ctx.guild.roles, id=int(PATROLROLEID))
-        onCallRole = get(ctx.guild.roles, id=int(CALLROLEID))
+        patrolRole = get(ctx.guild.roles, id=int(ROLE_ID_PATROL))
+        onCallRole = get(ctx.guild.roles, id=int(ROLE_ID_CALL))
         streakerRole = get(ctx.guild.roles, name=STREAKER)
 
         if patrolRole and onCallRole and streakerRole:
             mes = await remOnPatrol(
-                patrolRole, onCallRole, streakerRole, TIMTILLONCALL
+                patrolRole, onCallRole, streakerRole, TIME_TILL_ON_CALL
             )
             await ctx.send(mes)
 
     @commands.command(
-        enabled=COMON,
+        enabled=COMMANDS_ON,
         brief=getBrief("printSave"),
         description=getDesc("printSave"),
     )
@@ -249,7 +254,7 @@ class managerCommands(
         await ctx.send("Printed Save File.")
 
     @commands.command(
-        enabled=COMON,
+        enabled=COMMANDS_ON,
         brief=getBrief("xpAdd"),
         description=getDesc("xpAdd"),
     )
@@ -282,7 +287,7 @@ class managerCommands(
             await ctx.send("Finished adding xp")
 
     @commands.command(
-        enabled=COMON,
+        enabled=COMMANDS_ON,
         brief=getBrief("average"),
         description=getDesc("average"),
     )
@@ -290,9 +295,9 @@ class managerCommands(
         mes = discord.Embed(title="Average Enhancment Points")
         totSumPeeps = 0
         totLenPeeps = 0
-        getSupe = [x for x in ctx.guild.roles if str(x.name) == SUPEROLE]
+        getSupe = [x for x in ctx.guild.roles if str(x.name) == SUPE_ROLE]
         if not getSupe:
-            await ctx.send(f"No users of role: {SUPEROLE}")
+            await ctx.send(f"No users of role: {SUPE_ROLE}")
         else:
             getSupe = getSupe[0]
         for val in leader.values():
@@ -315,7 +320,7 @@ class managerCommands(
         totLenPeeps = len(getSupe.members)
         totAvPeep = round(totSumPeeps / totLenPeeps, 2)
         mes.add_field(
-            name=SUPEROLE,
+            name=SUPE_ROLE,
             value=(
                 f"There is a total of {totLenPeeps} "
                 f"host{pluralInt(totLenPeeps)} with a sum of "
@@ -324,11 +329,11 @@ class managerCommands(
                 f"\n Serverwide average of {totAvPeep}."
             ),
         )
-        mes.set_footer(text=HOSTNAME, icon_url=self.bot.user.display_avatar)
+        mes.set_footer(text=HOST_NAME, icon_url=self.bot.user.display_avatar)
         await sendMessage(mes, ctx)
 
     @commands.command(
-        enabled=COMON,
+        enabled=COMMANDS_ON,
         aliases=["poop"],
         brief=getBrief("popPeep"),
         description=getDesc("popPeep"),
@@ -345,7 +350,7 @@ class managerCommands(
         await ctx.send(sendMes)
 
     @commands.command(
-        enabled=COMON,
+        enabled=COMMANDS_ON,
         brief=getBrief("moveRoles"),
         description=getDesc("moveRoles"),
     )
@@ -357,12 +362,12 @@ class managerCommands(
         return
 
     @commands.command(
-        enabled=COMON,
+        enabled=COMMANDS_ON,
         brief=getBrief("trimAll"),
         description=getDesc("trimAll"),
     )
     # manager command to role trim all users bot has access to
-    async def trimAll(self, ctx: commands.Context, memStr: str = SUPEROLE):
+    async def trimAll(self, ctx: commands.Context, memStr: str = SUPE_ROLE):
         memList = await memGrab(ctx, memStr)
         await cut(ctx, memList)
         await ctx.send(f"Finished trimAll for {len(memList)} members.")
@@ -428,7 +433,7 @@ async def manageRoles(ctx: commands.Context):
         # check for rank 1 roles that do not have a lowerbound intelligence
         # role for positioning
         elif roleRank == 1:
-            roleRankLower = LOWESTROLE
+            roleRankLower = LOWEST_ROLE
 
         else:
             roleRankLower = [

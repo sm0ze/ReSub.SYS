@@ -18,11 +18,11 @@ from sqlitedict import SqliteDict
 import log
 import sharedDyVars
 from sharedConsts import (
-    GEMDIFF,
-    HOSTNAME,
-    SAVEFILE,
-    STARTCHANNEL,
-    SUPEROLE,
+    GEM_DIFF,
+    HOST_NAME,
+    SAVE_FILE,
+    START_CHANNEL,
+    SUPE_ROLE,
     TATSU,
 )
 from sharedDicts import (
@@ -281,7 +281,7 @@ async def dupeError(
 
     errMes = (
         f"At {currTimeStr}, {author} ({autID}) "
-        f"produced this error on {HOSTNAME}: "
+        f"produced this error on {HOST_NAME}: "
     )
     logP.warning(errMes + str(mes.to_dict()["description"]))
 
@@ -309,7 +309,7 @@ async def getSendLoc(id, bot: commands.Bot, attr: str = "channel"):
             x.archived_threads()
             for y in bot.guilds
             for x in y.text_channels
-            if int(x.id) == int(STARTCHANNEL)
+            if int(x.id) == int(START_CHANNEL)
         ]
 
     if otherOpt and not sendLoc:
@@ -343,7 +343,7 @@ def nON(user: discord.Member) -> str:
 async def dupeMes(bot, channel=None, mes: str = None):
     global STRCHNL
     if not STRCHNL:
-        STRCHNL = await getSendLoc(STARTCHANNEL, bot, "channel")
+        STRCHNL = await getSendLoc(START_CHANNEL, bot, "channel")
     if isinstance(channel, commands.Context):
         channel = channel.channel
 
@@ -406,7 +406,7 @@ async def memGrab(
     return grabList
 
 
-def save(key: int, value: dict, cache_file=SAVEFILE):
+def save(key: int, value: dict, cache_file=SAVE_FILE):
     try:
         with SqliteDict(cache_file) as mydict:
             mydict[key] = value  # Using dict[key] to store
@@ -416,7 +416,7 @@ def save(key: int, value: dict, cache_file=SAVEFILE):
         logP.warning(["Error during storing data (Possibly unsupported):", ex])
 
 
-def load(key: int, cache_file=SAVEFILE) -> dict[int, dict]:
+def load(key: int, cache_file=SAVE_FILE) -> dict[int, dict]:
     try:
         with SqliteDict(cache_file) as mydict:
             # No need to use commit(), since we are only loading data!
@@ -466,7 +466,7 @@ def topEnh(ctx: commands.Context, enh: str) -> dict:
     }
     peepDict = {}
     for peep in ctx.guild.members:
-        if SUPEROLE not in [x.name for x in peep.roles]:
+        if SUPE_ROLE not in [x.name for x in peep.roles]:
             continue
         for role in peep.roles:
             if role.name in enhNameList.keys():
@@ -756,7 +756,7 @@ def count(
         else:
             totXP = float(0)
         if nON(peep) == "Geminel":
-            totXP = round(totXP * float(GEMDIFF), 3)
+            totXP = round(totXP * float(GEM_DIFF), 3)
 
         gdv = lvlEqu(totXP)
 
@@ -907,8 +907,8 @@ async def remOnPatrol(
     membersFinishingPatrol = set(patrolRole.members) & set(notActive.keys())
 
     perPatrolMes = (
-        f"{currentlyPatrolling}/{len(memberDict)} {SUPEROLE}'s have started a "
-        f"patrol at some point in time and {len(membersFinishingPatrol)} "
+        f"{currentlyPatrolling}/{len(memberDict)} {SUPE_ROLE}'s have started a"
+        f" patrol at some point in time and {len(membersFinishingPatrol)} "
         "are currently finishing their patrol. "
         f"{len(patrolRole.members)-len(membersFinishingPatrol)} are out on a "
         f"patrol now with {len(onCallRole.members)} on call."
@@ -1128,7 +1128,7 @@ def isSuper(
 
     for guild in guilds:
         logP.debug(f"iter through: {guild}")
-        posRole = get(guild.roles, name=SUPEROLE)
+        posRole = get(guild.roles, name=SUPE_ROLE)
         if posRole:
             logP.debug(f"found role: {posRole}")
             foundRole.append(posRole)

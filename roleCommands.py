@@ -15,26 +15,26 @@ import sharedDyVars
 from battle import NPC, NPCFromBuild, battler, player, playerFromBuild
 from exceptions import noFields, notADuel, notNPC, notSupeDuel
 from sharedConsts import (
-    ASKNPC,
-    ASKSELF,
-    CALLROLEID,
-    PATROLROLEID,
-    ACTIVESEC,
-    BOTTURNWAIT,
-    COMMANDSROLES,
-    COMON,
-    DEFDUELOPP,
+    ASK_NPC,
+    ASK_SELF,
+    ROLE_ID_CALL,
+    ROLE_ID_PATROL,
+    ACTIVE_SEC,
+    BOT_TURN_WAIT,
+    COMMANDS_ROLES,
+    COMMANDS_ON,
+    DEFAULT_DUEL_OPP,
     DL_ARC_DUR,
     HIDE,
-    HOSTNAME,
-    LEADLIMIT,
+    HOST_NAME,
+    LEAD_LIMIT,
     MANAGER,
-    PLAYERTURNWAIT,
-    ROUNDLIMIT,
+    PLAYER_TURN_WAIT,
+    ROUND_LIMIT,
     STREAKER,
-    SUPEROLE,
-    TASKCD,
-    TIMTILLONCALL,
+    SUPE_ROLE,
+    TASK_CD,
+    TIME_TILL_ON_CALL,
 )
 from sharedDicts import (
     leader,
@@ -95,14 +95,14 @@ ENHLIST = [(x, y) for (x, y) in powerTypes.items()]
 
 class roleCommands(
     commands.Cog,
-    name=f"{SUPEROLE} Commands",
+    name=f"{SUPE_ROLE} Commands",
     description=getDesc("roleCommands"),
 ):
     def __init__(
         self, bot: typing.Union[commands.bot.Bot, commands.bot.AutoShardedBot]
     ):
         self.bot = bot
-        if not HOSTNAME == "sm0ze-desktop":
+        if not HOST_NAME == "sm0ze-desktop":
             self.remOnCallLoop.start()
             self.remOnPatrolLoop.start()
         self.xpLoop.start()
@@ -110,14 +110,14 @@ class roleCommands(
     # Check if user has guild role
     async def cog_check(self, ctx: commands.Context):
         async def predicate(ctx: commands.Context):
-            for role in COMMANDSROLES:
+            for role in COMMANDS_ROLES:
                 chkRole = get(ctx.guild.roles, name=role)
                 if chkRole in ctx.author.roles:
                     return chkRole
             raise commands.CheckFailure(
                 (
                     "You do not have permission as you are missing a role in "
-                    f"this list: {COMMANDSROLES}\nThe super command can be "
+                    f"this list: {COMMANDS_ROLES}\nThe super command can be "
                     "used to gain the Supe role"
                 )
             )
@@ -129,7 +129,7 @@ class roleCommands(
     async def xpLoop(self):
         roleGrab = None
         for guild in self.bot.guilds:
-            roleGrab = get(guild.roles, name=SUPEROLE)
+            roleGrab = get(guild.roles, name=SUPE_ROLE)
             if roleGrab:
                 await mee6DictGrab(roleGrab)
 
@@ -143,12 +143,12 @@ class roleCommands(
     @tasks.loop(minutes=10)
     async def remOnPatrolLoop(self):
         for guild in self.bot.guilds:
-            patrolRole = get(guild.roles, id=int(PATROLROLEID))
-            onCallRole = get(guild.roles, id=int(CALLROLEID))
+            patrolRole = get(guild.roles, id=int(ROLE_ID_PATROL))
+            onCallRole = get(guild.roles, id=int(ROLE_ID_CALL))
             streakerRole = get(guild.roles, name=STREAKER)
             if patrolRole and onCallRole and streakerRole:
                 await remOnPatrol(
-                    patrolRole, onCallRole, streakerRole, TIMTILLONCALL
+                    patrolRole, onCallRole, streakerRole, TIME_TILL_ON_CALL
                 )
 
     @remOnPatrolLoop.before_loop
@@ -158,25 +158,25 @@ class roleCommands(
     @tasks.loop(minutes=60)
     async def remOnCallLoop(self):
         for guild in self.bot.guilds:
-            onCallRole = get(guild.roles, id=int(CALLROLEID))
+            onCallRole = get(guild.roles, id=int(ROLE_ID_CALL))
 
             if onCallRole:
-                await remOnCall(onCallRole, ACTIVESEC)
+                await remOnCall(onCallRole, ACTIVE_SEC)
 
     @remOnCallLoop.before_loop
     async def before_remOnCallLoop(self):
         await self.bot.wait_until_ready()
 
-    @commands.command(enabled=COMON, hidden=True)
+    @commands.command(enabled=COMMANDS_ON, hidden=True)
     @commands.is_owner()
     async def forceTatsu(self, ctx: commands.Context):
-        roleGrab = get(ctx.guild.roles, name=SUPEROLE)
+        roleGrab = get(ctx.guild.roles, name=SUPE_ROLE)
         mes = await tatsuXpGrab(roleGrab)
         if mes:
             await sendMessage(mes, ctx)
 
     @commands.command(
-        enabled=COMON,
+        enabled=COMMANDS_ON,
         aliases=["npc"],
         brief=getBrief("npcList"),
         description=getDesc("npcList"),
@@ -229,7 +229,7 @@ class roleCommands(
         await sendMessage(newMes, ctx)
 
     @commands.command(
-        enabled=COMON,
+        enabled=COMMANDS_ON,
         brief=getBrief("trim"),
         description=getDesc("trim"),
     )
@@ -242,7 +242,7 @@ class roleCommands(
         await cut(ctx, memberList)
 
     @commands.command(
-        enabled=COMON,
+        enabled=COMMANDS_ON,
         aliases=["tu"],
         brief=getBrief("tatsuUpdate"),
         description=getDesc("tatsuUpdate"),
@@ -255,7 +255,7 @@ class roleCommands(
             await ctx.send("You are already set to update your xp soon.")
 
     @commands.command(
-        enabled=COMON,
+        enabled=COMMANDS_ON,
         brief=getBrief("convert"),
         description=getDesc("convert"),
     )
@@ -269,12 +269,12 @@ class roleCommands(
             await ctx.send(f"{inVar:,} XP is equivalent to {feedback} GDV")
 
     @commands.command(
-        enabled=COMON,
+        enabled=COMMANDS_ON,
         aliases=["t"],
         brief=getBrief("task"),
         description=getDesc("task"),
     )
-    @commands.cooldown(1, TASKCD, type=commands.BucketType.user)
+    @commands.cooldown(1, TASK_CD, type=commands.BucketType.user)
     async def task(self, ctx: commands.Context):
 
         taskType = random.choices(
@@ -287,9 +287,9 @@ class roleCommands(
         taskAdd = taskShrt["Add"]
         logP.debug(f"Task can have additional {taskAdd} peeps")
 
-        patrolRole = get(ctx.guild.roles, id=int(PATROLROLEID))
-        supRole = get(ctx.guild.roles, name=SUPEROLE)
-        onCallRole = get(ctx.guild.roles, id=int(CALLROLEID))
+        patrolRole = get(ctx.guild.roles, id=int(ROLE_ID_PATROL))
+        supRole = get(ctx.guild.roles, name=SUPE_ROLE)
+        onCallRole = get(ctx.guild.roles, id=int(ROLE_ID_CALL))
 
         aidPick = [patrolRole, onCallRole, supRole]
         aidWeight = [40, 30, 30]
@@ -490,7 +490,7 @@ class roleCommands(
         emptMes.set_thumbnail(url=ctx.author.display_avatar)
 
         emptMes.set_footer(
-            text=HOSTNAME, icon_url=self.bot.user.display_avatar
+            text=HOST_NAME, icon_url=self.bot.user.display_avatar
         )
 
         await ctx.send(embed=emptMes)
@@ -498,7 +498,7 @@ class roleCommands(
         return
 
     @commands.command(
-        enabled=COMON,
+        enabled=COMMANDS_ON,
         aliases=["it", "intTask"],
         brief=getBrief("interactiveTask"),
         description=getDesc("interactiveTask"),
@@ -519,7 +519,7 @@ class roleCommands(
         await startDuel(self, ctx, bat)
 
     @commands.command(
-        enabled=COMON,
+        enabled=COMMANDS_ON,
         aliases=["lo"],
         brief=getBrief("loadout"),
         description=getDesc("loadout"),
@@ -659,7 +659,7 @@ class roleCommands(
         save(ctx.guild.id, cache_file)
 
     @commands.command(
-        enabled=COMON,
+        enabled=COMMANDS_ON,
         aliases=["gen"],
         brief=getBrief("generate"),
         description=getDesc("generate"),
@@ -710,7 +710,7 @@ class roleCommands(
             )
 
     @commands.command(
-        enabled=COMON,
+        enabled=COMMANDS_ON,
         aliases=["a"],
         brief=getBrief("add"),
         description=getDesc("add"),
@@ -784,7 +784,7 @@ class roleCommands(
         await toAdd(ctx, user, userWantsBuild)
 
     @commands.command(
-        enabled=COMON,
+        enabled=COMMANDS_ON,
         aliases=["p"],
         brief=getBrief("points"),
         description=getDesc("points"),
@@ -796,12 +796,12 @@ class roleCommands(
         # restrict user list to those with SUPEROLE
         supeUsers = isSuper(self.bot, users)
         if not supeUsers:  # if no SUPEROLE users in list
-            await ctx.send(f"Your list contains no {SUPEROLE}'s")
+            await ctx.send(f"Your list contains no {SUPE_ROLE}'s")
             return
         await pointsLeft(ctx, supeUsers)
 
     @commands.command(
-        enabled=COMON,
+        enabled=COMMANDS_ON,
         aliases=["l"],
         brief=getBrief("list"),
         description=getDesc("list"),
@@ -843,7 +843,7 @@ class roleCommands(
         await ctx.send(embed=mes)
 
     @commands.command(
-        enabled=COMON,
+        enabled=COMMANDS_ON,
         aliases=["b"],
         brief=getBrief("build"),
         description=getDesc("build"),
@@ -897,7 +897,7 @@ class roleCommands(
         await ctx.send(embed=mes)
 
     @commands.command(
-        enabled=COMON,
+        enabled=COMMANDS_ON,
         aliases=["leaderboard"],
         brief=getBrief("top"),
         description=getDesc("top"),
@@ -906,7 +906,7 @@ class roleCommands(
     async def top(
         self,
         ctx: commands.Context,
-        lead: typing.Optional[int] = int(LEADLIMIT),
+        lead: typing.Optional[int] = int(LEAD_LIMIT),
         page: typing.Optional[int] = int(1),
         *,
         enh: str = "",
@@ -929,10 +929,10 @@ class roleCommands(
         if MANAGER in [str(x.name) for x in ctx.author.roles]:
             leade = lead
         else:
-            if lead < LEADLIMIT:
+            if lead < LEAD_LIMIT:
                 leade = lead
             else:
-                leade = LEADLIMIT
+                leade = LEAD_LIMIT
         if leade < 1:
             leade = 1
         strtLead = page * leade - leade
@@ -1019,7 +1019,7 @@ class roleCommands(
                 [
                     len(x.members)
                     for x in [
-                        get(y.roles, name=SUPEROLE) for y in self.bot.guilds
+                        get(y.roles, name=SUPE_ROLE) for y in self.bot.guilds
                     ]
                 ]
             )
@@ -1080,13 +1080,13 @@ class roleCommands(
             i += 1
 
         blankMessage.set_footer(
-            text=HOSTNAME, icon_url=self.bot.user.display_avatar
+            text=HOST_NAME, icon_url=self.bot.user.display_avatar
         )
         # return leaderboard to command caller
         await ctx.send(embed=blankMessage)
 
     @commands.command(
-        enabled=COMON,
+        enabled=COMMANDS_ON,
         brief=getBrief("rAdd"),
         description=getDesc("rAdd"),
     )
@@ -1096,7 +1096,7 @@ class roleCommands(
         await ctx.send(f"Finished rAdd-ing to {nON(user)}")
 
     @commands.command(
-        enabled=COMON,
+        enabled=COMMANDS_ON,
         aliases=["c", "clean"],
         brief=getBrief("clear"),
         description=getDesc("clear"),
@@ -1119,7 +1119,7 @@ class roleCommands(
         await cut(ctx, [ctx.author], toCut)
 
     @commands.command(
-        enabled=COMON,
+        enabled=COMMANDS_ON,
         hidden=HIDE,
         aliases=["x"],
         brief=getBrief("xpGrab"),
@@ -1172,10 +1172,10 @@ class roleCommands(
             )
 
             mes.set_footer(
-                text=f"{peep.name}#{peep.discriminator} - {HOSTNAME}",
+                text=f"{peep.name}#{peep.discriminator} - {HOST_NAME}",
                 icon_url=peep.display_avatar,
             )
-            patrolRole = get(ctx.guild.roles, id=int(PATROLROLEID))
+            patrolRole = get(ctx.guild.roles, id=int(ROLE_ID_PATROL))
             isPatrolStr = "Not Patrolling"
             patrolStats = ""
             if patrolRole:
@@ -1208,7 +1208,7 @@ class roleCommands(
             i += 1
 
     @commands.command(
-        enabled=COMON,
+        enabled=COMMANDS_ON,
         aliases=["s"],
         brief=getBrief("stats"),
         description=getDesc("stats"),
@@ -1223,14 +1223,14 @@ class roleCommands(
         )
         mes.set_thumbnail(url=p.p.display_avatar)
         mes.set_footer(
-            text=f"{p.p.name}#{p.p.discriminator} - {HOSTNAME}",
+            text=f"{p.p.name}#{p.p.discriminator} - {HOST_NAME}",
             icon_url=p.pic,
         )
 
         await ctx.send(embed=mes)
 
     @commands.command(
-        enabled=COMON,
+        enabled=COMMANDS_ON,
         aliases=["gd", "genD", "genDuel"],
         brief=getBrief("generateDuel"),
         description=getDesc("generateDuel"),
@@ -1260,7 +1260,7 @@ class roleCommands(
         await startDuel(self, ctx, bat)
 
     @commands.command(
-        enabled=COMON,
+        enabled=COMMANDS_ON,
         aliases=["d"],
         brief=getBrief("duel"),
         description=getDesc("duel"),
@@ -1272,19 +1272,21 @@ class roleCommands(
             typing.Union[
                 typing.Literal[1], typing.Literal[2], typing.Literal[3]
             ]
-        ] = ASKSELF,
+        ] = ASK_SELF,
         opponent: typing.Union[discord.Member, str] = False,
     ):
-        if not dontAsk == ASKNPC:
+        if not dontAsk == ASK_NPC:
             if not isinstance(opponent, discord.Member):
                 if not opponent:
-                    opponent = get(ctx.guild.members, id=DEFDUELOPP)
+                    opponent = get(ctx.guild.members, id=DEFAULT_DUEL_OPP)
                 else:
 
                     raise notSupeDuel("Not a supe.")
             nameList = [x.name for x in opponent.roles]
-            if (str(SUPEROLE) not in nameList) and str("Bots") not in nameList:
-                raise notSupeDuel(f"{opponent} is not a {SUPEROLE}.")
+            if (str(SUPE_ROLE) not in nameList) and str(
+                "Bots"
+            ) not in nameList:
+                raise notSupeDuel(f"{opponent} is not a {SUPE_ROLE}.")
             bat = battler(self.bot, [ctx.author, opponent])
 
         else:
@@ -1350,11 +1352,11 @@ async def playerDuelInput(
 
     mes = discord.Embed(
         title="Game Stats",
-        description=f"{totRounds}/{ROUNDLIMIT} Total Rounds",
+        description=f"{totRounds}/{ROUND_LIMIT} Total Rounds",
     )
     mes.add_field(name="Your Current", value=statsMes)
     mes.add_field(name="Opponent", value=stats2Mes)
-    mes.set_footer(text=HOSTNAME, icon_url=self.bot.user.display_avatar)
+    mes.set_footer(text=HOST_NAME, icon_url=self.bot.user.display_avatar)
     if peep.missTurn:
         moveStr = "You are exhausted."
     mes.add_field(
@@ -1364,9 +1366,9 @@ async def playerDuelInput(
     )
 
     if notPeep.play:
-        timeOut = PLAYERTURNWAIT
+        timeOut = PLAYER_TURN_WAIT
     else:
-        timeOut = BOTTURNWAIT
+        timeOut = BOT_TURN_WAIT
     moveView = None
     if not peep.missTurn:
         moveView = duelMoveView(reactionList)
@@ -1470,7 +1472,7 @@ async def startDuel(
             value=f"{stats}\n\n{adpStats}",
         )
 
-    mes.set_footer(text=HOSTNAME, icon_url=self.bot.user.display_avatar)
+    mes.set_footer(text=HOST_NAME, icon_url=self.bot.user.display_avatar)
 
     sentMes = await ctx.send(
         embed=mes,
@@ -1543,9 +1545,9 @@ async def startDuel(
             value=f"{moveTxt}",
         )
 
-        mes.description = f"{totRounds}/{ROUNDLIMIT} Total Rounds"
+        mes.description = f"{totRounds}/{ROUND_LIMIT} Total Rounds"
         await bat.echoMes(mes, thrd)
-        if not winner and totRounds >= ROUNDLIMIT:
+        if not winner and totRounds >= ROUND_LIMIT:
             winner = "exhaustion"
         elif winner:
             if not winner == "Noone":

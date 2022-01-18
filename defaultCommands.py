@@ -9,7 +9,7 @@ from discord.ext import commands
 from discord.utils import get
 
 import log
-from sharedConsts import COMON, HOSTNAME, STARTTIME
+from sharedConsts import COMMANDS_ON, HOST_NAME, START_TIME
 from sharedDicts import freeRoles
 from sharedFuncs import getBrief, getDesc, nON
 
@@ -40,7 +40,7 @@ class defaultCommands(
         logP.debug(f"Bot last login time set as: {loginTime}")
 
     @commands.command(
-        enabled=COMON,
+        enabled=COMMANDS_ON,
         brief=getBrief("emoji"),
         description=getDesc("emoji"),
     )
@@ -113,7 +113,7 @@ class defaultCommands(
                     active = False
 
     @commands.command(
-        enabled=COMON,
+        enabled=COMMANDS_ON,
         brief=getBrief("about"),
         description=getDesc("about"),
     )
@@ -151,22 +151,22 @@ class defaultCommands(
         mes.set_footer(
             text=(
                 f"{self.bot.user.display_name} is currently "
-                f"running on {HOSTNAME}."
+                f"running on {HOST_NAME}."
             )
         )
         mes.set_thumbnail(url=self.bot.user.display_avatar)
         await ctx.send(embed=mes)
 
     @commands.command(
-        enabled=COMON,
+        enabled=COMMANDS_ON,
         brief=getBrief("run"),
         description=getDesc("run"),
     )
     async def run(self, ctx: commands.Context):
-        await ctx.send(f"Bot is running on {HOSTNAME}")
+        await ctx.send(f"Bot is running on {HOST_NAME}")
 
     @commands.command(
-        enabled=COMON,
+        enabled=COMMANDS_ON,
         aliases=["r", "roles"],
         brief=getBrief("role"),
         description=getDesc("role"),
@@ -195,7 +195,7 @@ class defaultCommands(
         logP.debug("command role resolution: " + sendMes)
 
     @commands.command(
-        enabled=COMON,
+        enabled=COMMANDS_ON,
         aliases=["u"],
         brief=getBrief("uptime"),
         description=getDesc("uptime"),
@@ -206,7 +206,7 @@ class defaultCommands(
             datetime.timedelta(seconds=int(round(time.time() - loginTime)))
         )
         uptimeStartup = str(
-            datetime.timedelta(seconds=int(round(time.time() - STARTTIME)))
+            datetime.timedelta(seconds=int(round(time.time() - START_TIME)))
         )
         mes = discord.Embed(title="Uptime")
         mes.add_field(name=uptimeLogin, value="Time since last login.")
@@ -214,7 +214,7 @@ class defaultCommands(
         mes.set_footer(
             text=(
                 f"{self.bot.user.display_name} is "
-                f"currently running on {HOSTNAME}."
+                f"currently running on {HOST_NAME}."
             )
         )
         mes.set_thumbnail(url=self.bot.user.display_avatar)

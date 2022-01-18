@@ -6,7 +6,7 @@ from discord.utils import get
 from pretty_help import DefaultMenu, PrettyHelp
 
 import log
-from sharedConsts import CMDPREFIX, HOSTNAME, STARTTIME, SUPEROLE, TOKEN
+from sharedConsts import CMD_PREFIX, HOST_NAME, START_TIME, SUPE_ROLE, TOKEN
 from sharedDicts import powerTypes
 from sharedFuncs import asleep, dupeMes, nON
 
@@ -14,11 +14,11 @@ logP = log.get_logger(__name__)
 
 runBot = True
 logP.info(
-    f"Bot will attempt to connect to discord on host: {HOSTNAME}, {runBot}"
+    f"Bot will attempt to connect to discord on host: {HOST_NAME}, {runBot}"
 )
 
 
-logP.debug(f"Bot start time set as: {STARTTIME}")
+logP.debug(f"Bot start time set as: {START_TIME}")
 
 cogList = [
     "defaultCommands.py",
@@ -53,7 +53,7 @@ bot = commands.Bot(command_prefix="!")
 HELPCOMMAND = commands.DefaultHelpCommand(no_category="\nBasic Options")
 
 bot = commands.Bot(
-    command_prefix=CMDPREFIX,
+    command_prefix=CMD_PREFIX,
     case_insensitive=True,
     intents=INTENTS,
 )
@@ -83,7 +83,7 @@ async def on_ready():
         )
     )
 
-    strtMes = f"Bot has logged in as {bot.user} on {HOSTNAME}"
+    strtMes = f"Bot has logged in as {bot.user} on {HOST_NAME}"
     logP.info(strtMes)
 
     await dupeMes(bot, None, strtMes)
@@ -118,7 +118,7 @@ async def on_message(message: discord.Message):
         return
 
     if message.author.id == bot.owner_id:
-        if message.content.startswith(f"{CMDPREFIX}resume"):
+        if message.content.startswith(f"{CMD_PREFIX}resume"):
             # wake up the bot if it is asleep
             await bot.process_commands(message)
             return
@@ -127,7 +127,7 @@ async def on_message(message: discord.Message):
         # stop parsing the message if the bot is asleep
         return
 
-    if message.content.startswith(f"{CMDPREFIX}{CMDPREFIX}"):
+    if message.content.startswith(f"{CMD_PREFIX}{CMD_PREFIX}"):
         return
 
     # # begining implementation for ~start
@@ -181,7 +181,10 @@ async def on_message(message: discord.Message):
 async def update_presence():
     guilds = bot.guilds
     members = sum(
-        [len(x.members) for x in [get(y.roles, name=SUPEROLE) for y in guilds]]
+        [
+            len(x.members)
+            for x in [get(y.roles, name=SUPE_ROLE) for y in guilds]
+        ]
     )
     nameSet = f"{members} users with {len(powerTypes.keys())} " "enhancements"
 

@@ -5,7 +5,7 @@ import git
 from discord.ext import commands
 
 import log
-from sharedConsts import COMON, HOSTNAME
+from sharedConsts import COMMANDS_ON, HOST_NAME
 from sharedFuncs import asleep, dupeMes, getBrief, getDesc, load, save
 
 logP = log.get_logger(__name__)
@@ -31,7 +31,7 @@ class ownerCommands(
         return commands.check(await predicate(ctx))
 
     @commands.command(
-        enabled=COMON,
+        enabled=COMMANDS_ON,
         brief=getBrief("resetPatrol"),
         description=getDesc("resetPatrol"),
     )
@@ -52,13 +52,13 @@ class ownerCommands(
         self,
         ctx: commands.Context,
         up: typing.Optional[int] = 0,
-        host: str = HOSTNAME,
+        host: str = HOST_NAME,
     ):
         logP.debug(f"Command resume called for host: {host}, to update: {up}")
-        if host != HOSTNAME:
+        if host != HOST_NAME:
             return
         if asleep():
-            await dupeMes(self.bot, ctx, f"Bot is now awake on {HOSTNAME}")
+            await dupeMes(self.bot, ctx, f"Bot is now awake on {HOST_NAME}")
             asleep(True)
             logP.info("Bot is now awake")
         if up:
@@ -71,12 +71,12 @@ class ownerCommands(
         brief=getBrief("pause"),
         description=getDesc("pause"),
     )
-    async def pause(self, ctx: commands.Context, host: str = HOSTNAME):
+    async def pause(self, ctx: commands.Context, host: str = HOST_NAME):
         logP.debug(f"Command pause called for host: {host}")
-        if host != HOSTNAME:
+        if host != HOST_NAME:
             return
         asleep(True)
-        await dupeMes(self.bot, ctx, f"Bot is now asleep on {HOSTNAME}")
+        await dupeMes(self.bot, ctx, f"Bot is now asleep on {HOST_NAME}")
         logP.info("Bot is now paused")
 
     @commands.command(
@@ -84,16 +84,16 @@ class ownerCommands(
         brief=getBrief("update"),
         description=getDesc("update"),
     )
-    async def update(self, ctx: commands.Context, host: str = HOSTNAME):
+    async def update(self, ctx: commands.Context, host: str = HOST_NAME):
         logP.debug(f"Command update called for host: {host}")
-        if host != HOSTNAME:
+        if host != HOST_NAME:
             return
-        text1 = f"Update starting on {HOSTNAME}"
+        text1 = f"Update starting on {HOST_NAME}"
         await dupeMes(self.bot, ctx, text1)
         logP.warning(text1)
         git_dir = "/.git/ReSub.SYS"
         g = git.cmd.Git(git_dir)
-        text2 = f"{HOSTNAME}\n{g.pull()}"
+        text2 = f"{HOST_NAME}\n{g.pull()}"
         await dupeMes(self.bot, ctx, text2)
         logP.warning(text1)
         logP.info("Command update completed")
@@ -102,11 +102,11 @@ class ownerCommands(
         brief=getBrief("end"),
         description=getDesc("end"),
     )
-    async def end(self, ctx: commands.Context, host: str = HOSTNAME):
+    async def end(self, ctx: commands.Context, host: str = HOST_NAME):
         logP.debug(f"Command end called for host: {host}")
-        if host != HOSTNAME:
+        if host != HOST_NAME:
             return
-        text = f"Bot on {HOSTNAME} is terminating"
+        text = f"Bot on {HOST_NAME} is terminating"
         await dupeMes(self.bot, ctx, text)
         await self.bot.close()
         logP.warning("Bot is now offline and terminating")
@@ -117,9 +117,9 @@ class ownerCommands(
         brief=getBrief("toggle"),
         description=getDesc("toggle"),
     )
-    async def toggle(self, ctx: commands.Context, mes="t", host=HOSTNAME):
+    async def toggle(self, ctx: commands.Context, mes="t", host=HOST_NAME):
         logP.debug(f"command toggle called for host: {host}")
-        if host != HOSTNAME:
+        if host != HOST_NAME:
             return
         getComm = self.bot.get_command(mes)
         if ctx.command == getComm:
@@ -138,13 +138,13 @@ class ownerCommands(
             await dupeMes(self.bot, ctx, f"Command '{mes}' was not found.")
 
     @commands.command(
-        enabled=COMON,
+        enabled=COMMANDS_ON,
         brief=getBrief("testAll"),
         description=getDesc("testAll"),
     )
-    async def testAll(self, ctx: commands.Context, host: str = HOSTNAME):
+    async def testAll(self, ctx: commands.Context, host: str = HOST_NAME):
         logP.debug(f"command testAll called for host: {host}")
-        if host != HOSTNAME:
+        if host != HOST_NAME:
             return
         host = ""
         logP.info("Command testAll starting")

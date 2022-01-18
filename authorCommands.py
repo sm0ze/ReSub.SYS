@@ -5,7 +5,7 @@ import discord
 from discord.ext import commands
 
 import log
-from sharedConsts import COMON, GEMDIFF, setGemDiff
+from sharedConsts import COMMANDS_ON, GEM_DIFF, setGemDiff
 from sharedFuncs import getBrief, getDesc, sendMessage
 
 logP = log.get_logger(__name__)
@@ -44,12 +44,12 @@ class authorCommands(
         return commands.check(await predicate(ctx))
 
     @commands.command(
-        enabled=COMON,
+        enabled=COMMANDS_ON,
         brief=getBrief("diffGem"),
         description=getDesc("diffGem"),
     )
     async def diffGem(
-        self, ctx: commands.Context, var: float = float(GEMDIFF)
+        self, ctx: commands.Context, var: float = float(GEM_DIFF)
     ):
         if var < 0.0:
             var = 0.0

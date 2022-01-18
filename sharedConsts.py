@@ -18,10 +18,10 @@ def askToken(var: str) -> str:
     return tempToken
 
 
-HOSTNAME = socket.gethostname().lower()
-logP.info(f"Name of host for program is: {HOSTNAME}")
+HOST_NAME = socket.gethostname().lower()
+logP.info(f"Name of host for program is: {HOST_NAME}")
 
-COMON = True
+COMMANDS_ON = True
 
 # .env variables that are not shared with github and other users.
 # Use your own if testing this with your own bot
@@ -29,23 +29,23 @@ COMON = True
 dotenv.load_dotenv()
 dotenv_file = dotenv.find_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
-SAVEFILE = os.getenv("SAVEFILE")
-STARTCHANNEL = os.getenv("STARTCHANNEL")
-ERRORTHREAD = os.getenv("ERRORTHREAD")
+SAVE_FILE = os.getenv("SAVEFILE")
+START_CHANNEL = os.getenv("STARTCHANNEL")
+ERROR_THREAD = os.getenv("ERRORTHREAD")
 TATSU = os.getenv("TATSU_TOKEN")
 
 if not TOKEN:
     logP.warning("No Discord Token")
     TOKEN = askToken("DISCORD_TOKEN")
-if not SAVEFILE:
+if not SAVE_FILE:
     logP.warning("No saveFile name")
-    SAVEFILE = askToken("SAVEFILE")
-if not STARTCHANNEL:
+    SAVE_FILE = askToken("SAVEFILE")
+if not START_CHANNEL:
     logP.warning("No Discord channel id to post bot status messages set")
-    STARTCHANNEL = askToken("STARTCHANNEL")
-if not ERRORTHREAD:
+    START_CHANNEL = askToken("STARTCHANNEL")
+if not ERROR_THREAD:
     logP.warning("No Discord thread id to post error messages to set")
-    ERRORTHREAD = askToken("ERRORTHREAD")
+    ERROR_THREAD = askToken("ERRORTHREAD")
 if not TATSU:
     TATSU = askToken("TATSU_TOKEN")
 
@@ -57,47 +57,51 @@ def setGemDiff(var: float):
     dotenv.set_key(dotenv_file, "GEMDIFF", os.environ["GEMDIFF"])
 
 
-SUPEROLE = "Supe"
+SUPE_ROLE = "Supe"
 MANAGER = "System"  # manager role name for guild
 STREAKER = "Patrol_Reminder.exe"
-PATROLROLEID = 922408216644698162
-CALLROLEID = 925197249179418654
+ROLE_ID_PATROL = 922408216644698162
+ROLE_ID_CALL = 925197249179418654
 
-CMDPREFIX = "~"
-STARTTIME = time.time()
+CMD_PREFIX = "~"
+START_TIME = time.time()
 HIDE = False
-COMMANDSROLES = [SUPEROLE]  # guild role(s) for using these bot commands
-MANAGERROLES = [MANAGER]
+COMMANDS_ROLES = [SUPE_ROLE]  # guild role(s) for using these bot commands
+MANAGER_ROLES = [MANAGER]
 
-LOWESTROLE = 2  # bot sorts roles by rank from position of int10 to LOWESTROLE
-LEADLIMIT = 12
+LOWEST_ROLE = 2  # bot sorts roles by rank from position of int10 to LOWESTROLE
+LEAD_LIMIT = 12
 DL_ARC_DUR = 60
 
-TASKCD = 60 * 30
-TIMTILLONCALL = TASKCD * 4 + 60 * 60
-ACTIVESEC = 60 * 60 * 24 * 7
+TASK_CD = 60 * 30
+TIME_TILL_ON_CALL = TASK_CD * 4 + 60 * 60
+ACTIVE_SEC = 60 * 60 * 24 * 7
 
-DEFDUELOPP = 572301609305112596
-ROUNDLIMIT = 100
-DRAWDEF = 20
-PLAYERTURNWAIT = 30
-BOTTURNWAIT = 60
+DEFAULT_DUEL_OPP = 572301609305112596
+ROUND_LIMIT = 100
+DRAW_DEF = 20
+PLAYER_TURN_WAIT = 30
+BOT_TURN_WAIT = 60
 
-GEMDIFF = os.getenv("GEMDIFF")
-if not GEMDIFF:
-    GEMDIFF = 0.5
+GEM_DIFF = os.getenv("GEMDIFF")
+if not GEM_DIFF:
+    GEM_DIFF = 0.5
 
-ASKSELF = 0
-ASKNOONE = 1
-ASKALL = 2
-ASKNPC = 3
+ASK_SELF = 0
+ASK_NOONE = 1
+ASK_ALL = 2
+ASK_NPC = 3
 
-HITRANGE = 15
-LOHIT = -19
-AVHIT = -8
-HIHIT = 19
+HIT_RANGE = 15
+LO_HIT = -19
+AV_HIT = -8
+HI_HIT = 19
 
-WOUDMG = 5
+WOU_DMG = 5
 
+STATS_HP_DMG = 0.1
+STATS_HP_AG = 0.5
+STATS_HYBRID_DMG = 0.05
+STATS_HYBRID_AG = 0.35
 
 VERSION = 0

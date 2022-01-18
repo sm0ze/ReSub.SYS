@@ -10,15 +10,19 @@ from discord.ext import commands
 
 import log
 from sharedConsts import (
-    ASKALL,
-    ASKNPC,
-    ASKSELF,
-    AVHIT,
-    DRAWDEF,
-    HIHIT,
-    HITRANGE,
-    LOHIT,
-    WOUDMG,
+    ASK_ALL,
+    ASK_NPC,
+    ASK_SELF,
+    AV_HIT,
+    DRAW_DEF,
+    HI_HIT,
+    HIT_RANGE,
+    LO_HIT,
+    STATS_HP_AG,
+    STATS_HP_DMG,
+    STATS_HYBRID_AG,
+    STATS_HYBRID_DMG,
+    WOU_DMG,
 )
 from sharedDicts import (
     baseDict,
@@ -433,18 +437,26 @@ class player:
 
     async def genBuff(self, place: discord.abc.Messageable):
         bonus = int(self.bC / 5)
-        others = self._vis + self._olf + self._aur + self._spe + self._cel
+        aggressiveStats = (
+            self._vis
+            + self._olf
+            + self._aur
+            + self._spe
+            + self._cel
+            + self._str
+            + self._mem
+        )
         hpBonus = 0.0
         atBonus = 0.0
 
         if bonus:
-            if ((self._str + self._mem) > (self.bC * 0.1)) or (
-                others > (self.bC * 0.5)
+            if ((self._str + self._mem) > (self.bC * STATS_HP_DMG)) or (
+                aggressiveStats > (self.bC * STATS_HP_AG)
             ):
                 hpBonus = 3 * bonus
 
-            elif ((self._str + self._mem) >= (self.bC * 0.05)) or (
-                others >= (self.bC * 0.3)
+            elif ((self._str + self._mem) >= (self.bC * STATS_HYBRID_DMG)) or (
+                aggressiveStats >= (self.bC * STATS_HYBRID_AG)
             ):
                 atBonus = 0.5 * bonus
                 hpBonus = 1.5 * bonus
@@ -489,9 +501,11 @@ class battler:
             if isinstance(peep, player):
                 if not peep.npc:
                     if not peep.p.bot:
-                        if dontAsk == ASKSELF and (peep is self.playerList[0]):
+                        if dontAsk == ASK_SELF and (
+                            peep is self.playerList[0]
+                        ):
                             await peep.ask(self.playerList)
-                        elif dontAsk in [ASKALL, ASKNPC]:
+                        elif dontAsk in [ASK_ALL, ASK_NPC]:
                             await peep.ask(self.playerList)
 
     def nextRound(self) -> player:
@@ -626,7 +640,7 @@ class battler:
 
         if peep.missTurn:
             peep.missTurn -= 1
-        if peep.conDef >= DRAWDEF:
+        if peep.conDef >= DRAW_DEF:
             mes += (
                 f"{peep.n} has defended for 20 consecutive turns "
                 "without attacking and tied this fight."
@@ -712,16 +726,16 @@ class battler:
 
         HPS = notPeep.rec * (peep.totSta / (peep.staR + 1))
 
-        if Attack.hitChance < LOHIT:
+        if Attack.hitChance < LO_HIT:
             # lowhit func
             logP.debug(f"lowHit: {Attack.hitChance}")
             if oneHit and Attack.hitChance + baseDict["FOC"] * fAA > 50:
-                while Attack.hitChance < LOHIT and peep.sta > normSta:
+                while Attack.hitChance < LO_HIT and peep.sta > normSta:
                     peep.focus()
                     Attack = self.adp(peep, notPeep)
                 # then normal attack
             elif oneDespHit and Attack.hitChance + baseDict["FOC"] * fAD > 50:
-                while Attack.hitChance < LOHIT and peep.sta > despSta:
+                while Attack.hitChance < LO_HIT and peep.sta > despSta:
                     peep.focus()
                     Attack = self.adp(peep, notPeep)
                 desperate = 1
@@ -730,12 +744,12 @@ class battler:
                 if atk < HPS and dAtk < HPS:
                     typeMove = "Defend"
                 elif oneHit or atk > HPS:
-                    while Attack.hitChance < LOHIT and peep.sta >= normSta:
+                    while Attack.hitChance < LO_HIT and peep.sta >= normSta:
                         peep.focus()
                         Attack = self.adp(peep, notPeep)
                     # then normal attack
                 else:
-                    while Attack.hitChance < AVHIT and peep.sta > despSta:
+                    while Attack.hitChance < AV_HIT and peep.sta > despSta:
                         peep.focus()
                         Attack = self.adp(peep, notPeep)
                     desperate = 1
@@ -745,7 +759,7 @@ class battler:
 
             atk, atkStr, dAtk, dAtkStr = self.decAtk(Attack, peep)
 
-        elif Attack.hitChance <= AVHIT:
+        elif Attack.hitChance <= AV_HIT:
             # avhit func
             logP.debug(f"avHit: {Attack.hitChance}")
             if oneHit and canAt:
@@ -770,7 +784,7 @@ class battler:
             else:
                 typeMove = "Defend"
 
-        elif Attack.hitChance < HIHIT:
+        elif Attack.hitChance < HI_HIT:
             # highhit func
             logP.debug(f"highHit: {Attack.hitChance}")
             if oneHit and canAt:
@@ -899,8 +913,8 @@ class battler:
             mes += ", it is "
 
         multiBase = int(baseDict["FOC"] + attacker.acc - defender.eva)
-        multiRangeStart = multiBase - HITRANGE
-        multiRangeStop = multiBase + HITRANGE
+        multiRangeStart = multiBase - HIT_RANGE
+        multiRangeStop = multiBase + HIT_RANGE
 
         multiRange = [
             float(attackRollDict[x])
@@ -927,7 +941,7 @@ class battler:
             defender.dT += attDmg if defender.hp > attDmg else defender.hp
             defender.hp = defender.hp - attDmg
 
-            if attDmg > WOUDMG:
+            if attDmg > WOU_DMG:
                 defender.wou = True
 
             mes += f" for {attDmg:0.3g} physical damage.\n\n"
@@ -945,7 +959,7 @@ class battler:
             defender.dT += attDmg if defender.hp > attDmg else defender.hp
             defender.hp = defender.hp - attDmg
 
-            if attDmg > WOUDMG:
+            if attDmg > WOU_DMG:
                 defender.wou = True
 
             mes += f" for {attDmg:0.3g} mental damage.\n\n"
