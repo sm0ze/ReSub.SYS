@@ -455,8 +455,8 @@ class player:
             ):
                 hpBonus = 3 * bonus
 
-            elif ((self._str + self._mem) >= (self.bC * STATS_HYBRID_DMG)) or (
-                aggressiveStats >= (self.bC * STATS_HYBRID_AG)
+            elif ((self._str + self._mem) > (self.bC * STATS_HYBRID_DMG)) or (
+                aggressiveStats > (self.bC * STATS_HYBRID_AG)
             ):
                 atBonus = 0.5 * bonus
                 hpBonus = 1.5 * bonus
@@ -724,7 +724,7 @@ class battler:
         canAt = bool(staAftA >= 0)
         canDespAt = bool(staAftD >= 0)
 
-        HPS = notPeep.rec * (peep.totSta / (peep.staR + 1))
+        HPS = notPeep.rec * ((peep.totSta / (peep.staR + 1)) + 1)
 
         if Attack.hitChance < LO_HIT:
             # lowhit func
