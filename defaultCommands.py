@@ -55,6 +55,7 @@ class defaultCommands(
             memDict[ctx.author.id]["tut"] = []
         if not memDict[ctx.author.id]["tut"]:
             await ctx.send("Tutorial Complete")
+            save(ctx.guild.id, memDict)
             return
         await ctx.send(f"{len(memDict[ctx.author.id]['tut'])} steps left.")
         step = tutDict[memDict[ctx.author.id]["tut"][0]]
