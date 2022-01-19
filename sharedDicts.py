@@ -419,6 +419,7 @@ for tup in frame.itertuples():
             continue
         npcDict[str(tup.ID)][loc] = getattr(tup, ite)
     logP.debug(f"Added NPC: {npcDict[str(tup.ID)]}")
+logP.info(f"Added {len(npcDict)} NPCs")
 
 
 descSheet = "BotDescriptions"
@@ -439,6 +440,7 @@ for tup in frame.itertuples():
         else:
             cmdInf[tup.Command][ite] = getattr(tup, ite)
     logP.debug(f"Added Command description: {cmdInf[tup.Command]}")
+logP.info(f"Added {len(cmdInf)} command descriptions.")
 
 
 activeDic = {}
@@ -469,7 +471,7 @@ for tup in frame.itertuples():
         activeDic.setdefault("person", [])
         activeDic["person"].append([tup.Person, tup.Gender])
 
-logP.debug(
+logP.info(
     (
         f"Imported for Interactive Tasks: {powers} Powers, "
         f"{len(activeDic['person'])} Peeps, {ranks} Ranks"
@@ -491,7 +493,36 @@ except Exception as e:
 for tup in frame.itertuples():
     attackRollDict[int(tup.Roll)] = float(tup.Mod)
 
-logP.debug(f"Loaded {len(attackRollDict)} vals into attackRollDict")
+logP.info(f"Loaded {len(attackRollDict)} vals into attackRollDict")
 
+
+tutorialSheet = "Tutorial"
+tutorialToken = "1ESiyR28hw3WSLTxx95H2kenk43PoZ5iPEnh8hnqZ2W8"
+tutorialUrl = urltoAdd.format(tutorialToken, tutorialSheet)
+
+tutDict = {}
+
+
+def nanCheck(val):
+    if str(val).lower() == "nan":
+        return ""
+    return val
+
+
+try:
+    frame = None
+    frame = pd.read_csv(tutorialUrl)
+except Exception as e:
+    logP.warning(e)
+
+for tup in frame.itertuples():
+    if not nanCheck(tup.Step):
+        continue
+    tutDict[int(tup.Step)] = {
+        "cmd": tup.Command,
+        "arg": nanCheck(tup.Arguments),
+        "txt": tup.Tutorial,
+    }
+logP.info(f"Loaded {len(tutDict)} steps into tutDict")
 
 logP.info("Finished csv download and input.")

@@ -9,9 +9,9 @@ from discord.ext import commands
 from discord.utils import get
 
 import log
-from sharedConsts import COMMANDS_ON, HOST_NAME, START_TIME
-from sharedDicts import freeRoles
-from sharedFuncs import getBrief, getDesc, nON
+from sharedConsts import CMD_PREFIX, COMMANDS_ON, HOST_NAME, START_TIME
+from sharedDicts import freeRoles, tutDict
+from sharedFuncs import getBrief, getDesc, nON, load, save, sendMessage
 
 logP = log.get_logger(__name__)
 
@@ -38,6 +38,33 @@ class defaultCommands(
         loginTime = time.time()
 
         logP.debug(f"Bot last login time set as: {loginTime}")
+
+    @commands.command(
+        enabled=COMMANDS_ON,
+        aliases=["tut"],
+        brief=getBrief("tutorial"),
+        description=getDesc("tutorial"),
+    )
+    async def tutorial(self, ctx: commands.Context, res: int = 0):
+        memDict = load(ctx.guild.id)
+        defTut = sorted(list(tutDict.keys()))
+        memDict[ctx.author.id].setdefault("tut", defTut.copy())
+        if res == 1:
+            memDict[ctx.author.id]["tut"] = defTut.copy()
+        elif res == -1:
+            memDict[ctx.author.id]["tut"] = []
+        if not memDict[ctx.author.id]["tut"]:
+            await ctx.send("Tutorial Complete")
+            return
+        await ctx.send(f"{len(memDict[ctx.author.id]['tut'])} steps left.")
+        step = tutDict[memDict[ctx.author.id]["tut"][0]]
+        mes = f"{CMD_PREFIX}{step['cmd']}"
+        if step["arg"]:
+            mes += f" {step['arg']}"
+        mes += f": {step['txt']}"
+        await sendMessage(mes, ctx)
+        memDict[ctx.author.id]["tut"] = memDict[ctx.author.id]["tut"][1:]
+        save(ctx.guild.id, memDict)
 
     @commands.command(
         enabled=COMMANDS_ON,
