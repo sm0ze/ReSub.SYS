@@ -729,13 +729,18 @@ class battler:
         if Attack.hitChance < LO_HIT:
             # lowhit func
             logP.debug(f"lowHit: {Attack.hitChance}")
-            if oneHit and Attack.hitChance + baseDict["FOC"] * fAA < AV_HIT:
+            if (
+                canAt
+                and oneHit
+                and Attack.hitChance + baseDict["FOC"] * fAA < AV_HIT
+            ):
                 while Attack.hitChance < AV_HIT and peep.sta > normSta:
                     peep.focus()
                     Attack = self.adp(peep, notPeep)
                 # then normal attack
             elif (
-                oneDespHit
+                canDespAt
+                and oneDespHit
                 and Attack.hitChance + baseDict["FOC"] * fAD < AV_HIT
             ):
                 while Attack.hitChance < AV_HIT and peep.sta > despSta:
@@ -776,7 +781,7 @@ class battler:
                 if dAtk < HPS:
                     typeMove = "Defend"
                 elif nextHP > dAtk * 2:
-                    peep.focusTill(despSta+1)
+                    peep.focusTill(despSta + 1)
                     desperate = 1
                     # then desperate attack
                 else:
@@ -802,7 +807,7 @@ class battler:
                 if dAtk < HPS:
                     typeMove = "Defend"
                 elif nextHP > dAtk * 2:
-                    peep.focusTill(despSta+1)
+                    peep.focusTill(despSta + 1)
                     desperate = 1
                     # then desperate attack
                 else:
@@ -829,7 +834,7 @@ class battler:
                 if critDesp < HPS:
                     typeMove = "Defend"
                 elif critDesp * 2 < nextHP:
-                    peep.focusTill(despSta+1)
+                    peep.focusTill(despSta + 1)
                     desperate = 1
                     moveStr = critDespStr
                     # then desperate attack
