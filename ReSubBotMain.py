@@ -8,7 +8,7 @@ from pretty_help import DefaultMenu, PrettyHelp
 import log
 from sharedConsts import CMD_PREFIX, HOST_NAME, START_TIME, SUPE_ROLE, TOKEN
 from sharedDicts import powerTypes
-from sharedFuncs import asleep, dupeMes, nON
+from sharedFuncs import asleep, dupeMes
 
 logP = log.get_logger(__name__)
 
@@ -103,7 +103,7 @@ async def on_ready():
                 i += 1
         logP.debug(
             (
-                f"Bot: {nON(botMember)}, in guild: {guild.name}, "
+                f"Bot: {botMember.display_name}, in guild: {guild.name}, "
                 f"has {i}/{len(permList)} permissions"
             )
         )

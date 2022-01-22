@@ -9,12 +9,12 @@ from discord.utils import get
 
 import log
 from sharedConsts import (
-    ROLE_ID_CALL,
-    ROLE_ID_PATROL,
     COMMANDS_ON,
     HOST_NAME,
     LOWEST_ROLE,
     MANAGER_ROLES,
+    ROLE_ID_CALL,
+    ROLE_ID_PATROL,
     SAVE_FILE,
     STREAKER,
     SUPE_ROLE,
@@ -24,16 +24,15 @@ from sharedDicts import leader, masterEhnDict
 from sharedFuncs import (
     cut,
     dupeMes,
-    remOnPatrol,
     getBrief,
     getDesc,
     isSuper,
     load,
     memGrab,
-    nON,
     pluralInt,
     pointsLeft,
     rAddFunc,
+    remOnPatrol,
     save,
     sendMessage,
     topEnh,
@@ -281,7 +280,7 @@ class managerCommands(
                 sum = 0.0
             infGrab[peep.id]["invXP"][-1] = sum
 
-            await ctx.send(f"Host {nON(peep)}: {iniVal} -> {sum}")
+            await ctx.send(f"Host {peep.display_name}: {iniVal} -> {sum}")
         save(ctx.guild.id, infGrab)
         if len(memList) > 5:
             await ctx.send("Finished adding xp")
@@ -334,14 +333,14 @@ class managerCommands(
 
     @commands.command(
         enabled=COMMANDS_ON,
-        aliases=["poop"],
+        aliases=["poop", "pp"],
         brief=getBrief("popPeep"),
         description=getDesc("popPeep"),
     )
     async def popPeep(self, ctx: commands.Context, peep: discord.User):
         cache_file = load(ctx.guild.id)
         if peep.id not in cache_file.keys():
-            ctx.send(f"{nON(peep)} is not saved in File.")
+            ctx.send(f"{peep.display_name} is not saved in File.")
             return
         haveRemoved = cache_file.pop(peep.id)
         sendMes = f"Have removed {peep.id}: {haveRemoved}"
