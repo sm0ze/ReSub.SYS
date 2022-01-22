@@ -11,7 +11,7 @@ from discord.utils import get
 import log
 from sharedConsts import CMD_PREFIX, COMMANDS_ON, HOST_NAME, START_TIME
 from sharedDicts import freeRoles, tutDict
-from sharedFuncs import getBrief, getDesc, nON, load, save, sendMessage
+from sharedFuncs import getBrief, getDesc, load, save, sendMessage
 
 logP = log.get_logger(__name__)
 
@@ -207,7 +207,10 @@ class defaultCommands(
         member = ctx.author
         sendMes = ""
         logP.debug(
-            f"Trying to toggle the role: {roleToAdd}, for: {nON(member)}"
+            (
+                f"Trying to toggle the role: {roleToAdd}, "
+                f"for: {member.display_name}"
+            )
         )
         roleAdd = get(member.guild.roles, name=roleToAdd)
         if not roleAdd:
@@ -216,10 +219,14 @@ class defaultCommands(
             sendMes = "That is not a role you can add with this command!"
         elif roleAdd not in member.roles:
             await member.add_roles(roleAdd)
-            sendMes = f"{nON(member)} is granted the role: '{roleAdd}'!"
+            sendMes = (
+                f"{member.display_name} is granted the role: '{roleAdd}'!"
+            )
         else:
             await member.remove_roles(roleAdd)
-            sendMes = f"{nON(member)} no longer has the role: '{roleAdd}'!"
+            sendMes = (
+                f"{member.display_name} no longer has the role: '{roleAdd}'!"
+            )
         await ctx.send(sendMes)
         logP.debug("command role resolution: " + sendMes)
 

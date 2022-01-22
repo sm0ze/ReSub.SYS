@@ -217,7 +217,11 @@ def funcBuild(
 
     logP.debug(f"Total cost of build is: {costTot}")
     # return cost of build, role names and prerequisite roles
-    return costTot, nameList, reqList
+    return (
+        costTot,
+        sorted(nameList, key=lambda x: (-int(x.split()[1]), x.split()[2])),
+        reqList,
+    )
 
 
 # function to grab number of enhancement points
@@ -270,7 +274,7 @@ async def dupeError(
     ctx: commands.Context,
     channel: typing.Union[discord.TextChannel, discord.Thread],
 ):
-    author = nON(ctx.author)
+    author = ctx.author.display_name
     autID = ctx.author.id
     currTime = time.localtime()
     currTimeStr = (
@@ -330,14 +334,6 @@ async def getSendLoc(id, bot: commands.Bot, attr: str = "channel"):
         if sendLoc:
             sendLoc = sendLoc[0]
     return sendLoc
-
-
-# dirty little function to avoid 'if user.nick else user.name'
-def nON(user: discord.Member) -> str:
-    if user.nick:
-        return user.nick
-    else:
-        return user.name
 
 
 async def dupeMes(bot, channel=None, mes: str = None):
@@ -552,8 +548,8 @@ async def cut(
         await peep.remove_roles(*idRemList)
 
         # notify current user has been finished with to discord
-        sendMes += f"{nON(peep)} has been cut down to size!"
-        mes.add_field(name=f"{nON(peep)}", value=sendMes)
+        sendMes += f"{peep.display_name} has been cut down to size!"
+        mes.add_field(name=f"{peep.display_name}", value=sendMes)
     await sendMessage(mes, ctx)
     return
 
@@ -575,7 +571,7 @@ async def toAdd(ctx: commands.Context, user: discord.Member, givenBuild: list):
     if cantAdd:
         await ctx.send(
             (
-                f"Cannot add enhancements as {nON(user)} "
+                f"Cannot add enhancements as {user.display_name} "
                 f"does not have {cantAdd}"
             )
         )
@@ -594,7 +590,7 @@ async def toAdd(ctx: commands.Context, user: discord.Member, givenBuild: list):
         # check for if user has enhancement role already
         roleId = get(guildRoles, name=role)
         if roleId in user.roles:
-            logP.debug(f"{nON(user)} already has the role {roleId}")
+            logP.debug(f"{user.display_name} already has the role {roleId}")
             continue
 
         # role names to add will have format "Rank *Rank* *Type*"
@@ -615,7 +611,7 @@ async def toAdd(ctx: commands.Context, user: discord.Member, givenBuild: list):
     # debug("TO CUT")
     # await cut(ctx, [user])
     if rolesToAddStr:
-        sendMes.add_field(name=f"{nON(user)}", value=rolesToAddStr)
+        sendMes.add_field(name=f"{user.display_name}", value=rolesToAddStr)
         await user.add_roles(*rolesToAdd)
     await sendMessage(sendMes, ctx)
 
@@ -639,7 +635,7 @@ async def pointsLeft(
                 continue
         await ctx.send(
             (
-                f"{nON(group[0])} has {pointTot[0]- group[1]} "
+                f"{group[0].display_name} has {pointTot[0]- group[1]} "
                 "spare enhancement points."
             )
         )
@@ -687,7 +683,7 @@ async def tatsuXpGrab(roleTo: discord.Role):
     tat = tatsu.wrapper
     mes = ""
     savedCache = load(roleTo.guild.id)
-    peepList = sharedDyVars.tatsuUpdateList.copy()
+    peepList: list[discord.Member] = sharedDyVars.tatsuUpdateList.copy()
     for peep in peepList:
         TATSUxp = 0
         try:
@@ -698,11 +694,14 @@ async def tatsuXpGrab(roleTo: discord.Role):
         origXP = savedCache[peep.id]["invXP"][1]
         savedCache[peep.id]["invXP"][1] = TATSUxp
         logP.debug(
-            ("Updating TatsuXP for " f"{nON(peep)}: {origXP} -> {TATSUxp}")
+            (
+                "Updating TatsuXP for "
+                f"{peep.display_name}: {origXP} -> {TATSUxp}"
+            )
         )
         try:
             sharedDyVars.tatsuUpdateList.remove(peep)
-            mes += f"Updated {nON(peep)}\n"
+            mes += f"Updated {peep.display_name}\n"
         except ValueError as e:
             logP.warning(e)
             mes += str(e) + "\n"
@@ -739,7 +738,7 @@ def count(
         else:
             totXP = float(0)
 
-        if nON(peep) == "Geminel":
+        if peep.display_name == "Geminel":
             totXP = round(totXP * float(GEM_DIFF), 3)
 
         gdv = lvlEqu(totXP)
@@ -763,7 +762,7 @@ def count(
 
         logP.debug(
             (
-                f"{nON(peep)}-"
+                f"{peep.display_name}-"
                 f" ReSubXP: {ReSubXP},"
                 f" TATSUxp: {TATSUxp},"
                 f" MEE6xp: {MEE6xp},"

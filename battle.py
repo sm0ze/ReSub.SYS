@@ -25,17 +25,17 @@ from sharedConsts import (
     WOU_DMG,
 )
 from sharedDicts import (
+    attackRollDict,
     baseDict,
     bonusDict,
     leader,
     masterEhnDict,
     moveOpt,
+    multiTypDict,
     replaceDict,
     statCalcDict,
-    attackRollDict,
-    multiTypDict,
 )
-from sharedFuncs import funcBuild, intNPC, nON, sendMessage, spent
+from sharedFuncs import funcBuild, intNPC, sendMessage, spent
 
 logP = log.get_logger(__name__)
 
@@ -96,7 +96,7 @@ class player:
 
         if isinstance(member, discord.Member):
             self.p = member
-            self.n = nON(member)
+            self.n = member.display_name
             self.sG = spent([member])
             self.bL = self.sG[0][2]
             self.npc = False

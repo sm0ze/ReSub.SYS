@@ -65,7 +65,6 @@ from sharedFuncs import (
     lvlEqu,
     mee6DictGrab,
     memGrab,
-    nON,
     pickWeightedSupe,
     pluralInt,
     pointsLeft,
@@ -305,7 +304,7 @@ class roleCommands(
         logP.debug("xpList = ", xpList)
         logP.debug(f"{taskType}\nTask XP: {lvlEqu(taskWorth[0], 1)}")
         emptMes = discord.Embed(
-            title=f"Alert, {nON(ctx.author)}!",
+            title=f"Alert, {ctx.author.display_name}!",
             description=f"A new {taskType[0]} GDV task has been assigned.",
         )
 
@@ -393,7 +392,7 @@ class roleCommands(
 
             if peep[0].id == ctx.author.id or taskAdd != -1:
                 emptMes.add_field(
-                    name=f"{nON(peep[0])} Earns",
+                    name=f"{peep[0].display_name} Earns",
                     value=(
                         f"{taskGrant * peep[1]:,} GDV XP\nTotal of "
                         f"{cached_file[peep[0].id]['invXP'][-1]:,} XP"
@@ -433,7 +432,7 @@ class roleCommands(
                 totPatrols = authInf["topStatistics"]["totalPatrols"]
 
                 patrolMes += (
-                    f"{nON(ctx.author)} is starting their Patrol "
+                    f"{ctx.author.display_name} is starting their Patrol "
                     f"#{totPatrols}!\n"
                 )
 
@@ -459,7 +458,7 @@ class roleCommands(
                 currPatrolTasks = authInf["currPatrol"]["patrolTasks"]
 
                 patrolMes += (
-                    f"{nON(ctx.author)} is continuing their Patrol "
+                    f"{ctx.author.display_name} is continuing their Patrol "
                     f"#{totPatrols}! \nThey have completed "
                     f"{currPatrolTasks} tasks on this patrol over the last "
                     f"{currPatrolTime}"
@@ -470,7 +469,8 @@ class roleCommands(
         stateL = count(ctx.author)
         currEnhP = stateL[0]
         logP.debug(
-            f"{nON(ctx.author)} has {currEnhP} available" " enhancements"
+            f"{ctx.author.display_name} has {currEnhP} available"
+            " enhancements"
         )
         stateG = spent([ctx.author])
         currEnh = int(stateG[0][1])
@@ -480,7 +480,7 @@ class roleCommands(
         )
         if currEnh < currEnhP:
             val = (
-                f"{nON(ctx.author)} has "
+                f"{ctx.author.display_name} has "
                 f"{currEnhP - currEnh} unspent enhancement "
                 f"point{pluralInt(currEnhP - currEnh)}."
             )
@@ -774,7 +774,7 @@ class roleCommands(
                 useDict = masterEhnDict
                 await ctx.send(
                     (
-                        f"{nON(user)} needs {userWantsCost} "
+                        f"{user.display_name} needs {userWantsCost} "
                         "available enhancements for "
                         f"{[useDict[x]['Name'] for x in buildList]} "
                         f"but only has {pointTot[0]}"
@@ -1038,39 +1038,39 @@ class roleCommands(
             if not enh:
                 blankMessage.add_field(
                     inline=True,
-                    name=f"**{i}** - {nON(group[0])}",
+                    name=f"**{i}** - {group[0].display_name}",
                     value=f"\t{group[1]} enhancement{pluralInt(group[1])}",
                 )
             else:
                 if enhL in xpKey:
                     blankMessage.add_field(
                         inline=True,
-                        name=f"**{i}** - {nON(group[0])}",
+                        name=f"**{i}** - {group[0].display_name}",
                         value=f"\t{group[1]:,} {enh.upper()}",
                     )
                 elif enhL in patrolKey.keys():
                     if enhL == "active" or enhL == "tasks":
                         blankMessage.add_field(
                             inline=True,
-                            name=f"**{i}** - {nON(group[0])}",
+                            name=f"**{i}** - {group[0].display_name}",
                             value=f"\t{group[1]} task{pluralInt(group[1])}",
                         )
                     elif enhL == "long":
                         blankMessage.add_field(
                             inline=True,
-                            name=f"**{i}** - {nON(group[0])}",
+                            name=f"**{i}** - {group[0].display_name}",
                             value=f"\t{datetime.timedelta(seconds=group[1])}",
                         )
                     elif enhL == "patrols":
                         blankMessage.add_field(
                             inline=True,
-                            name=f"**{i}** - {nON(group[0])}",
+                            name=f"**{i}** - {group[0].display_name}",
                             value=f"\t{group[1]} patrol{pluralInt(group[1])}",
                         )
                 else:
                     blankMessage.add_field(
                         inline=True,
-                        name=f"**{i}** - {nON(group[0])}",
+                        name=f"**{i}** - {group[0].display_name}",
                         value=f"\tRank {group[1]} {enh}",
                     )
 
@@ -1090,7 +1090,7 @@ class roleCommands(
     async def rAdd(self, ctx: commands.Context, incAmount: int = 1):
         user = ctx.author
         await rAddFunc(ctx, [user], incAmount)
-        await ctx.send(f"Finished rAdd-ing to {nON(user)}")
+        await ctx.send(f"Finished rAdd-ing to {user.display_name}")
 
     @commands.command(
         enabled=COMMANDS_ON,
@@ -1137,7 +1137,7 @@ class roleCommands(
                 )
             )
         for peep in scrollList:
-            mes = discord.Embed(title=f"{nON(peep)} Stats")
+            mes = discord.Embed(title=f"{peep.display_name} Stats")
             stuff = count(peep)
             group = pointList[i]
             unspent = stuff[0] - group[1]
@@ -1200,7 +1200,7 @@ class roleCommands(
                     currPatrolTasks = stuff[4]["patrolTasks"]
 
                     patrolStats += (
-                        f"{nON(peep)} has completed "
+                        f"{peep.display_name} has completed "
                         f"{currPatrolTasks} tasks on this patrol over the "
                         f"last {currPatrolTime}"
                     )
