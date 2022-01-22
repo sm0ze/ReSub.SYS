@@ -48,6 +48,7 @@ class defaultCommands(
     async def tutorial(self, ctx: commands.Context, res: int = 0):
         memDict = load(ctx.guild.id)
         defTut = sorted(list(tutDict.keys()))
+        memDict.setdefault(ctx.author.id, {})
         memDict[ctx.author.id].setdefault("tut", defTut.copy())
         if res == 1:
             memDict[ctx.author.id]["tut"] = defTut.copy()

@@ -727,34 +727,19 @@ def count(
         pickle_file = {}
 
     for peep in peepList:
-        MEE6xp = int(0)
-        TATSUxp = int(0)
+        pickle_file.setdefault(peep.id, {})
 
-        if pickle_file and peep.id not in pickle_file.keys():
-            pickle_file.setdefault(peep.id, {})
+        pickle_file[peep.id].setdefault("invXP", [0, 0, 0])
 
-        if pickle_file and peep.id in pickle_file.keys():
-            pickle_file[peep.id].setdefault("invXP", [0, 0, 0])
-            ReSubXP = float(pickle_file[peep.id]["invXP"][-1])
-        else:
-            ReSubXP = float(0)
-
-        if not MEE6xp:
-            MEE6xp = int(0)
-            if peep.id in pickle_file.keys():
-                if pickle_file[peep.id]["invXP"][0]:
-                    MEE6xp = int(pickle_file[peep.id]["invXP"][0])
-
-        if not TATSUxp:
-            TATSUxp = int(0)
-            if peep.id in pickle_file.keys():
-                if pickle_file[peep.id]["invXP"][0]:
-                    TATSUxp = int(pickle_file[peep.id]["invXP"][1])
+        ReSubXP = float(pickle_file[peep.id]["invXP"][-1])
+        MEE6xp = int(pickle_file[peep.id]["invXP"][0])
+        TATSUxp = int(pickle_file[peep.id]["invXP"][1])
 
         if MEE6xp or TATSUxp or ReSubXP:
             totXP = ReSubXP + MEE6xp + (TATSUxp / 2)
         else:
             totXP = float(0)
+
         if nON(peep) == "Geminel":
             totXP = round(totXP * float(GEM_DIFF), 3)
 
@@ -762,8 +747,10 @@ def count(
 
         enhP = math.floor(gdv / 5) + 1
 
-        currPatrol = pickle_file[peep.id].setdefault("currPatrol", {})
-        topStatistics = pickle_file[peep.id].setdefault("topStatistics", {})
+        currPatrol: dict = pickle_file[peep.id].setdefault("currPatrol", {})
+        topStatistics: dict = pickle_file[peep.id].setdefault(
+            "topStatistics", {}
+        )
 
         lastTaskTime = currPatrol.setdefault("lastTaskTime", None)
         patrolStart = currPatrol.setdefault("patrolStart", None)
