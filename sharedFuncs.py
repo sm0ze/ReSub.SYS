@@ -668,9 +668,8 @@ async def mee6DictGrab(roleTo: discord.Role):
 
     savedCache = load(roleTo.guild.id)
 
-    for peep in memberList:
+    for peep in [x for x in memberList if int(x["id"]) in savedCache.keys()]:
         peepID = int(peep["id"])
-        savedCache.setdefault(peepID, {})
         savedCache[peepID].setdefault("invXP", [0, 0, 0])
         origXP = savedCache[peepID]["invXP"][0]
         savedCache[peepID]["invXP"][0] = peep["xp"]
@@ -727,7 +726,7 @@ def count(
         pickle_file = {}
 
     for peep in peepList:
-        pickle_file.setdefault(peep.id, {})
+        pickle_file.setdefault(peep.id, {"Name": peep.name})
 
         pickle_file[peep.id].setdefault("invXP", [0, 0, 0])
 
@@ -801,6 +800,15 @@ def count(
         )
     else:
         return pickle_file
+
+
+def countIdList(ctx: commands.Context, idList: list[int]):
+    peepList = []
+    for id in idList:
+        addPeep = ctx.guild.get_member(id)
+        if addPeep:
+            peepList.append(addPeep)
+    return count(peepList)
 
 
 def getDesc(cmdName: str = ""):

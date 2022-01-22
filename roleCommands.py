@@ -15,21 +15,20 @@ import sharedDyVars
 from battle import NPC, NPCFromBuild, battler, player, playerFromBuild
 from exceptions import noFields, notADuel, notNPC, notSupeDuel
 from sharedConsts import (
+    ACTIVE_SEC,
     ASK_NPC,
     ASK_SELF,
-    ROLE_ID_CALL,
-    ROLE_ID_PATROL,
-    ACTIVE_SEC,
     BOT_TURN_WAIT,
-    COMMANDS_ROLES,
     COMMANDS_ON,
+    COMMANDS_ROLES,
     DEFAULT_DUEL_OPP,
     DL_ARC_DUR,
     HIDE,
     HOST_NAME,
     LEAD_LIMIT,
-    MANAGER,
     PLAYER_TURN_WAIT,
+    ROLE_ID_CALL,
+    ROLE_ID_PATROL,
     ROUND_LIMIT,
     STREAKER,
     SUPE_ROLE,
@@ -37,6 +36,7 @@ from sharedConsts import (
     TIME_TILL_ON_CALL,
 )
 from sharedDicts import (
+    activeDic,
     leader,
     masterEhnDict,
     moveOpt,
@@ -47,16 +47,14 @@ from sharedDicts import (
     restrictedList,
     rsltDict,
     taskVar,
-    activeDic,
 )
 from sharedFuncs import (
     aOrAn,
     blToStr,
     count,
+    countIdList,
     cut,
     duelMoveView,
-    remOnCall,
-    remOnPatrol,
     funcBuild,
     genBuild,
     genderPick,
@@ -72,6 +70,8 @@ from sharedFuncs import (
     pluralInt,
     pointsLeft,
     rAddFunc,
+    remOnCall,
+    remOnPatrol,
     reqEnd,
     rollTask,
     save,
@@ -538,7 +538,7 @@ class roleCommands(
 
         lowDoWith = doWith.lower()
 
-        cache_file.setdefault(ctx.author.id, {})
+        cache_file.setdefault(ctx.author.id, {"Name": ctx.author.name})
         cache_file[ctx.author.id].setdefault("builds", {})
 
         builds = cache_file[ctx.author.id]["builds"]
@@ -911,6 +911,7 @@ class roleCommands(
         *,
         enh: str = "",
     ):
+        enhL = enh.lower()
 
         xpKey = ["xp", "gdv"]
         patrolKey = {
@@ -926,41 +927,37 @@ class roleCommands(
             "patrols": "totalPatrols",
         }
 
-        if MANAGER in [str(x.name) for x in ctx.author.roles]:
-            leade = lead
-        else:
-            if lead < LEAD_LIMIT:
-                leade = lead
-            else:
-                leade = LEAD_LIMIT
-        if leade < 1:
-            leade = 1
-        strtLead = page * leade - leade
-        endLead = page * leade
+        if lead < 1:
+            lead = 1
+        strtLead = page * lead - lead
+        endLead = page * lead
 
-        if enh.lower() in xpKey:
+        if enhL in xpKey:
             serverXP = load(ctx.guild.id)
-            if enh == xpKey[0]:
+            serverXP: dict[int, dict] = countIdList(ctx, serverXP.keys())
+            if enhL == xpKey[0]:
                 resubXPList = [
                     [ctx.guild.get_member(x), serverXP[x]["invXP"][-1]]
                     for x in serverXP.keys()
+                    if ctx.guild.get_member(x)
                 ]
             else:
                 resubXPList = [
-                    [ctx.guild.get_member(x), serverXP[x]["gdv"]]
+                    [ctx.guild.get_member(x), serverXP[x].get("gdv", 0)]
                     for x in serverXP.keys()
+                    if ctx.guild.get_member(x)
                 ]
             pointList = sorted(resubXPList, key=lambda x: -x[1])
 
             blankMessage = discord.Embed(title=f"{enh.upper()} Leaderboard")
 
-        elif enh.lower() in patrolKey.keys():
+        elif enhL in patrolKey.keys():
             peepList = load(ctx.guild.id)
             grabbedStatList = []
 
             for peep in peepList:
                 topStats = peepList[peep].get("topStatistics", {})
-                peepScore = topStats.get(patrolLoad[enh.lower()], 0)
+                peepScore = topStats.get(patrolLoad[enhL], 0)
                 if peepScore:
                     grabbedStatList.append(
                         [ctx.guild.get_member(peep), peepScore]
@@ -969,11 +966,11 @@ class roleCommands(
             pointList = sorted(grabbedStatList, key=lambda x: -x[1])
 
             blankMessage = discord.Embed(
-                title=f"{patrolKey[enh.lower()]} Leaderboard"
+                title=f"{patrolKey[enhL]} Leaderboard"
             )
 
         elif enh:
-            if enh not in leader.keys():
+            if enhL not in leader.keys():
                 if enh not in leader.values():
                     await ctx.send(
                         (f"No enhancement could be found for type: {enh}")
@@ -1045,26 +1042,26 @@ class roleCommands(
                     value=f"\t{group[1]} enhancement{pluralInt(group[1])}",
                 )
             else:
-                if enh.lower() in xpKey:
+                if enhL in xpKey:
                     blankMessage.add_field(
                         inline=True,
                         name=f"**{i}** - {nON(group[0])}",
                         value=f"\t{group[1]:,} {enh.upper()}",
                     )
-                elif enh.lower() in patrolKey.keys():
-                    if enh.lower() == "active" or enh.lower() == "tasks":
+                elif enhL in patrolKey.keys():
+                    if enhL == "active" or enhL == "tasks":
                         blankMessage.add_field(
                             inline=True,
                             name=f"**{i}** - {nON(group[0])}",
                             value=f"\t{group[1]} task{pluralInt(group[1])}",
                         )
-                    elif enh.lower() == "long":
+                    elif enhL == "long":
                         blankMessage.add_field(
                             inline=True,
                             name=f"**{i}** - {nON(group[0])}",
                             value=f"\t{datetime.timedelta(seconds=group[1])}",
                         )
-                    elif enh.lower() == "patrols":
+                    elif enhL == "patrols":
                         blankMessage.add_field(
                             inline=True,
                             name=f"**{i}** - {nON(group[0])}",
@@ -1083,7 +1080,7 @@ class roleCommands(
             text=HOST_NAME, icon_url=self.bot.user.display_avatar
         )
         # return leaderboard to command caller
-        await ctx.send(embed=blankMessage)
+        await sendMessage(blankMessage, ctx)
 
     @commands.command(
         enabled=COMMANDS_ON,
@@ -1130,7 +1127,16 @@ class roleCommands(
         typeMem = await memGrab(ctx, mem)
         pointList = spent(typeMem)
         i = 0
-        for peep in typeMem:
+        savedCache = load(ctx.guild.id)
+        scrollList = [x for x in typeMem if x.id in savedCache.keys()]
+        if len(typeMem) != len(scrollList):
+            await ctx.send(
+                (
+                    f"Of list of {len(typeMem)}, "
+                    f"{len(scrollList)} are in saveFile."
+                )
+            )
+        for peep in scrollList:
             mes = discord.Embed(title=f"{nON(peep)} Stats")
             stuff = count(peep)
             group = pointList[i]
