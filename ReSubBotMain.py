@@ -22,6 +22,7 @@ logP.debug(f"Bot start time set as: {START_TIME}")
 
 cogList = [
     "defaultCommands.py",
+    "gameCommands.py",
     "roleCommands.py",
     "managerCommands.py",
     "ownerCommands.py",
@@ -45,12 +46,6 @@ menu = DefaultMenu(
 
 # Custom ending note
 ending_note = "{ctx.bot.user.name}"
-
-bot = commands.Bot(command_prefix="!")
-
-
-# DefaultHelpCommand along with a no_category rename
-HELPCOMMAND = commands.DefaultHelpCommand(no_category="\nBasic Options")
 
 bot = commands.Bot(
     command_prefix=CMD_PREFIX,
