@@ -1,5 +1,5 @@
 .env
 *.sqlite3
 /discord.py
-
+/__pycache__
 ReSubBot.log*
