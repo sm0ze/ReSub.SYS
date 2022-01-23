@@ -200,7 +200,6 @@ def funcBuild(
 
         # add enhancement full name to lists
         reqList.append(tempName)
-        nameList.append(tempName)
     logP.debug(f"Build command reqList is of length: {len(reqList)}")
 
     # restrict nested prereq list to a set of prereqs
@@ -208,6 +207,7 @@ def funcBuild(
 
     # fetch highest ranked prereqs of each type in list
     reqList = trim([x for x in temp[1]])
+    nameList = temp[1]
     logP.debug(f"reqList len = {len(reqList)}")
 
     # sum cost of build from prereqs
@@ -228,7 +228,7 @@ def funcBuild(
 # spent by each user in given list
 def spent(
     memList: list[discord.Member],
-) -> list[list[discord.Member, int, list[str]]]:
+) -> list[tuple[discord.Member, int, list[str]]]:
     retList = []
     logP.debug(f"memList is: {memList}")
 
@@ -263,7 +263,13 @@ def spent(
 
         # add (user, total build cost, enhancmeent role names)
         # to list to return
-        retList.append([peep, pointCount, supeRoles])
+        retList.append(
+            (
+                peep,
+                pointCount,
+                sorted(supeRoles, key=lambda x: (-int(x[3:]), x[:3])),
+            )
+        )
 
     logP.debug(f"retlist is: {retList}")
     return retList
@@ -963,7 +969,7 @@ async def rAddFunc(
             await toAdd(ctx, user, randPlus[2])
 
 
-def genBuild(val: int = 0, typ: str = "", iniBuild: list = []) -> list[str]:
+def genBuild(val: int = 0, typ: str = "", iniBuild: list = None) -> list[str]:
     build = []
     buildFinal = []
     floor = 0
@@ -991,6 +997,7 @@ def genBuild(val: int = 0, typ: str = "", iniBuild: list = []) -> list[str]:
     iniSplit = {}
 
     if not iniBuild:
+        iniBuild = []
         searchBuild = [typ + str(checkInt)]
     else:
         iniBuild = trimShrtList(iniBuild)
@@ -1467,3 +1474,70 @@ def exitGenBuild(searchedBuilds: dict, val: int):
     )
     largestSafeBuild = largestSafeBuilds[0]
     return largestSafeBuild[1]
+
+
+def buildFromString(givenString: str):
+    fixArg = givenString.replace(" ", ",")
+    fixArg = fixArg.replace(";", ",")
+    buildList = [x.strip() for x in fixArg.split(",") if x.strip()]
+    return buildList
+
+
+def checkDefined(ctx: commands.Context, buildType: typing.Union[int, str]):
+    gen = None
+    cost = None
+    build = []
+    if isinstance(buildType, str):
+        if buildType.lower() == "rand":
+            buildType = 0
+
+        elif buildType.lower() == "self":
+            gen = spent([ctx.author])[0]
+            cost = gen[1]
+            build = gen[2]
+
+        else:
+            # peepBuild is a quoted build
+            gen = funcBuild(buildFromString(buildType))
+            cost = gen[0]
+            build = strList(gen[2])
+    return buildType, cost, build
+
+
+def checkUndefined(
+    ctx: commands.Context,
+    peepBuild: typing.Union[int, str],
+    notPeepBuild: typing.Union[int, str],
+    defCost: int,
+):
+
+    # peepBuild requires notPeepBuild to be evaluated
+    if isinstance(notPeepBuild, int) or notPeepBuild.lower() == "rand":
+        # notPeepBuild is not defined and peepBuild should use defCost
+        cost = max(0, peepBuild + defCost)
+
+    else:
+        # calculate the cost of notPeepBuild to use as
+        # the baseCost for p1Cost instead of defCost as baseCost
+        if notPeepBuild.lower() == "self":
+            otherGen = spent([ctx.author])[0]
+            otherCost = otherGen[1]
+
+        else:
+            # notPeepBuild is a quoted build
+            otherGen = funcBuild(buildFromString(notPeepBuild))
+            otherCost = otherGen[0]
+
+        cost = max(0, peepBuild + otherCost)
+    build = genBuild(cost)
+    return build, cost
+
+
+def winPercent(varList: list[str]):
+    mes = ""
+    varCount = typing.Counter(varList)
+    totalNum = len(varList)
+    mes += f"({totalNum}) "
+    for key, val in varCount.items():
+        mes += f"{key}: {val/totalNum:.0%}, "
+    return mes[:-2]

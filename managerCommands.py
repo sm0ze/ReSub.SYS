@@ -6,6 +6,7 @@ import typing
 import discord
 from discord.ext import commands
 from discord.utils import get
+from battle import testBattle
 
 import log
 from sharedConsts import (
@@ -67,6 +68,32 @@ class managerCommands(
 
         # messy implementation for Supe
         return commands.check(await predicate(ctx))
+
+    @commands.command(
+        enabled=COMMANDS_ON,
+        aliases=["td"],
+        brief=getBrief("testDuel"),
+        description=getDesc("testDuel"),
+    )
+    async def testDuel(
+        self,
+        ctx: commands.Context,
+        peepBuild: typing.Union[int, str],
+        notPeepBuild: typing.Union[int, str],
+        generations: int = 1,
+        repeats: int = 1,
+        defCost: int = 20,
+    ):
+        mes = await testBattle(
+            self.bot,
+            ctx,
+            peepBuild,
+            notPeepBuild,
+            generations,
+            repeats,
+            defCost,
+        )
+        await sendMessage(mes, ctx)
 
     @commands.command(
         enabled=COMMANDS_ON,
@@ -330,23 +357,6 @@ class managerCommands(
         )
         mes.set_footer(text=HOST_NAME, icon_url=self.bot.user.display_avatar)
         await sendMessage(mes, ctx)
-
-    @commands.command(
-        enabled=COMMANDS_ON,
-        aliases=["poop", "pp"],
-        brief=getBrief("popPeep"),
-        description=getDesc("popPeep"),
-    )
-    async def popPeep(self, ctx: commands.Context, peep: discord.User):
-        cache_file = load(ctx.guild.id)
-        if peep.id not in cache_file.keys():
-            ctx.send(f"{peep.display_name} is not saved in File.")
-            return
-        haveRemoved = cache_file.pop(peep.id)
-        sendMes = f"Have removed {peep.id}: {haveRemoved}"
-        logP.debug(sendMes)
-        save(ctx.guild.id, cache_file)
-        await ctx.send(sendMes)
 
     @commands.command(
         enabled=COMMANDS_ON,
