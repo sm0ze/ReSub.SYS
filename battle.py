@@ -916,7 +916,7 @@ class battler:
 
         multiBase = int(baseDict["FOC"] + attacker.acc - defender.eva)
         multiRangeStart = multiBase - HIT_RANGE
-        multiRangeStop = multiBase + HIT_RANGE
+        multiRangeStop = multiBase + 1 + HIT_RANGE
 
         multiRange = [
             float(attackRollDict[x])
