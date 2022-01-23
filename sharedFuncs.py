@@ -200,6 +200,7 @@ def funcBuild(
 
         # add enhancement full name to lists
         reqList.append(tempName)
+        nameList.append(tempName)
     logP.debug(f"Build command reqList is of length: {len(reqList)}")
 
     # restrict nested prereq list to a set of prereqs
@@ -207,7 +208,6 @@ def funcBuild(
 
     # fetch highest ranked prereqs of each type in list
     reqList = trim([x for x in temp[1]])
-    nameList = temp[1]
     logP.debug(f"reqList len = {len(reqList)}")
 
     # sum cost of build from prereqs
@@ -217,11 +217,7 @@ def funcBuild(
 
     logP.debug(f"Total cost of build is: {costTot}")
     # return cost of build, role names and prerequisite roles
-    return (
-        costTot,
-        sorted(nameList, key=lambda x: (-int(x.split()[1]), x.split()[2])),
-        reqList,
-    )
+    return costTot, nameList.reverse(), reqList
 
 
 # function to grab number of enhancement points

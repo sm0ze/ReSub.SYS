@@ -334,7 +334,7 @@ class roleCommands(
             ((taskGrant - taskWorth[0]) / (2 * taskDiff)) + 0.5, 3
         )
 
-        logP.debug("selected result: ", selResult)
+        logP.debug(f"selected result: {selResult}")
         varList = rsltDict.keys()
         logP.debug(
             f"int(selResult * 100): {int(selResult * 100)}, "
