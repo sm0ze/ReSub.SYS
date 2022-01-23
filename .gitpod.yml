@@ -4,11 +4,22 @@
 # and commit this file to your remote git repository to share the goodness with others.
 
 tasks:
-  - init: pyenv install 3.9.7
-  - init: pip install git+https://github.com/Rapptz/discord.py
-  - init: pip install -r requirements.txt
-  - init: pip install -U flake8
-  - init: python -m pip install --upgrade pip
+  - name: Install Python
+    init: >
+      pyenv install 3.9.7 &&
+      gp sync-done bundle
+  - name: update pip
+    init: gp sync-await bundle 
+    command: >
+      python -m pip install --upgrade pip &&
+      gp sync-done pip-setup
+  - name: Setup Gitpod
+    init: gp sync-await pip-setup
+    command: |
+      pip install git+https://github.com/Rapptz/discord.py
+      pip install -r requirements.txt
+      pip install -U flake8
+      
   
 vscode:
   extensions:
