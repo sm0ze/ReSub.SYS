@@ -1,12 +1,15 @@
 # battle.py
 
 import asyncio
+import datetime
 import random
+import time
 import typing
 from collections import namedtuple
 
 import discord
 from discord.ext import commands
+from exceptions import noFields, notADuel
 
 import log
 from sharedConsts import (
@@ -14,10 +17,15 @@ from sharedConsts import (
     ASK_NPC,
     ASK_SELF,
     AV_HIT,
+    BOT_TURN_WAIT,
+    DL_ARC_DUR,
     DRAW_DEF,
     HI_HIT,
     HIT_RANGE,
+    HOST_NAME,
     LO_HIT,
+    PLAYER_TURN_WAIT,
+    ROUND_LIMIT,
     STATS_HP_AG,
     STATS_HP_DMG,
     STATS_HYBRID_AG,
@@ -35,7 +43,17 @@ from sharedDicts import (
     replaceDict,
     statCalcDict,
 )
-from sharedFuncs import funcBuild, intNPC, sendMessage, spent
+from sharedFuncs import (
+    checkDefined,
+    checkUndefined,
+    duelMoveView,
+    funcBuild,
+    intNPC,
+    pluralInt,
+    sendMessage,
+    spent,
+    winPercent,
+)
 
 logP = log.get_logger(__name__)
 
@@ -90,7 +108,7 @@ class player:
     def __init__(
         self,
         member: typing.Union[discord.Member, NPC, intNPC],
-        bot,
+        bot: typing.Union[commands.bot.Bot, commands.bot.AutoShardedBot],
     ) -> None:
         self.bot = bot
 
@@ -435,7 +453,7 @@ class player:
             while self.sta > num:
                 self.focus()
 
-    async def genBuff(self, place: discord.abc.Messageable):
+    async def genBuff(self, place: discord.abc.Messageable = None):
         bonus = int(self.bC / 5)
         aggressiveStats = (
             self._vis
@@ -469,15 +487,16 @@ class player:
             self.pa += atBonus
             self.ma += atBonus
 
-            await place.send(
-                f"Buffed MA & PA by: {atBonus}.\nBuffed HP by: {hpBonus}"
-            )
+            if place:
+                await place.send(
+                    f"Buffed MA & PA by: {atBonus}.\nBuffed HP by: {hpBonus}"
+                )
 
 
 class battler:
     def __init__(
         self,
-        bot,
+        bot: typing.Union[commands.bot.Bot, commands.bot.AutoShardedBot],
         memberList: list[typing.Union[discord.Member, NPC, intNPC]],
     ) -> None:
 
@@ -1126,3 +1145,293 @@ def NPCFromBuild(
         FPC,
     )
     return genNPC
+
+
+async def startDuel(
+    bot: typing.Union[commands.bot.Bot, commands.bot.AutoShardedBot],
+    ctx: commands.Context,
+    bat: battler,
+    output: bool = True,
+):
+    if output:
+        titleString = ""
+        for peep in bat.playerList:
+            titleString += f"{peep.n}: {bat.isPlay(peep)} Vs. "
+        titleString = titleString[:-5]
+
+        mes = discord.Embed(title=titleString)
+
+        for peep in bat.playerList:
+            stats = peep.statMessage()
+            adpStats = bat.adpList(peep)
+
+            mes.add_field(
+                name=f"{peep.n}",
+                value=f"{stats}\n\n{adpStats}",
+            )
+
+        mes.set_footer(text=HOST_NAME, icon_url=bot.user.display_avatar)
+
+        sentMes = await ctx.send(
+            embed=mes,
+        )
+
+        thrd = await ctx.channel.create_thread(
+            name=mes.title,
+            message=sentMes,
+            auto_archive_duration=DL_ARC_DUR,
+            reason=mes.title,
+        )
+        for peep in bat.playerList:
+            if peep.play:
+                await thrd.add_user(peep.p)
+
+        mes.add_field(
+            inline=False,
+            name="TBD Move",
+            value="Does Nothing.",
+        )
+
+    winner = None
+    totRounds = int(0)
+    while not winner:
+        totRounds += 1
+        Who2Move = bat.nextRound()
+
+        move = None
+        defPeep = None
+
+        if Who2Move.defending:
+            Who2Move.defend()
+        if Who2Move.play and output:
+            move, defPeep = await playerDuelInput(
+                bot, ctx, totRounds, Who2Move, bat
+            )
+
+        if not move:
+            if len(bat.playerList) == 2:
+                if Who2Move is bat.playerList[0]:
+                    defPeep = bat.playerList[1]
+                else:
+                    defPeep = bat.playerList[0]
+            else:
+                raise notADuel(
+                    f"Expected a Duel with 2 players not {len(bat.playerList)}"
+                )
+            move = bat.moveSelf(Who2Move, defPeep)
+
+        moveStr, winner = bat.move(Who2Move, defPeep, move)
+
+        if output:
+            for i, peep in enumerate(bat.playerList):
+                stats = peep.statMessage()
+                adpStats = bat.adpList(peep)
+
+                mes.set_field_at(
+                    i,
+                    name=f"{peep.n}",
+                    value=f"{stats}\n\n{adpStats}",
+                )
+
+            numFields = len(mes.fields)
+            if not numFields:
+                raise noFields()
+
+            moveTxt = moveStr
+            mes.set_field_at(
+                numFields - 1,
+                inline=False,
+                name=f"{Who2Move.n} Move #{Who2Move.t} ",
+                value=f"{moveTxt}",
+            )
+
+            mes.description = f"{totRounds}/{ROUND_LIMIT} Total Rounds"
+            await bat.echoMes(mes, thrd)
+        if not winner and totRounds >= ROUND_LIMIT:
+            winner = "exhaustion"
+        elif winner:
+            if not winner == "Noone":
+                totRounds = winner.t
+
+    winnerName = winner.n if isinstance(winner, player) else winner
+    if output:
+        damageMes = ""
+        for peep in bat.playerList:
+            damageMes += f"{peep.n} took {peep.dT:.4g} damage.\n"
+        mes.clear_fields()
+        mes.add_field(
+            name=(
+                f"Winner is {winnerName}"
+                f" after {totRounds} move{pluralInt(totRounds)}."
+            ),
+            value=("Prize to be implemented.\n" + damageMes),
+        )
+        if isinstance(winner, player):
+            mes.set_thumbnail(url=winner.pic)
+        await bat.echoMes(mes, thrd)
+        await bat.echoMes(f"<#{ctx.channel.id}>", thrd, False)
+        await thrd.edit(archived=1)
+        await ctx.send(embed=mes)
+    return winnerName
+
+
+async def playerDuelInput(
+    bot: typing.Union[commands.bot.Bot, commands.bot.AutoShardedBot],
+    ctx: commands.Context,
+    totRounds: int,
+    peep: player,
+    battle: battler,
+):
+    if len(battle.playerList) == 2:
+        if peep is battle.playerList[0]:
+            notPeep = battle.playerList[1]
+        else:
+            notPeep = battle.playerList[0]
+    else:
+        raise notADuel(
+            f"Expected a Duel with 2 players not {len(battle.playerList)}"
+        )
+    statsMes = peep.statMessage()
+    statsMes += "\n\n" + battle.adpList(peep)
+    stats2Mes = notPeep.statMessage()
+    stats2Mes += "\n\n" + battle.adpList(notPeep)
+
+    moveStr = ""
+    reactionList = []
+    moveList = []
+    chosenMove = False
+
+    for key in moveOpt.keys():
+        moveCost = moveOpt[key]["cost"]
+        if moveCost <= peep.sta:
+            react = [
+                moveOpt[key]["reaction"],
+                moveOpt[key]["type"],
+                key,
+            ]
+            moveStr += f"{react[0]}: ({moveCost}) {moveOpt[key]['name']}\n"
+            moveList.append(key)
+            reactionList.append(react)
+
+    mes = discord.Embed(
+        title="Game Stats",
+        description=f"{totRounds}/{ROUND_LIMIT} Total Rounds",
+    )
+    mes.add_field(name="Your Current", value=statsMes)
+    mes.add_field(name="Opponent", value=stats2Mes)
+    mes.set_footer(text=HOST_NAME, icon_url=bot.user.display_avatar)
+    if peep.missTurn:
+        moveStr = "You are exhausted."
+    mes.add_field(
+        inline=False,
+        name=f"Available Moves ({peep.sta} Stamina)",
+        value=moveStr,
+    )
+
+    if notPeep.play:
+        timeOut = PLAYER_TURN_WAIT
+    else:
+        timeOut = BOT_TURN_WAIT
+    moveView = None
+    if not peep.missTurn:
+        moveView = duelMoveView(reactionList)
+    msg = await peep.p.send(embed=mes, view=moveView)
+
+    def check(interaction: discord.Interaction):
+        return interaction.user.id == peep.p.id
+
+    moveString = ""
+    while not peep.missTurn and not moveView.is_finished():
+        try:
+            interaction: discord.Interaction = await bot.wait_for(
+                "interaction",
+                timeout=timeOut,
+                check=check,
+            )
+            move = interaction.data["custom_id"]
+            desperate = moveOpt[move]["desperate"]
+            typeMove = moveOpt[move]["type"]
+            moveString = moveOpt[move]["moveStr"]
+            chosenMove = True
+            moveView.stop()
+            await msg.edit(view=None)
+
+        except asyncio.TimeoutError:
+            moveView.stop()
+            await msg.edit(view=None)
+    if chosenMove and moveString != "MakeBot":
+        if "Focus" == moveString:
+            peep.focus()
+            [desperate, typeMove, moveString], notPeep = await playerDuelInput(
+                bot, ctx, totRounds, peep, battle
+            )
+    else:
+        if moveString == "MakeBot":
+            peep.play = False
+        desperate, typeMove, moveString = battle.moveSelf(peep, notPeep)
+    return [desperate, typeMove, moveString], notPeep
+
+
+async def testBattle(
+    bot: typing.Union[commands.bot.Bot, commands.bot.AutoShardedBot],
+    ctx: commands.Context,
+    peepBuild: typing.Union[int, str],
+    notPeepBuild: typing.Union[int, str],
+    generations: int,
+    repeats: int,
+    defCost: int,
+):
+    mes = ""
+    winnerList = []
+    testStart = time.time()
+
+    for generation in range(generations):
+        p1Build = []
+        p2Build = []
+
+        buffList = []
+
+        peepBuild, p1Cost, p1Build = checkDefined(ctx, peepBuild)
+        buff = False
+        if not p1Build and isinstance(peepBuild, int):
+            p1Build, p1Cost = checkUndefined(
+                ctx, peepBuild, notPeepBuild, defCost
+            )
+            buff = True
+        buffList.append(buff)
+
+        notPeepBuild, p2Cost, p2Build = checkDefined(ctx, notPeepBuild)
+        buff = False
+        if not p2Build and isinstance(notPeepBuild, int):
+            p2Build, p2Cost = checkUndefined(
+                ctx, notPeepBuild, peepBuild, defCost
+            )
+            buff = True
+        buffList.append(buff)
+
+        p1FPC = NPCFromBuild(bot, p1Build, "Peep")
+        p2FPC = NPCFromBuild(bot, p2Build, "NotPeep")
+
+        mes += (
+            f"Gen: {generation+1}\n"
+            f"   {p1Cost}: {buffList[0]} - {p1Build}\n"
+            f"   {p2Cost}: {buffList[1]} - {p2Build}\n"
+        )
+        roundList = []
+        for round in range(repeats):
+            bat = battler(bot, [p1FPC, p2FPC])
+            for count, toBuff in enumerate(buffList):
+                if toBuff:
+                    await bat.playerList[count].genBuff()
+
+            winner = await startDuel(bot, ctx, bat, False)
+            winnerList.append(winner)
+            roundList.append(winner)
+            # mes += f"    Round: {round+1} - {winner}\n"
+        mes += f"      {winPercent(roundList)}\n"
+    mes += winPercent(winnerList)
+    timeTaken = time.time() - testStart
+    mes += f"\nTest took: {datetime.timedelta(seconds=int(timeTaken))}"
+    if timeTaken > 120:
+        mes += f" <@{ctx.author.id}>"
+    return mes

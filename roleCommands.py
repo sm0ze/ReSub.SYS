@@ -1,6 +1,5 @@
 # roleCommands.py
 
-import asyncio
 import datetime
 import random
 import time
@@ -12,24 +11,27 @@ from discord.utils import get
 
 import log
 import sharedDyVars
-from battle import NPC, NPCFromBuild, battler, player, playerFromBuild
-from exceptions import noFields, notADuel, notNPC, notSupeDuel
+from battle import (
+    NPC,
+    NPCFromBuild,
+    battler,
+    player,
+    playerFromBuild,
+    startDuel,
+)
+from exceptions import notNPC, notSupeDuel
 from sharedConsts import (
     ACTIVE_SEC,
     ASK_NPC,
     ASK_SELF,
-    BOT_TURN_WAIT,
     COMMANDS_ON,
     COMMANDS_ROLES,
     DEFAULT_DUEL_OPP,
-    DL_ARC_DUR,
     HIDE,
     HOST_NAME,
     LEAD_LIMIT,
-    PLAYER_TURN_WAIT,
     ROLE_ID_CALL,
     ROLE_ID_PATROL,
-    ROUND_LIMIT,
     STREAKER,
     SUPE_ROLE,
     TASK_CD,
@@ -39,7 +41,6 @@ from sharedDicts import (
     activeDic,
     leader,
     masterEhnDict,
-    moveOpt,
     npcDict,
     posTask,
     powerTypes,
@@ -51,10 +52,10 @@ from sharedDicts import (
 from sharedFuncs import (
     aOrAn,
     blToStr,
+    buildFromString,
     count,
     countIdList,
     cut,
-    duelMoveView,
     funcBuild,
     genBuild,
     genderPick,
@@ -866,9 +867,7 @@ class roleCommands(
         # check for args, else use user's current build
         # split args into iterable shorthand list
         if typeRank:
-            fixArg = typeRank.replace(" ", ",")
-            fixArg = fixArg.replace(";", ",")
-            buildList = [x.strip() for x in fixArg.split(",") if x.strip()]
+            buildList = buildFromString(typeRank)
         else:
             buildList = spent([mem])[0][2]
         logP.debug(f"buildList = {buildList}")
@@ -1246,12 +1245,8 @@ class roleCommands(
         genVal = authCount[0] + diffVal
         build = genBuild(genVal)
 
-        peepName = random.choice(activeDic["person"])
-        if isinstance(peepName, list):
-            peepName = peepName[0]
-
-        if isinstance(peepName, str):
-            peepName = peepName[0].upper() + peepName[1:]
+        peepName: list = random.choice(activeDic["person"])
+        peepName = str(peepName[0]).capitalize()
 
         FPC = NPCFromBuild(self.bot, build, peepName)
         mes = f"Creating a duel against {FPC.n}\n**Enhancements**\n"
@@ -1318,103 +1313,6 @@ class roleCommands(
         await startDuel(self, ctx, bat)
 
 
-async def playerDuelInput(
-    self: roleCommands,
-    ctx: commands.Context,
-    totRounds: int,
-    peep: player,
-    battle: battler,
-):
-    if len(battle.playerList) == 2:
-        if peep is battle.playerList[0]:
-            notPeep = battle.playerList[1]
-        else:
-            notPeep = battle.playerList[0]
-    else:
-        raise notADuel(
-            f"Expected a Duel with 2 players not {len(battle.playerList)}"
-        )
-    statsMes = peep.statMessage()
-    statsMes += "\n\n" + battle.adpList(peep)
-    stats2Mes = notPeep.statMessage()
-    stats2Mes += "\n\n" + battle.adpList(notPeep)
-
-    moveStr = ""
-    reactionList = []
-    moveList = []
-    chosenMove = False
-
-    for key in moveOpt.keys():
-        moveCost = moveOpt[key]["cost"]
-        if moveCost <= peep.sta:
-            react = [
-                moveOpt[key]["reaction"],
-                moveOpt[key]["type"],
-                key,
-            ]
-            moveStr += f"{react[0]}: ({moveCost}) {moveOpt[key]['name']}\n"
-            moveList.append(key)
-            reactionList.append(react)
-
-    mes = discord.Embed(
-        title="Game Stats",
-        description=f"{totRounds}/{ROUND_LIMIT} Total Rounds",
-    )
-    mes.add_field(name="Your Current", value=statsMes)
-    mes.add_field(name="Opponent", value=stats2Mes)
-    mes.set_footer(text=HOST_NAME, icon_url=self.bot.user.display_avatar)
-    if peep.missTurn:
-        moveStr = "You are exhausted."
-    mes.add_field(
-        inline=False,
-        name=f"Available Moves ({peep.sta} Stamina)",
-        value=moveStr,
-    )
-
-    if notPeep.play:
-        timeOut = PLAYER_TURN_WAIT
-    else:
-        timeOut = BOT_TURN_WAIT
-    moveView = None
-    if not peep.missTurn:
-        moveView = duelMoveView(reactionList)
-    msg = await peep.p.send(embed=mes, view=moveView)
-
-    def check(interaction: discord.Interaction):
-        return interaction.user.id == peep.p.id
-
-    moveString = ""
-    while not peep.missTurn and not moveView.is_finished():
-        try:
-            interaction: discord.Interaction = await self.bot.wait_for(
-                "interaction",
-                timeout=timeOut,
-                check=check,
-            )
-            move = interaction.data["custom_id"]
-            desperate = moveOpt[move]["desperate"]
-            typeMove = moveOpt[move]["type"]
-            moveString = moveOpt[move]["moveStr"]
-            chosenMove = True
-            moveView.stop()
-            await msg.edit(view=None)
-
-        except asyncio.TimeoutError:
-            moveView.stop()
-            await msg.edit(view=None)
-    if chosenMove and moveString != "MakeBot":
-        if "Focus" == moveString:
-            peep.focus()
-            [desperate, typeMove, moveString], notPeep = await playerDuelInput(
-                self, ctx, totRounds, peep, battle
-            )
-    else:
-        if moveString == "MakeBot":
-            peep.play = False
-        desperate, typeMove, moveString = battle.moveSelf(peep, notPeep)
-    return [desperate, typeMove, moveString], notPeep
-
-
 def checkAddBuild(listAdd: list = [], listBase: list = []):
     enhNumList = masterEhnDict.keys()
     userKeyList = {}
@@ -1455,127 +1353,6 @@ def checkAddBuild(listAdd: list = [], listBase: list = []):
                 listRet.append(strAdd)
 
     return listRet, listBaseNew
-
-
-async def startDuel(
-    self: roleCommands,
-    ctx: commands.Context,
-    bat: battler,
-):
-    titleString = ""
-    for peep in bat.playerList:
-        titleString += f"{peep.n}: {bat.isPlay(peep)} Vs. "
-    titleString = titleString[:-5]
-
-    mes = discord.Embed(title=titleString)
-
-    for peep in bat.playerList:
-        stats = peep.statMessage()
-        adpStats = bat.adpList(peep)
-
-        mes.add_field(
-            name=f"{peep.n}",
-            value=f"{stats}\n\n{adpStats}",
-        )
-
-    mes.set_footer(text=HOST_NAME, icon_url=self.bot.user.display_avatar)
-
-    sentMes = await ctx.send(
-        embed=mes,
-    )
-
-    thrd = await ctx.channel.create_thread(
-        name=mes.title,
-        message=sentMes,
-        auto_archive_duration=DL_ARC_DUR,
-        reason=mes.title,
-    )
-    for peep in bat.playerList:
-        if peep.play:
-            await thrd.add_user(peep.p)
-
-    winner = None
-    mes.add_field(
-        inline=False,
-        name="TBD Move",
-        value="Does Nothing.",
-    )
-    totRounds = int(0)
-    while not winner:
-        totRounds += 1
-        Who2Move = bat.nextRound()
-
-        move = None
-        defPeep = None
-
-        if Who2Move.defending:
-            Who2Move.defend()
-        if Who2Move.play:
-            move, defPeep = await playerDuelInput(
-                self, ctx, totRounds, Who2Move, bat
-            )
-        else:
-
-            if len(bat.playerList) == 2:
-                if Who2Move is bat.playerList[0]:
-                    defPeep = bat.playerList[1]
-                else:
-                    defPeep = bat.playerList[0]
-            else:
-                raise notADuel(
-                    f"Expected a Duel with 2 players not {len(bat.playerList)}"
-                )
-            move = bat.moveSelf(Who2Move, defPeep)
-
-        moveStr, winner = bat.move(Who2Move, defPeep, move)
-
-        for i, peep in enumerate(bat.playerList):
-            stats = peep.statMessage()
-            adpStats = bat.adpList(peep)
-
-            mes.set_field_at(
-                i,
-                name=f"{peep.n}",
-                value=f"{stats}\n\n{adpStats}",
-            )
-
-        numFields = len(mes.fields)
-        if not numFields:
-            raise noFields()
-
-        moveTxt = moveStr
-        mes.set_field_at(
-            numFields - 1,
-            inline=False,
-            name=f"{Who2Move.n} Move #{Who2Move.t} ",
-            value=f"{moveTxt}",
-        )
-
-        mes.description = f"{totRounds}/{ROUND_LIMIT} Total Rounds"
-        await bat.echoMes(mes, thrd)
-        if not winner and totRounds >= ROUND_LIMIT:
-            winner = "exhaustion"
-        elif winner:
-            if not winner == "Noone":
-                totRounds = winner.t
-
-    damageMes = ""
-    for peep in bat.playerList:
-        damageMes += f"{peep.n} took {peep.dT:.4g} damage.\n"
-    mes.clear_fields()
-    mes.add_field(
-        name=(
-            f"Winner is {winner.n if isinstance(winner, player) else winner}"
-            f" after {totRounds} move{pluralInt(totRounds)}."
-        ),
-        value=("Prize to be implemented.\n" + damageMes),
-    )
-    if isinstance(winner, player):
-        mes.set_thumbnail(url=winner.pic)
-    await bat.echoMes(mes, thrd)
-    await bat.echoMes(f"<#{ctx.channel.id}>", thrd, False)
-    await thrd.edit(archived=1)
-    await ctx.send(embed=mes)
 
 
 def highestEhn(userEhnList: list = [], belowTop: bool = True):

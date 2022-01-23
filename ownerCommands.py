@@ -1,5 +1,6 @@
 import sys
 import typing
+import discord
 
 import git
 from discord.ext import commands
@@ -43,6 +44,23 @@ class ownerCommands(
             cache_file[key].pop("topStatistics", None)
         save(ctx.guild.id, cache_file)
         await ctx.send("Truncated File.")
+
+    @commands.command(
+        enabled=COMMANDS_ON,
+        aliases=["poop", "pp"],
+        brief=getBrief("popPeep"),
+        description=getDesc("popPeep"),
+    )
+    async def popPeep(self, ctx: commands.Context, peep: discord.User):
+        cache_file = load(ctx.guild.id)
+        if peep.id not in cache_file.keys():
+            ctx.send(f"{peep.display_name} is not saved in File.")
+            return
+        haveRemoved = cache_file.pop(peep.id)
+        sendMes = f"Have removed {peep.id}: {haveRemoved}"
+        logP.debug(sendMes)
+        save(ctx.guild.id, cache_file)
+        await ctx.send(sendMes)
 
     @commands.command(
         brief=getBrief("resume"),
