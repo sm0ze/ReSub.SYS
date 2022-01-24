@@ -736,36 +736,39 @@ class battler:
         despHPS = notPeep.rec * ((peep.despSta / (peep.staR + 1)) + 1)
 
         # AI time!
-        If sta >= 2:
-            if oneHit:
-                peep.focusTill(normSta)
-                # then normal hit
+        if sta >= 2:
+		if oneHit:
+		peep.focusTill(normSta)
+		# then normal hit
 
-            elif sta >= 5:
-                if oneDespHit:
-                    peep.focusTill(despSta)
-                    desperate = 1
-                    # then desperate attack
+		elif sta >= 5:
+			if oneDespHit:
+			peep.focusTill(despSta)
+			desperate = 1
+			# then desperate attack
 
 		        elif sta == 10:
 			        if dAtk < despHPS:
-				    typeMove = "Defend"
+				typeMove = "Defend"
 
 			        elif nextHP > dAtk * 2 and dAtk > maxHPS:
-				        peep.focusTill(despSta + 1)
-                        desperate = 1
-                        # then desperate attack
+				peep.focusTill(despSta + 1)
+				desperate = 1
+				# then desperate attack
 
-			        else:
-                        desperate = 1
-                        # then desperate attack
+				else:
+				desperate = 1
+				# then desperate attack
 
-            elif sta > 2 and atk > normHPS:
+		elif sta > 2 and atk > normHPS:
                 pass
                 # then normal attack
-			
-        else:
-        typeMove = "Defend"
+		
+		else:
+        	typeMove = "Defend"
+		
+	else:
+	typeMove = "Defend"
 
         if typeMove == "Defend":
             # defend func
