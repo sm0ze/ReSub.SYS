@@ -5,4 +5,5 @@ pandas==1.3.4
 discord==1.7.3
 GitPython==3.1.26
 python-dotenv==0.19.2
-tatsu==5.7.3
+tatsu==5.7.0
+discord-pretty-help==1.3.3
