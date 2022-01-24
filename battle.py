@@ -10,27 +10,24 @@ from collections import namedtuple
 import discord
 from discord.ext import commands
 from exceptions import noFields, notADuel
+from numpy import mean
 
 import log
 from sharedConsts import (
     ASK_ALL,
     ASK_NPC,
     ASK_SELF,
-    AV_HIT,
     BOT_TURN_WAIT,
     DL_ARC_DUR,
     DRAW_DEF,
-    HI_HIT,
     HIT_RANGE,
     HOST_NAME,
-    LO_HIT,
     PLAYER_TURN_WAIT,
     ROUND_LIMIT,
     STATS_HP_AG,
     STATS_HP_DMG,
     STATS_HYBRID_AG,
     STATS_HYBRID_DMG,
-    WOU_DMG,
 )
 from sharedDicts import (
     attackRollDict,
@@ -142,6 +139,8 @@ class player:
         self.play = False
 
         self.iniCalc()
+
+        self.agg = baseDict["AGG"]
 
         addHP = baseDict["HP"] + self.calcStat("HP")
 
@@ -671,10 +670,20 @@ class battler:
                 attPeep.hp = float(0)
         return mes
 
-    def decAtk(self, Attack, peep):
+    def decAtk(self, Attack, peep: player, notPeep: player):
+        # pull average modifier
+        multiRange = self.rangeFinder(peep, notPeep)
+        avMod = mean(multiRange) + 1
+
+        # aggression modifier
+        agro = 10 - peep.agg
+
         # norm attack value
         decAtk = max(
-            [[Attack.phys, "physical"], [Attack.ment, "mental"]],
+            [
+                [peep.pa * avMod - notPeep.pd - agro, "physical"],
+                [peep.ma * avMod - notPeep.md - agro, "mental"],
+            ],
             key=lambda x: x[0],
         )
         atk = float(decAtk[0])
@@ -683,8 +692,8 @@ class battler:
         # desperate attack value
         decDAtk = max(
             [
-                [Attack.phys + peep.pa, "physical"],
-                [Attack.ment + peep.ma, "mental"],
+                [peep.pa * (avMod + 1) - notPeep.pd - agro, "physical"],
+                [peep.ma * (avMod + 1) - notPeep.md - agro, "mental"],
             ],
             key=lambda x: x[0],
         )
@@ -704,35 +713,10 @@ class battler:
         normSta = moveOpt["physA"]["cost"]
         despSta = moveOpt["dPhysA"]["cost"]
 
-        atk, atkStr, dAtk, dAtkStr = self.decAtk(Attack, peep)
-
-        decCritDesp = max(
-            [
-                [Attack.phys + 1.66 * peep.pa, "physical"],
-                [Attack.ment + 1.66 * peep.ma, "mental"],
-            ],
-            key=lambda x: x[0],
-        )
-        critDesp = float(decCritDesp[0])
-        critDespStr = decCritDesp[1]
-
-        # peep stamina after norm attack
-        staAftA = peep.sta - normSta
-
-        # num of available focusses with a norm attack
-        fAA = staAftA if staAftA > 0 else 0
-
-        # peep stamina after desp attack
-        staAftD = peep.sta - despSta
-
-        # num of available focusses with a desp attack
-        fAD = staAftD if staAftD > 0 else 0
+        atk, atkStr, dAtk, dAtkStr = self.decAtk(Attack, peep, notPeep)
 
         # notPeep's hp next peep turn
-        nextHP = notPeep.hp + notPeep.rec
-
-        # if peep at max stamina
-        maxSta = bool(peep.sta == peep.totSta)
+        nextHP = notPeep.hp + notPeep.rec * 2
 
         # if notPeep is one norm hit from loss
         oneHit = bool(notPeep.hp <= atk)
@@ -740,131 +724,47 @@ class battler:
         # if notPeep is one desp hit from loss
         oneDespHit = bool(notPeep.hp <= dAtk)
 
-        canAt = bool(staAftA >= 0)
-        canDespAt = bool(staAftD >= 0)
+        # HPS of enemy compared to turns needed to recover sta,
+        # +1 for doubled regen after being hit
+        maxHPS = notPeep.rec * ((peep.totSta / (peep.staR + 1)) + 1)
+        normHPS = notPeep.rec * ((normSta / (peep.staR + 1)) + 1)
+        despHPS = notPeep.rec * ((despSta / (peep.staR + 1)) + 1)
 
-        HPS = notPeep.rec * ((peep.totSta / (peep.staR + 1)) + 1)
-
-        if Attack.hitChance < LO_HIT:
-            # lowhit func
-            logP.debug(f"lowHit: {Attack.hitChance}")
-            if (
-                canAt
-                and oneHit
-                and Attack.hitChance + baseDict["FOC"] * fAA < AV_HIT
-            ):
-                while Attack.hitChance < AV_HIT and peep.sta > normSta:
-                    peep.focus()
-                    Attack = self.adp(peep, notPeep)
-                # then normal attack
-            elif (
-                canDespAt
-                and oneDespHit
-                and Attack.hitChance + baseDict["FOC"] * fAD < AV_HIT
-            ):
-                while Attack.hitChance < AV_HIT and peep.sta > despSta:
-                    peep.focus()
-                    Attack = self.adp(peep, notPeep)
-                desperate = 1
-                # then desp attaack
-            elif maxSta:
-                if dAtk < HPS:
-                    typeMove = "Defend"
-                elif oneHit or atk > HPS:
-                    while Attack.hitChance < AV_HIT and peep.sta > normSta:
-                        peep.focus()
-                        Attack = self.adp(peep, notPeep)
-                    # then normal attack
-                else:
-                    while Attack.hitChance < AV_HIT and peep.sta > despSta:
-                        peep.focus()
-                        Attack = self.adp(peep, notPeep)
-                    desperate = 1
-                    # then desp attaack
-            else:
-                typeMove = "Defend"
-
-            atk, atkStr, dAtk, dAtkStr = self.decAtk(Attack, peep)
-
-        elif Attack.hitChance <= AV_HIT:
-            # avhit func
-            logP.debug(f"avHit: {Attack.hitChance}")
-            if oneHit and canAt:
+        # AI time!
+        if peep.sta >= 2:
+            if oneHit:
                 peep.focusTill(normSta)
-                # then normal attack
-            elif oneDespHit and canDespAt:
-                peep.focusTill(despSta)
-                desperate = 1
-                # then desperate attack
-            elif maxSta:
-                if dAtk < HPS:
-                    typeMove = "Defend"
-                elif nextHP > dAtk * 2:
-                    peep.focusTill(despSta + 1)
+            # then normal hit
+            elif peep.sta >= 5:
+                if oneDespHit:
+                    peep.focusTill(despSta)
                     desperate = 1
                     # then desperate attack
-                else:
-                    desperate = 1
-                    # then desperate attack
-            elif staAftA > 0 and atk > notPeep.rec * 3:
-                pass
-                # then Normal attack
-            else:
-                typeMove = "Defend"
 
-        elif Attack.hitChance < HI_HIT:
-            # highhit func
-            logP.debug(f"highHit: {Attack.hitChance}")
-            if oneHit and canAt:
-                peep.focusTill(normSta)
-                # then normal hit
-            elif oneDespHit and canDespAt:
-                peep.focusTill(despSta)
-                desperate = 1
-                # then desperate attack
-            elif maxSta:
-                if dAtk < HPS:
-                    typeMove = "Defend"
-                elif nextHP > dAtk * 2:
-                    peep.focusTill(despSta + 1)
-                    desperate = 1
-                    # then desperate attack
+                elif peep.sta == 10:
+                    if dAtk < despHPS:
+                        typeMove = "Defend"
+
+                    elif nextHP > dAtk * 2 and dAtk > maxHPS:
+                        peep.focusTill(despSta + 1)
+                        desperate = 1
+                        # then desperate attack
+
+                    else:
+                        desperate = 1
+                        # then desperate attack
                 else:
-                    desperate = 1
-                    # then desperate attack
-            elif staAftA > 0 and atk > notPeep.rec * 3:
+                    typeMove = "Defend"
+
+            elif peep.sta > 2 and atk > normHPS:
                 pass
                 # then normal attack
+
             else:
                 typeMove = "Defend"
 
         else:
-            logP.debug(f"critHit: {Attack.hitChance}")
-            # crithit func
-            if oneHit and canAt:
-                peep.focusTill(normSta)
-                # then normal attack
-            elif notPeep.hp <= critDesp and canDespAt:
-                peep.focusTill(despSta)
-                desperate = 1
-                moveStr = critDespStr
-                # then desperate attack
-            elif maxSta:
-                if critDesp < HPS:
-                    typeMove = "Defend"
-                elif critDesp * 2 < nextHP:
-                    peep.focusTill(despSta + 1)
-                    desperate = 1
-                    moveStr = critDespStr
-                    # then desperate attack
-                else:
-                    desperate = 1
-                    moveStr = critDespStr
-            elif staAftA > 0 and atk > notPeep.rec * 3:
-                pass
-                # then normal attack
-            else:
-                typeMove = "Defend"
+            typeMove = "Defend"
 
         if typeMove == "Defend":
             # defend func
@@ -933,14 +833,7 @@ class battler:
         else:
             mes += ", it is "
 
-        multiBase = int(baseDict["FOC"] + attacker.acc - defender.eva)
-        multiRangeStart = multiBase - HIT_RANGE
-        multiRangeStop = multiBase + 1 + HIT_RANGE
-
-        multiRange = [
-            float(attackRollDict[x])
-            for x in range(multiRangeStart, multiRangeStop)
-        ]
+        multiRange = self.rangeFinder(attacker, defender)
 
         multi = round(random.choice(multiRange), 3)
         typHit = multiTypDict.get(multi, "mistaken")
@@ -962,7 +855,7 @@ class battler:
             defender.dT += attDmg if defender.hp > attDmg else defender.hp
             defender.hp = defender.hp - attDmg
 
-            if attDmg > WOU_DMG:
+            if attDmg > float(baseDict["WOU"]):
                 defender.wou = True
 
             mes += f" for {attDmg:0.3g} physical damage.\n\n"
@@ -980,7 +873,7 @@ class battler:
             defender.dT += attDmg if defender.hp > attDmg else defender.hp
             defender.hp = defender.hp - attDmg
 
-            if attDmg > WOU_DMG:
+            if attDmg > float(baseDict["WOU"]):
                 defender.wou = True
 
             mes += f" for {attDmg:0.3g} mental damage.\n\n"
@@ -991,6 +884,18 @@ class battler:
             mes += "\n" + self.attack(defender, attacker, "", typDesp, True)
 
         return mes
+
+    def rangeFinder(self, attacker: player, defender: player):
+        multiBase = int(attacker.acc - defender.eva)
+        multiRangeStart = multiBase - HIT_RANGE
+        multiRangeStop = multiBase + 1 + HIT_RANGE
+
+        multiRange = [
+            float(attackRollDict[x])
+            for x in range(multiRangeStart, multiRangeStop)
+        ]
+
+        return multiRange
 
     def adp(self, at1: player, at2: player):
         adpStats = namedtuple("adpStats", ["hitChance", "phys", "ment"])
