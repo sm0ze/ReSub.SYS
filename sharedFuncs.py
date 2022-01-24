@@ -108,7 +108,8 @@ def trim(pList, inDict=masterEhnDict):
     logP.debug("Start of trim function")
     tierDict = {}
     trimList = []
-    logP.debug(f"list of length {len(pList)} to trim")
+    if pList:
+        logP.debug(f"list of length {len(pList)} to trim")
 
     # iterate thorugh list of given enhancements
     for pow in pList:
@@ -217,7 +218,7 @@ def funcBuild(
 
     logP.debug(f"Total cost of build is: {costTot}")
     # return cost of build, role names and prerequisite roles
-    return costTot, nameList.reverse(), reqList
+    return costTot, nameList[::-1], reqList
 
 
 # function to grab number of enhancement points
