@@ -453,7 +453,7 @@ class player:
                 self.focus()
 
     async def genBuff(self, place: discord.abc.Messageable = None):
-        bonus = int(self.bC / 5)
+        bonus = int(self.bC / int(baseDict["BON"]))
         aggressiveStats = (
             self._vis
             + self._olf
