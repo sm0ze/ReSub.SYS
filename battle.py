@@ -28,7 +28,6 @@ from sharedConsts import (
     STATS_HP_DMG,
     STATS_HYBRID_AG,
     STATS_HYBRID_DMG,
-    WOU_DMG,
 )
 from sharedDicts import (
     attackRollDict,
@@ -140,6 +139,8 @@ class player:
         self.play = False
 
         self.iniCalc()
+
+        self.agg = baseDict["AGG"]
 
         addHP = baseDict["HP"] + self.calcStat("HP")
 
@@ -669,26 +670,19 @@ class battler:
                 attPeep.hp = float(0)
         return mes
 
-    def decAtk(self, Attack, peep):
+    def decAtk(self, Attack, peep: player, notPeep: player):
         # pull average modifier
-        multiBase = int(baseDict["FOC"] * (peep.focusNumLast + peep.focusNumNow) + attacker.acc - defender.eva)
-        multiRangeStart = multiBase - HIT_RANGE
-        multiRangeStop = multiBase + 1 + HIT_RANGE
-
-        multiRange = [
-            float(attackRollDict[x])
-            for x in range(multiRangeStart, multiRangeStop)
-        ]
+        multiRange = self.rangeFinder(peep, notPeep)
         avMod = mean(multiRange) + 1
-  
+
         # aggression modifier
         agro = 10 - peep.agg
 
         # norm attack value
         decAtk = max(
             [
-                [peep.pa * avMod - notPeep.pd - agro, "physical"], 
-                [peep.ma * avMod - notPeep.md - agro, "mental"]
+                [peep.pa * avMod - notPeep.pd - agro, "physical"],
+                [peep.ma * avMod - notPeep.md - agro, "mental"],
             ],
             key=lambda x: x[0],
         )
@@ -719,7 +713,7 @@ class battler:
         normSta = moveOpt["physA"]["cost"]
         despSta = moveOpt["dPhysA"]["cost"]
 
-        atk, atkStr, dAtk, dAtkStr = self.decAtk(Attack, peep)
+        atk, atkStr, dAtk, dAtkStr = self.decAtk(Attack, peep, notPeep)
 
         # notPeep's hp next peep turn
         nextHP = notPeep.hp + notPeep.rec * 2
@@ -730,45 +724,47 @@ class battler:
         # if notPeep is one desp hit from loss
         oneDespHit = bool(notPeep.hp <= dAtk)
 
-        # HPS of enemy compared to turns needed to recover sta, +1 for doubled regen after being hit
+        # HPS of enemy compared to turns needed to recover sta,
+        # +1 for doubled regen after being hit
         maxHPS = notPeep.rec * ((peep.totSta / (peep.staR + 1)) + 1)
-        normHPS = notPeep.rec * ((peep.normSta / (peep.staR + 1)) + 1)
-        despHPS = notPeep.rec * ((peep.despSta / (peep.staR + 1)) + 1)
+        normHPS = notPeep.rec * ((normSta / (peep.staR + 1)) + 1)
+        despHPS = notPeep.rec * ((despSta / (peep.staR + 1)) + 1)
 
         # AI time!
-        if sta >= 2:
-		if oneHit:
-		peep.focusTill(normSta)
-		# then normal hit
+        if peep.sta >= 2:
+            if oneHit:
+                peep.focusTill(normSta)
+            # then normal hit
+            elif peep.sta >= 5:
+                if oneDespHit:
+                    peep.focusTill(despSta)
+                    desperate = 1
+                    # then desperate attack
 
-		elif sta >= 5:
-			if oneDespHit:
-			peep.focusTill(despSta)
-			desperate = 1
-			# then desperate attack
+                elif peep.sta == 10:
+                    if dAtk < despHPS:
+                        typeMove = "Defend"
 
-		        elif sta == 10:
-			        if dAtk < despHPS:
-				typeMove = "Defend"
+                    elif nextHP > dAtk * 2 and dAtk > maxHPS:
+                        peep.focusTill(despSta + 1)
+                        desperate = 1
+                        # then desperate attack
 
-			        elif nextHP > dAtk * 2 and dAtk > maxHPS:
-				peep.focusTill(despSta + 1)
-				desperate = 1
-				# then desperate attack
+                    else:
+                        desperate = 1
+                        # then desperate attack
+                else:
+                    typeMove = "Defend"
 
-				else:
-				desperate = 1
-				# then desperate attack
-
-		elif sta > 2 and atk > normHPS:
+            elif peep.sta > 2 and atk > normHPS:
                 pass
                 # then normal attack
-		
-		else:
-        	typeMove = "Defend"
-		
-	else:
-	typeMove = "Defend"
+
+            else:
+                typeMove = "Defend"
+
+        else:
+            typeMove = "Defend"
 
         if typeMove == "Defend":
             # defend func
@@ -837,14 +833,7 @@ class battler:
         else:
             mes += ", it is "
 
-        multiBase = int(baseDict["FOC"] * (peep.focusNumLast + peep.focusNumNow) + attacker.acc - defender.eva)
-        multiRangeStart = multiBase - HIT_RANGE
-        multiRangeStop = multiBase + 1 + HIT_RANGE
-
-        multiRange = [
-            float(attackRollDict[x])
-            for x in range(multiRangeStart, multiRangeStop)
-        ]
+        multiRange = self.rangeFinder(attacker, defender)
 
         multi = round(random.choice(multiRange), 3)
         typHit = multiTypDict.get(multi, "mistaken")
@@ -866,7 +855,7 @@ class battler:
             defender.dT += attDmg if defender.hp > attDmg else defender.hp
             defender.hp = defender.hp - attDmg
 
-            if attDmg > WOU_DMG:
+            if attDmg > float(baseDict["WOU"]):
                 defender.wou = True
 
             mes += f" for {attDmg:0.3g} physical damage.\n\n"
@@ -884,7 +873,7 @@ class battler:
             defender.dT += attDmg if defender.hp > attDmg else defender.hp
             defender.hp = defender.hp - attDmg
 
-            if attDmg > WOU_DMG:
+            if attDmg > float(baseDict["WOU"]):
                 defender.wou = True
 
             mes += f" for {attDmg:0.3g} mental damage.\n\n"
@@ -895,6 +884,18 @@ class battler:
             mes += "\n" + self.attack(defender, attacker, "", typDesp, True)
 
         return mes
+
+    def rangeFinder(self, attacker: player, defender: player):
+        multiBase = int(attacker.acc - defender.eva)
+        multiRangeStart = multiBase - HIT_RANGE
+        multiRangeStop = multiBase + 1 + HIT_RANGE
+
+        multiRange = [
+            float(attackRollDict[x])
+            for x in range(multiRangeStart, multiRangeStop)
+        ]
+
+        return multiRange
 
     def adp(self, at1: player, at2: player):
         adpStats = namedtuple("adpStats", ["hitChance", "phys", "ment"])

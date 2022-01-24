@@ -517,7 +517,7 @@ class roleCommands(
         bat = battler(self.bot, [ctx.author, opp])
         bat.playerList[0].play = True
         await bat.playerList[1].genBuff(ctx)
-        await startDuel(self, ctx, bat)
+        await startDuel(self.bot, ctx, bat)
 
     @commands.command(
         enabled=COMMANDS_ON,
@@ -1258,7 +1258,7 @@ class roleCommands(
         bat = battler(self.bot, [ctx.author, FPC])
         await bat.findPlayers(0)
         await bat.playerList[1].genBuff(ctx)
-        await startDuel(self, ctx, bat)
+        await startDuel(self.bot, ctx, bat)
 
     @commands.command(
         enabled=COMMANDS_ON,
@@ -1310,7 +1310,7 @@ class roleCommands(
             else:
                 raise notNPC(f"{opponent} is not an NPC")
         await bat.findPlayers(dontAsk)
-        await startDuel(self, ctx, bat)
+        await startDuel(self.bot, ctx, bat)
 
 
 def checkAddBuild(listAdd: list = [], listBase: list = []):
