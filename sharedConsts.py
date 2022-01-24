@@ -93,9 +93,6 @@ ASK_ALL = 2
 ASK_NPC = 3
 
 HIT_RANGE = 15
-LO_HIT = -19
-AV_HIT = -8
-HI_HIT = 19
 
 WOU_DMG = 5
 
