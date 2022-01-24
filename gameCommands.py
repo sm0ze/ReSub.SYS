@@ -80,7 +80,14 @@ class gameCommands(
                         "interaction",
                         check=check,
                     )
-                    guessedNum.append(str(interaction.data["custom_id"]))
+                    press = interaction.data["custom_id"]
+                    if str(press) in digitList:
+                        guessedNum.append(str(press))
+                    elif str(press) == "b":
+                        if guessedNum:
+                            guessedNum.pop()
+                    elif str(press) == "x":
+                        guessedNum = [-1] * len(numToGuess)
                     gameEmbed.set_field_at(
                         index=1,
                         name="Current Guess",
@@ -88,14 +95,16 @@ class gameCommands(
                     )
                     await gameMes.edit(embed=gameEmbed)
 
-                    if len(guessedNum) == 5:
+                    if len(guessedNum) == len(numToGuess):
                         gameView.stop()
                         await gameMes.edit(view=None)
 
                 except asyncio.TimeoutError:
                     gameView.stop()
                     await gameMes.edit(view=None)
-
+            if guessedNum == [-1] * len(numToGuess):
+                await self.bacExitFail(numToGuess, gameEmbed, gameMes)
+                break
             gameView = self.gameViewButtons(emojiList)
             currRound -= 1
             gameEmbed.description = self.roundText(currRound)
@@ -124,12 +133,20 @@ class gameCommands(
                 await gameMes.edit(embed=gameEmbed, view=None)
                 currRound = 0
             elif not currRound > 0:
-                gameEmbed.set_field_at(
-                    index=1,
-                    name="Correct Guess",
-                    value=f"Not Guessed:\n{numToGuess}",
-                )
-                await gameMes.edit(embed=gameEmbed, view=None)
+                await self.bacExitFail(numToGuess, gameEmbed, gameMes)
+
+    async def bacExitFail(
+        self,
+        numToGuess: list,
+        gameEmbed: discord.Embed,
+        gameMes: discord.Message,
+    ):
+        gameEmbed.set_field_at(
+            index=1,
+            name="Correct Guess",
+            value=f"Not Guessed:\n{numToGuess}",
+        )
+        await gameMes.edit(embed=gameEmbed, view=None)
 
     def roundText(self, currRound):
         roundText = (
@@ -148,6 +165,20 @@ class gameCommands(
                     custom_id=str(count),
                 )
             )
+        gameView.add_item(
+            discord.ui.Button(
+                label="Backspace",
+                style=discord.ButtonStyle.grey,
+                custom_id="b",
+            )
+        )
+        gameView.add_item(
+            discord.ui.Button(
+                label="Give Up",
+                style=discord.ButtonStyle.red,
+                custom_id="x",
+            )
+        )
         return gameView
 
     def countBAC(self, answer: list[int], guess: list[int]):
