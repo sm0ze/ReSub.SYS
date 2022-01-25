@@ -386,7 +386,7 @@ class roleCommands(
         for peep in reversed(xpList):
             logP.debug(f"peep is: {peep}")
             if peep[0].id in cached_file.keys():
-                cached_file[peep[0]].setdefault("invXP", [0, 0, 0])
+                cached_file[peep[0].id].setdefault("invXP", [0, 0, 0])
                 cached_file[peep[0].id]["invXP"][-1] += taskGrant * peep[1]
             else:
                 cached_file[peep[0].id] = {"Name": peep[0].name}
