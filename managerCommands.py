@@ -301,6 +301,7 @@ class managerCommands(
                 infGrab = {}
             if peep.id not in infGrab.keys():
                 infGrab[peep.id] = {"Name": peep.name, "invXP": [0, 0, 0]}
+            infGrab[peep.id].setdefault("invXP", [0, 0, 0])
             iniVal = infGrab[peep.id]["invXP"][-1]
             sum = iniVal + val
             if sum < 0.0:
