@@ -11,6 +11,8 @@ urltoAdd = (
     "https://docs.google.com/spreadsheets/d/{}/gviz/tq?tqx=out:csv&sheet={}"
 )
 
+toLoad = []
+loaded = []
 
 statsToken = "1JIJjDzFjtuIU2k0jk1aHdMr2oErD_ySoFm7-iFEBOV0"
 statsheetNom = [["Requirements", statsToken]]
@@ -269,9 +271,11 @@ for sheetL in sheet_names:
     sheet = sheetL[0]
     url = urltoAdd.format(urlToken, sheet)
     logP.debug(f"At URL: {url}")
+    toLoad.append(url)
     try:
         frame = None
         frame = pd.read_csv(url)
+        loaded.append(url)
     except Exception as e:
         logP.warning(e)
         continue
@@ -288,10 +292,12 @@ for statsheet in statsheetNom:
     statsheetName = statsheet[0]
     statUrl = urltoAdd.format(statUrlID, statsheetName)
 
+    toLoad.append(statUrl)
     logP.debug(f"At URL: {statUrl}")
     try:
         frame = None
         frame = pd.read_csv(statUrl)
+        loaded.append(statUrl)
     except Exception as e:
         logP.warning(e)
         continue
@@ -358,9 +364,11 @@ urlList = [
 ]
 
 for url, dic, dicName in urlList:
+    toLoad.append(url)
     try:
         frame = None
         frame = pd.read_csv(url)
+        loaded.append(url)
     except Exception as e:
         logP.warning(e)
     for tup in frame.itertuples():
@@ -374,10 +382,11 @@ for url, dic, dicName in urlList:
                 )
                 dic[shrt][name] = value
 
-
+toLoad.append(urlReplace)
 try:
     frame = None
     frame = pd.read_csv(urlReplace)
+    loaded.append(urlReplace)
 except Exception as e:
     logP.warning(e)
 for tup in frame.itertuples():
@@ -390,9 +399,11 @@ for tup in frame.itertuples():
             logP.debug(f"replace '{shrt}' with '{shrt2}'")
             replaceDict[shrt] = shrt2
 
+toLoad.append(urlBase)
 try:
     frame = None
     frame = pd.read_csv(urlBase)
+    loaded.append(urlBase)
 except Exception as e:
     logP.warning(e)
 
@@ -405,9 +416,12 @@ npcSheet = "NPC"
 npcToken = "1GAs0JctnNcWHTiCb7YPZk-9CtEd53RtDKb5VLPE_PbM"
 npcUrl = urltoAdd.format(npcToken, npcSheet)
 
+
+toLoad.append(npcUrl)
 try:
     frame = None
     frame = pd.read_csv(npcUrl)
+    loaded.append(npcUrl)
 except Exception as e:
     logP.warning(e)
 
@@ -426,9 +440,11 @@ descSheet = "BotDescriptions"
 descToken = "1Pw96S2rvfRlNuPqbSkGpHDtEkIqQlK5_QGy6lTmMexI"
 descUrl = urltoAdd.format(descToken, descSheet)
 
+toLoad.append(descUrl)
 try:
     frame = None
     frame = pd.read_csv(descUrl)
+    loaded.append(descUrl)
 except Exception as e:
     logP.warning(e)
 
@@ -449,9 +465,11 @@ interactiveSheet = "Interactive"
 interactiveToken = "12F0NDWn6dAiavMPH7f1ADDfFwUZx4JWn9KhWC4kQOag"
 interactiveUrl = urltoAdd.format(interactiveToken, interactiveSheet)
 
+toLoad.append(interactiveUrl)
 try:
     frame = None
     frame = pd.read_csv(interactiveUrl)
+    loaded.append(interactiveUrl)
 except Exception as e:
     logP.warning(e)
 
@@ -484,9 +502,11 @@ attackUrl = urltoAdd.format(statsToken, attackSheet)
 
 attackRollDict = {}
 
+toLoad.append(attackUrl)
 try:
     frame = None
     frame = pd.read_csv(attackUrl)
+    loaded.append(attackUrl)
 except Exception as e:
     logP.warning(e)
 
@@ -509,9 +529,11 @@ def nanCheck(val):
     return val
 
 
+toLoad.append(tutorialUrl)
 try:
     frame = None
     frame = pd.read_csv(tutorialUrl)
+    loaded.append(tutorialUrl)
 except Exception as e:
     logP.warning(e)
 
@@ -525,4 +547,5 @@ for tup in frame.itertuples():
     }
 logP.info(f"Loaded {len(tutDict)} steps into tutDict")
 
+notLoaded = ((set(toLoad) - set(loaded)), len(toLoad), len(loaded))
 logP.info("Finished csv download and input.")
