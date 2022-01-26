@@ -71,7 +71,7 @@ class managerCommands(
         return commands.check(await predicate(ctx))
 
     @commands.command(
-        enabled=True,
+        enabled=COMMANDS_ON,
         aliases=["td"],
         brief=getBrief("testDuel"),
         description=getDesc("testDuel"),
@@ -104,7 +104,7 @@ class managerCommands(
         )
 
     @commands.command(
-        enabled=True,
+        enabled=COMMANDS_ON,
         brief=getBrief("wipe"),
         description=getDesc("wipe"),
     )
