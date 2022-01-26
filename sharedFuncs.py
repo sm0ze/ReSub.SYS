@@ -1538,3 +1538,10 @@ def winPercent(varList: list[str]):
     for key, val in varCount.items():
         mes += f"{key}: {val/totalNum:.0%}, "
     return mes[:-2]
+
+
+def dictShrtBuild(shrtBuild: list[str]):
+    retDict = {}
+    for item in shrtBuild:
+        retDict[item[:3]] = int(item[3:])
+    return retDict

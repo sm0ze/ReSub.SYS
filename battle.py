@@ -39,10 +39,12 @@ from sharedDicts import (
     multiTypDict,
     replaceDict,
     statCalcDict,
+    restrictedList,
 )
 from sharedFuncs import (
     checkDefined,
     checkUndefined,
+    dictShrtBuild,
     duelMoveView,
     funcBuild,
     intNPC,
@@ -1285,10 +1287,14 @@ async def testBattle(
     generations: int,
     repeats: int,
     defCost: int,
+    outType: int,
 ):
     mes = ""
     winnerList = []
     testStart = time.time()
+    win: dict[int, dict] = {}
+    loss: dict[int, dict] = {}
+    totRound = int(0)
 
     for generation in range(generations):
         p1Build = []
@@ -1316,12 +1322,12 @@ async def testBattle(
 
         p1FPC = NPCFromBuild(bot, p1Build, "Peep")
         p2FPC = NPCFromBuild(bot, p2Build, "NotPeep")
-
-        mes += (
-            f"Gen: {generation+1}\n"
-            f"   {p1Cost}: {buffList[0]} - {p1Build}\n"
-            f"   {p2Cost}: {buffList[1]} - {p2Build}\n"
-        )
+        if outType >= 1:
+            mes += (
+                f"Gen: {generation+1}\n"
+                f"   {p1Cost}: {buffList[0]} - {p1Build}\n"
+                f"   {p2Cost}: {buffList[1]} - {p2Build}\n"
+            )
         roundList = []
         for round in range(repeats):
             bat = battler(bot, [p1FPC, p2FPC])
@@ -1330,13 +1336,57 @@ async def testBattle(
                     await bat.playerList[count].genBuff()
 
             winner = await startDuel(bot, ctx, bat, False)
+            totRound += 1
             winnerList.append(winner)
             roundList.append(winner)
-            # mes += f"    Round: {round+1} - {winner}\n"
-        mes += f"      {winPercent(roundList)}\n"
-    mes += winPercent(winnerList)
+            if winner == "Peep":
+                win[totRound] = dictShrtBuild(p1Build)
+                loss[totRound] = dictShrtBuild(p2Build)
+            elif winner == "NotPeep":
+                win[totRound] = dictShrtBuild(p2Build)
+                loss[totRound] = dictShrtBuild(p1Build)
+            else:
+                win[totRound] = {}
+                loss[totRound] = {}
+            if outType >= 2:
+                mes += f"    Round: {round+1} - {winner}\n"
+        if outType >= 1:
+            mes += f"      {winPercent(roundList)}\n"
     timeTaken = time.time() - testStart
     mes += f"\nTest took: {datetime.timedelta(seconds=int(timeTaken))}"
     if timeTaken > 120:
         mes += f" <@{ctx.author.id}>"
-    return mes
+
+    winSum = {}
+    lossSum = {}
+    pickList = [x for x in leader.keys() if leader[x] not in restrictedList]
+    for key in pickList:
+        winSum.setdefault(key, [0, 0])
+        lossSum.setdefault(key, [0, 0])
+        for count in range(1, totRound + 1):
+            winTemp = win[count].get(key, 0)
+            lossTemp = loss[count].get(key, 0)
+            winSum[key][0] += winTemp
+            lossSum[key][0] += lossTemp
+            if winTemp:
+                winSum[key][1] += 1
+            if lossTemp:
+                lossSum[key][1] += 1
+
+    embMes = discord.Embed(title=f"Totals {winPercent(winnerList)}")
+    for key in pickList:
+        weightedAv = (winSum[key][0] / totRound) - (lossSum[key][0] / totRound)
+        embMes.add_field(
+            name=(f"{leader[key]}: {weightedAv:0.2f}"),
+            value=(
+                f"{winSum[key][1]} winners, {lossSum[key][1]} losers\n"
+                f"Winners total {winSum[key][0]} or  "
+                f"WinAv of {winSum[key][0]/max(1,winSum[key][1]):0.2f} and "
+                f"TotAv of {winSum[key][0]/totRound:0.2f}\n"
+                f"Losers total of {lossSum[key][0]} or "
+                f"LossAv of {lossSum[key][0]/max(1,lossSum[key][1]):0.2f} and "
+                f"TotAv of {lossSum[key][0]/totRound:0.2f}\n"
+            ),
+        )
+    await sendMessage(mes, ctx)
+    await sendMessage(embMes, ctx)

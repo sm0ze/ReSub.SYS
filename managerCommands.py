@@ -1,3 +1,4 @@
+import asyncio
 import os
 import sys
 import time
@@ -83,17 +84,24 @@ class managerCommands(
         generations: int = 1,
         repeats: int = 1,
         defCost: int = 20,
+        outType: int = 1,
     ):
-        mes = await testBattle(
-            self.bot,
-            ctx,
-            peepBuild,
-            notPeepBuild,
-            generations,
-            repeats,
-            defCost,
+        await ctx.send(
+            f"Starting simulation of {generations * repeats} "
+            f"battles of {generations} generations * {repeats} repeats."
         )
-        await sendMessage(mes, ctx)
+        asyncio.create_task(
+            testBattle(
+                self.bot,
+                ctx,
+                peepBuild,
+                notPeepBuild,
+                generations,
+                repeats,
+                defCost,
+                outType,
+            )
+        )
 
     @commands.command(
         enabled=COMMANDS_ON,
