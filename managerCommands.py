@@ -71,7 +71,7 @@ class managerCommands(
         return commands.check(await predicate(ctx))
 
     @commands.command(
-        enabled=COMMANDS_ON,
+        enabled=True,
         aliases=["td"],
         brief=getBrief("testDuel"),
         description=getDesc("testDuel"),
@@ -90,7 +90,7 @@ class managerCommands(
             f"Starting simulation of {generations * repeats} "
             f"battles of {generations} generations * {repeats} repeats."
         )
-        asyncio.create_task(
+        asyncio.to_thread(
             testBattle(
                 self.bot,
                 ctx,
@@ -104,7 +104,7 @@ class managerCommands(
         )
 
     @commands.command(
-        enabled=COMMANDS_ON,
+        enabled=True,
         brief=getBrief("wipe"),
         description=getDesc("wipe"),
     )
