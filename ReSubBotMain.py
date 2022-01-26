@@ -7,7 +7,7 @@ from pretty_help import DefaultMenu, PrettyHelp
 
 import log
 from sharedConsts import CMD_PREFIX, HOST_NAME, START_TIME, SUPE_ROLE, TOKEN
-from sharedDicts import powerTypes
+from sharedDicts import powerTypes, notLoaded
 from sharedFuncs import asleep, dupeMes
 
 logP = log.get_logger(__name__)
@@ -77,8 +77,10 @@ async def on_ready():
             f" channels and {len(threadList)} threads."
         )
     )
-
-    strtMes = f"Bot has logged in as {bot.user} on {HOST_NAME}"
+    strtMes = f"Bot has logged in as {bot.user} on {HOST_NAME}.\n"
+    strtMes += f"Loaded {notLoaded[2]} of {notLoaded[1]} URLs.\n"
+    if notLoaded[0]:
+        strtMes += f"Failed to load these URLs: {notLoaded}"
     logP.info(strtMes)
 
     await dupeMes(bot, None, strtMes)
