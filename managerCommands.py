@@ -90,7 +90,7 @@ class managerCommands(
             f"Starting simulation of {generations * repeats} "
             f"battles of {generations} generations * {repeats} repeats."
         )
-        asyncio.to_thread(
+        asyncio.create_task(
             testBattle(
                 self.bot,
                 ctx,
