@@ -472,13 +472,13 @@ class player:
             if ((self._str + self._mem) > (self.bC * STATS_HP_DMG)) or (
                 aggressiveStats > (self.bC * STATS_HP_AG)
             ):
-                hpBonus = 3 * bonus
+                hpBonus = 4 * bonus
 
             elif ((self._str + self._mem) > (self.bC * STATS_HYBRID_DMG)) or (
                 aggressiveStats > (self.bC * STATS_HYBRID_AG)
             ):
                 atBonus = 0.5 * bonus
-                hpBonus = 1.5 * bonus
+                hpBonus = 2 * bonus
             else:
                 atBonus = bonus
 
@@ -736,7 +736,7 @@ class battler:
         if peep.sta >= 2:
             if oneHit:
                 peep.focusTill(normSta)
-            # then normal hit
+            # then normal attack
             elif peep.sta >= 5:
                 if oneDespHit:
                     peep.focusTill(despSta)
@@ -842,7 +842,7 @@ class battler:
 
         logP.debug(f"Hit is '{typHit}' for '{multi}'")
 
-        mes += f"a {typHit}:{multi} {'hit' if not riposte else 'riposte'}"
+        mes += f"a {typHit} ({multi}) {'hit' if not riposte else 'riposte'}"
 
         if attMove == "physical":
             attDmg = attackCalc(
