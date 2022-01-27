@@ -46,19 +46,24 @@ rsltDict = {
 }
 
 multiTypDict = {
-    -2: "repelled",
-    -1.5: "parried",
-    -1: "deflected",
-    -0.66: "blocked",
-    -0.33: "glancing",
-    0: "normal",
-    0.33: "good",
-    0.66: "great",
-    1: "spectacular",
-    1.5: "superlative",
     2: "flawless",
+    1.75: "superlative",
+    1.5: "magnificent",
+    1.25: "spectacular",
+    1: "brutal",
+    .75: "great",
+    .5: "good",
+    .25: "accurate",
+    0: "normal",
+    -.25: "inaccurate",
+    -.5: "weak",
+    -.75: "poor",
+    -1: "botched",
+    -1.25: "blocked",
+    -1.5: "deflected",
+    -1.75: "parried",
+    -2: "avoided",
 }
-
 
 posTask = {
     "Minor": {
