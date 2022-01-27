@@ -42,6 +42,7 @@ from sharedDicts import (
     restrictedList,
 )
 from sharedFuncs import (
+    aOrAn,
     checkDefined,
     checkUndefined,
     dictShrtBuild,
