@@ -842,7 +842,10 @@ class battler:
 
         logP.debug(f"Hit is '{typHit}' for '{multi}'")
 
-        mes += f"a {typHit} ({multi}) {'hit' if not riposte else 'riposte'}"
+        mes += (
+            f"{aOrAn(typHit).lower()} {typHit} ({multi}) "
+            f"{'hit' if not riposte else 'riposte'}"
+        )
 
         if attMove == "physical":
             attDmg = attackCalc(
