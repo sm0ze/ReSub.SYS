@@ -26,6 +26,7 @@ from sharedConsts import (
     TATSU,
 )
 from sharedDicts import (
+    baseDict,
     cmdInf,
     leader,
     masterEhnDict,
@@ -763,6 +764,8 @@ def count(
         mostActivePatrol = topStatistics.setdefault("mostActivePatrol", 0)
         firstTaskTime = topStatistics.setdefault("firstTaskTime", None)
 
+        agg = pickle_file[peep.id].setdefault("agg", baseDict["AGG"])
+
         logP.debug(
             (
                 f"{peep.display_name}-"
@@ -780,6 +783,7 @@ def count(
                 f" longestPatrol: {longestPatrol}"
                 f" firstTaskTime: {firstTaskTime}"
                 f" mostActivePatrol: {mostActivePatrol}"
+                f" agg: {agg}"
             )
         )
         pickle_file[peep.id]["Name"] = peep.name
@@ -799,6 +803,7 @@ def count(
             [MEE6xp, TATSUxp, ReSubXP],
             currPatrol,
             topStatistics,
+            agg,
         )
     else:
         return pickle_file

@@ -45,6 +45,7 @@ from sharedFuncs import (
     aOrAn,
     checkDefined,
     checkUndefined,
+    count,
     dictShrtBuild,
     duelMoveView,
     funcBuild,
@@ -119,6 +120,7 @@ class player:
             self.bL = self.sG[0][2]
             self.npc = False
             self.pic = self.p.display_avatar
+            self.agg = count(member)[6]
         elif isinstance(member, NPC):
             self.p = None
             self.n = member.n
@@ -126,6 +128,7 @@ class player:
             self.bL = member.bL
             self.npc = True
             self.pic = member.pic
+            self.agg = baseDict["AGG"]
         elif isinstance(member, intNPC):
             self.p = None
             self.n = member.n
@@ -133,6 +136,7 @@ class player:
             self.bL = member.bL
             self.npc = True
             self.pic = member.pic
+            self.agg = baseDict["AGG"]
 
         self.fB = funcBuild(self.bL)
         self.bC = self.fB[0]
@@ -142,8 +146,6 @@ class player:
         self.play = False
 
         self.iniCalc()
-
-        self.agg = baseDict["AGG"]
 
         addHP = baseDict["HP"] + self.calcStat("HP")
 
@@ -1335,9 +1337,9 @@ async def testBattle(
         roundList = []
         for round in range(repeats):
             bat = battler(bot, [p1FPC, p2FPC])
-            for count, toBuff in enumerate(buffList):
+            for i, toBuff in enumerate(buffList):
                 if toBuff:
-                    await bat.playerList[count].genBuff()
+                    await bat.playerList[i].genBuff()
 
             winner = await startDuel(bot, ctx, bat, False)
             totRound += 1
@@ -1367,9 +1369,9 @@ async def testBattle(
     for key in pickList:
         winSum.setdefault(key, [0, 0])
         lossSum.setdefault(key, [0, 0])
-        for count in range(1, totRound + 1):
-            winTemp = win[count].get(key, 0)
-            lossTemp = loss[count].get(key, 0)
+        for i in range(1, totRound + 1):
+            winTemp = win[i].get(key, 0)
+            lossTemp = loss[i].get(key, 0)
             winSum[key][0] += winTemp
             lossSum[key][0] += lossTemp
             if winTemp:
