@@ -502,6 +502,20 @@ class roleCommands(
 
     @commands.command(
         enabled=COMMANDS_ON,
+        brief=getBrief("setAgg"),
+        description=getDesc("setAgg"),
+    )
+    async def setAgg(self, ctx: commands.Context, agg: int):
+        cache = load(ctx.guild.id)
+        cache.setdefault(ctx.author.id, {})
+
+        agg = max(0, min(agg, 10))
+
+        cache[ctx.author.id]["agg"] = agg
+        save(ctx.guild.id, cache)
+
+    @commands.command(
+        enabled=COMMANDS_ON,
         aliases=["it", "intTask"],
         brief=getBrief("interactiveTask"),
         description=getDesc("interactiveTask"),
