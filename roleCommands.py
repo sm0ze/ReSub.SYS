@@ -505,14 +505,21 @@ class roleCommands(
         brief=getBrief("setAgg"),
         description=getDesc("setAgg"),
     )
-    async def setAgg(self, ctx: commands.Context, agg: int):
+    async def setAgg(self, ctx: commands.Context, agg: int = None):
         cache = load(ctx.guild.id)
         cache.setdefault(ctx.author.id, {})
 
-        agg = max(0, min(agg, 10))
+        if agg is not None:
+            agg = max(0, min(agg, 10))
+            cache[ctx.author.id]["agg"] = agg
 
-        cache[ctx.author.id]["agg"] = agg
         save(ctx.guild.id, cache)
+        await ctx.send(
+            (
+                f"{ctx.author.display_name}'s Aggression is set to "
+                f"{cache[ctx.author.id]['agg']}"
+            )
+        )
 
     @commands.command(
         enabled=COMMANDS_ON,
