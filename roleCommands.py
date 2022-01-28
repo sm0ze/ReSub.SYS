@@ -64,6 +64,7 @@ from sharedFuncs import (
     getDesc,
     isSuper,
     load,
+    loadAllPers,
     lvlEqu,
     mee6DictGrab,
     memGrab,
@@ -521,10 +522,25 @@ class roleCommands(
         description=getDesc("interactiveTask"),
     )
     async def interactiveTask(self, ctx: commands.Context):
-        opp = rollTask(self.bot, ctx.author)
+        autSpent = spent([ctx.author])
+        loadedPers = loadAllPers()
+        opp = None
+        possibleOpp = None
+        if loadedPers:
+            possibleOpp = [
+                x[0] for x in loadedPers if x[0].baseV == autSpent[0][1]
+            ]
+            if possibleOpp:
+                opp = random.choice(possibleOpp)
+                opp.reRoll()
+
+        if not opp:
+            opp = rollTask(self.bot, ctx.author)
+
         await ctx.send(
             (
                 f"It is {aOrAn(opp.rank).lower()} {opp.rank} task to stop the "
+                f"{'persistent ' if possibleOpp else ''}"
                 f"{opp.desc} {opp.n} {opp.task}.\n"
                 f"{genderPick(opp.gender, 'their').capitalize()} enhancements "
                 f"are:\n{blToStr(opp.bL)}"
@@ -533,7 +549,7 @@ class roleCommands(
         bat = battler(self.bot, [ctx.author, opp])
         bat.playerList[0].play = True
         await bat.playerList[1].genBuff(ctx)
-        asyncio.create_task(startDuel(self.bot, ctx, bat))
+        asyncio.create_task(startDuel(self.bot, ctx, bat, saveOpp=opp))
 
     @commands.command(
         enabled=COMMANDS_ON,
