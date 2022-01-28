@@ -49,8 +49,9 @@ from bin.sharedFuncs import (
     dictShrtBuild,
     duelMoveView,
     funcBuild,
-    intNPC,
+    genOppNPC,
     pluralInt,
+    savePers,
     sendMessage,
     spent,
     winPercent,
@@ -108,7 +109,7 @@ class NPC:
 class player:
     def __init__(
         self,
-        member: typing.Union[discord.Member, NPC, intNPC],
+        member: typing.Union[discord.Member, NPC, genOppNPC],
         bot: typing.Union[commands.bot.Bot, commands.bot.AutoShardedBot],
     ) -> None:
         self.bot = bot
@@ -129,7 +130,7 @@ class player:
             self.npc = True
             self.pic = member.pic
             self.agg = baseDict["AGG"]
-        elif isinstance(member, intNPC):
+        elif isinstance(member, genOppNPC):
             self.p = None
             self.n = member.n
             self.sG = None
@@ -501,7 +502,7 @@ class battler:
     def __init__(
         self,
         bot: typing.Union[commands.bot.Bot, commands.bot.AutoShardedBot],
-        memberList: list[typing.Union[discord.Member, NPC, intNPC]],
+        memberList: list[typing.Union[discord.Member, NPC, genOppNPC]],
     ) -> None:
 
         self.playerList: list[player] = []
@@ -1065,6 +1066,7 @@ async def startDuel(
     ctx: commands.Context,
     bat: battler,
     output: bool = True,
+    saveOpp: bool = False,
 ):
     if output:
         titleString = ""
@@ -1167,6 +1169,8 @@ async def startDuel(
                 totRounds = winner.t
 
     winnerName = winner.n if isinstance(winner, player) else winner
+    if saveOpp:
+        savePers(saveOpp, not bool(winner == bat.playerList[0].n))
     if output:
         damageMes = ""
         for peep in bat.playerList:
