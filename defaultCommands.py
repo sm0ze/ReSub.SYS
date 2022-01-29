@@ -58,7 +58,9 @@ class defaultCommands(
             await ctx.send("Tutorial Complete")
             save(ctx.guild.id, memDict)
             return
-        await ctx.send(f"{len(memDict[ctx.author.id]['tut'])} steps left.")
+        await ctx.send(
+            f"Step {memDict[ctx.author.id]['tut'][0]} of {len(defTut)}."
+        )
         step = tutDict[memDict[ctx.author.id]["tut"][0]]
         mes = f"{CMD_PREFIX}{step['cmd']}"
         if step["arg"]:
