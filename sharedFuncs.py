@@ -1027,6 +1027,7 @@ def genBuild(val: int = 0, typ: str = "", iniBuild: list = None) -> list[str]:
         else:
             testMax = False
         if not pickList:
+            maxBuild = funcBuild(trimShrtList(maxSearch))
             testMax = False
             val = maxBuild[0]
     if maxTyp:
