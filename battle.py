@@ -1341,11 +1341,12 @@ async def testBattle(
                 if toBuff:
                     await bat.playerList[i].genBuff()
 
-            winner = asyncio.create_task(startDuel(bot, ctx, bat, False))
-            await asyncio.wait_for(winner, timeout=60)
+            duelTask = asyncio.create_task(startDuel(bot, ctx, bat, False))
+            await asyncio.wait_for(duelTask, timeout=60)
+            winner = duelTask.result()
             totRound += 1
-            winnerList.append(winner.result())
-            roundList.append(winner.result())
+            winnerList.append(winner)
+            roundList.append(winner)
             if winner == "Peep":
                 win[totRound] = dictShrtBuild(p1Build)
                 loss[totRound] = dictShrtBuild(p2Build)
