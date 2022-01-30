@@ -10,9 +10,9 @@ import discord
 from discord.ext import commands, tasks
 from discord.utils import get
 
-import log
-import sharedDyVars
-from battle import (
+import bin.log as log
+import bin.sharedDyVars as sharedDyVars
+from bin.battle import (
     NPC,
     NPCFromBuild,
     battler,
@@ -20,8 +20,8 @@ from battle import (
     playerFromBuild,
     startDuel,
 )
-from exceptions import notNPC, notSupeDuel
-from sharedConsts import (
+from bin.exceptions import notNPC, notSupeDuel
+from bin.sharedConsts import (
     ACTIVE_SEC,
     ASK_NPC,
     ASK_SELF,
@@ -38,7 +38,7 @@ from sharedConsts import (
     TASK_CD,
     TIME_TILL_ON_CALL,
 )
-from sharedDicts import (
+from bin.sharedDicts import (
     activeDic,
     leader,
     masterEhnDict,
@@ -50,7 +50,7 @@ from sharedDicts import (
     rsltDict,
     taskVar,
 )
-from sharedFuncs import (
+from bin.sharedFuncs import (
     aOrAn,
     blToStr,
     buildFromString,

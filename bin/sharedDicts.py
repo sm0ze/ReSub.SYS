@@ -3,7 +3,7 @@
 
 import pandas as pd
 
-import log
+import bin.log as log
 
 logP = log.get_logger(__name__)
 
@@ -51,13 +51,13 @@ multiTypDict = {
     1.5: "magnificent",
     1.25: "spectacular",
     1: "brutal",
-    .75: "great",
-    .5: "good",
-    .25: "accurate",
+    0.75: "great",
+    0.5: "good",
+    0.25: "accurate",
     0: "normal",
-    -.25: "inaccurate",
-    -.5: "weak",
-    -.75: "poor",
+    -0.25: "inaccurate",
+    -0.5: "weak",
+    -0.75: "poor",
     -1: "botched",
     -1.25: "blocked",
     -1.5: "deflected",

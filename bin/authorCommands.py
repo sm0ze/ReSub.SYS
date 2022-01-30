@@ -4,9 +4,9 @@ import typing
 import discord
 from discord.ext import commands
 
-import log
-from sharedConsts import COMMANDS_ON, GEM_DIFF, setGemDiff
-from sharedFuncs import getBrief, getDesc, sendMessage
+import bin.log as log
+from bin.sharedConsts import COMMANDS_ON, GEM_DIFF, setGemDiff
+from bin.sharedFuncs import getBrief, getDesc, sendMessage
 
 logP = log.get_logger(__name__)
 

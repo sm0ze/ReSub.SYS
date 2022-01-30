@@ -1,13 +1,18 @@
 # log.py
 
 import logging
+import os
 import sys
 from logging.handlers import TimedRotatingFileHandler
 
 FORMATTER = logging.Formatter(
     "%(asctime)s — %(name)s — %(levelname)s — %(message)s"
 )
-LOG_FILE = "ReSubBot.log"
+
+# get the path to the root of the project
+Root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+os.makedirs(Root + "\\Logs", exist_ok=True)
+LOG_FILE = Root + "\\Logs\\ReSubBot.log"
 
 
 def get_console_handler():

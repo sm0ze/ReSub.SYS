@@ -4,7 +4,7 @@ import time
 
 import dotenv
 
-import log
+import bin.log as log
 
 logP = log.get_logger(__name__)
 

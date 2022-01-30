@@ -4,9 +4,9 @@ import datetime
 import discord
 from discord.ext import commands
 
-from exceptions import notNPC, notSupeDuel
-from sharedConsts import CMD_PREFIX, ERROR_THREAD
-from sharedFuncs import dupeError, getSendLoc
+from bin.exceptions import notNPC, notSupeDuel
+from bin.sharedConsts import CMD_PREFIX, ERROR_THREAD
+from bin.sharedFuncs import dupeError, getSendLoc
 
 
 class ErrorHandler(commands.Cog):

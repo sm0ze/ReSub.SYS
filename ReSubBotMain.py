@@ -5,10 +5,16 @@ from discord.ext import commands, tasks
 from discord.utils import get
 from pretty_help import DefaultMenu, PrettyHelp
 
-import log
-from sharedConsts import CMD_PREFIX, HOST_NAME, START_TIME, SUPE_ROLE, TOKEN
-from sharedDicts import powerTypes, notLoaded
-from sharedFuncs import asleep, dupeMes
+import bin.log as log
+from bin.sharedConsts import (
+    CMD_PREFIX,
+    HOST_NAME,
+    START_TIME,
+    SUPE_ROLE,
+    TOKEN,
+)
+from bin.sharedDicts import powerTypes, notLoaded
+from bin.sharedFuncs import asleep, dupeMes
 
 logP = log.get_logger(__name__)
 
@@ -158,7 +164,7 @@ if __name__ == "__main__":
     for filename in cogList:
         if filename.endswith(".py"):
             logP.debug(f"Loading Cog: {filename}")
-            bot.load_extension(f"{filename[:-3]}")
+            bot.load_extension(f"bin.{filename[:-3]}")
 
         # general exception for excluding __pycache__
         # while accounting for generation of other filetypes
