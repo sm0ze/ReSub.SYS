@@ -8,10 +8,10 @@ import discord
 from discord.ext import commands
 from discord.utils import get
 
-import log
-from sharedConsts import CMD_PREFIX, COMMANDS_ON, HOST_NAME, START_TIME
-from sharedDicts import freeRoles, tutDict
-from sharedFuncs import getBrief, getDesc, load, save, sendMessage
+import bin.log as log
+from bin.sharedConsts import CMD_PREFIX, COMMANDS_ON, HOST_NAME, START_TIME
+from bin.sharedDicts import freeRoles, tutDict
+from bin.sharedFuncs import getBrief, getDesc, load, save, sendMessage
 
 logP = log.get_logger(__name__)
 

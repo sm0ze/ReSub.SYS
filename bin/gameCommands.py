@@ -3,11 +3,11 @@ import random
 import typing
 
 import discord
-import log
 from discord.ext import commands
-from sharedConsts import COMMANDS_ON, MAX_BAC_ROUNDS
 
-from sharedFuncs import getBrief, getDesc
+import bin.log as log
+from bin.sharedConsts import COMMANDS_ON, MAX_BAC_ROUNDS
+from bin.sharedFuncs import getBrief, getDesc
 
 logP = log.get_logger(__name__)
 

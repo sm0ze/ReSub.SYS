@@ -9,11 +9,11 @@ from collections import namedtuple
 
 import discord
 from discord.ext import commands
-from exceptions import noFields, notADuel
 from numpy import mean
 
-import log
-from sharedConsts import (
+import bin.log as log
+from bin.exceptions import noFields, notADuel
+from bin.sharedConsts import (
     ASK_ALL,
     ASK_NPC,
     ASK_SELF,
@@ -29,7 +29,7 @@ from sharedConsts import (
     STATS_HYBRID_AG,
     STATS_HYBRID_DMG,
 )
-from sharedDicts import (
+from bin.sharedDicts import (
     attackRollDict,
     baseDict,
     bonusDict,
@@ -38,10 +38,10 @@ from sharedDicts import (
     moveOpt,
     multiTypDict,
     replaceDict,
-    statCalcDict,
     restrictedList,
+    statCalcDict,
 )
-from sharedFuncs import (
+from bin.sharedFuncs import (
     aOrAn,
     checkDefined,
     checkUndefined,

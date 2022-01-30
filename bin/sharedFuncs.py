@@ -2,22 +2,23 @@
 
 import datetime
 import math
+import os
 import random
 import time
 import typing
 
 import discord
-from discord.abc import Messageable
 import tatsu
+from discord.abc import Messageable
 from discord.ext import commands
 from discord.ext.commands.converter import MemberConverter, RoleConverter
 from discord.utils import get
 from mee6_py_api import API
 from sqlitedict import SqliteDict
 
-import log
-import sharedDyVars
-from sharedConsts import (
+import bin.log as log
+import bin.sharedDyVars as sharedDyVars
+from bin.sharedConsts import (
     GEM_DIFF,
     HOST_NAME,
     SAVE_FILE,
@@ -25,19 +26,19 @@ from sharedConsts import (
     SUPE_ROLE,
     TATSU,
 )
-from sharedDicts import (
+from bin.sharedDicts import (
+    activeDic,
     baseDict,
     cmdInf,
+    genDictAll,
     leader,
     masterEhnDict,
+    powerTypes,
     rankColour,
     remList,
     reqResList,
     restrictedList,
-    activeDic,
     taskVar,
-    powerTypes,
-    genDictAll,
 )
 
 logP = log.get_logger(__name__)
@@ -406,7 +407,17 @@ async def memGrab(
     return grabList
 
 
-def save(key: int, value: dict, cache_file=SAVE_FILE):
+def getLoc(fileName: str, dirName: str):
+    # get the root directory of the project
+    # if there is not a directory of dirName, create it
+    # return the full path of the file
+    rootDir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if not os.path.exists(os.path.join(rootDir, dirName)):
+        os.mkdir(os.path.join(rootDir, dirName))
+    return os.path.join(rootDir, dirName, fileName)
+
+
+def save(key: int, value: dict, cache_file=getLoc(SAVE_FILE, "data")):
     try:
         with SqliteDict(cache_file) as mydict:
             mydict[key] = value  # Using dict[key] to store
@@ -416,7 +427,7 @@ def save(key: int, value: dict, cache_file=SAVE_FILE):
         logP.warning(["Error during storing data (Possibly unsupported):", ex])
 
 
-def load(key: int, cache_file=SAVE_FILE) -> dict[int, dict]:
+def load(key: int, cache_file=getLoc(SAVE_FILE, "data")) -> dict[int, dict]:
     try:
         with SqliteDict(cache_file) as mydict:
             # No need to use commit(), since we are only loading data!

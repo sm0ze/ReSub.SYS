@@ -7,10 +7,10 @@ import typing
 import discord
 from discord.ext import commands
 from discord.utils import get
-from battle import testBattle
 
-import log
-from sharedConsts import (
+import bin.log as log
+from bin.battle import testBattle
+from bin.sharedConsts import (
     COMMANDS_ON,
     HOST_NAME,
     LOWEST_ROLE,
@@ -22,12 +22,13 @@ from sharedConsts import (
     SUPE_ROLE,
     TIME_TILL_ON_CALL,
 )
-from sharedDicts import leader, masterEhnDict
-from sharedFuncs import (
+from bin.sharedDicts import leader, masterEhnDict
+from bin.sharedFuncs import (
     cut,
     dupeMes,
     getBrief,
     getDesc,
+    getLoc,
     isSuper,
     load,
     memGrab,
@@ -238,7 +239,9 @@ class managerCommands(
         else:
             await ctx.send(
                 f"File {SAVE_FILE} from {HOST_NAME}",
-                file=discord.File(SAVE_FILE, filename=nameStamp),
+                file=discord.File(
+                    getLoc(SAVE_FILE, "data"), filename=nameStamp
+                ),
             )
         logP.debug("command upload completed")
 
