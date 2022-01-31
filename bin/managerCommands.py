@@ -85,7 +85,7 @@ class managerCommands(
             if member.id in cache_file:
                 cache_file[member.id].pop("agg", None)
         save(ctx.guild.id, cache_file)
-        await ctx.send(f"Reset Aggression for {pluralInt(members)}")
+        await ctx.send(f"Reset Aggression for {len(members)}")
 
     @commands.command(
         enabled=COMMANDS_ON,
