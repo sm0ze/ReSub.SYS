@@ -102,7 +102,7 @@ class NPC:
         ]
 
         self.n = str(npcDict["name"])
-        self.pic = npcDict[picVar]
+        self.picUrl = str(npcDict[picVar])
         self.bL = [x for x in npcEhn if int(x[3:])]
 
 
@@ -120,7 +120,7 @@ class player:
             self.sG = spent([member])
             self.bL = self.sG[0][2]
             self.npc = False
-            self.pic = self.p.display_avatar
+            self.picUrl = self.p.display_avatar.url
             self.agg: float = count(member)[6]
         elif isinstance(member, NPC):
             self.p = None
@@ -128,7 +128,7 @@ class player:
             self.sG = None
             self.bL = member.bL
             self.npc = True
-            self.pic = member.pic
+            self.picUrl = member.picUrl
             self.agg = baseDict["AGG"]
         elif isinstance(member, genOppNPC):
             self.p = None
@@ -136,7 +136,7 @@ class player:
             self.sG = None
             self.bL = member.bL
             self.npc = True
-            self.pic = member.pic
+            self.picUrl = member.picUrl
             self.agg = baseDict["AGG"]
 
         self.fB = funcBuild(self.bL)
@@ -1097,9 +1097,6 @@ async def startDuel(
             auto_archive_duration=DL_ARC_DUR,
             reason=mes.title,
         )
-        for peep in bat.playerList:
-            if peep.play:
-                await thrd.add_user(peep.p)
 
         mes.add_field(
             inline=False,
@@ -1184,7 +1181,7 @@ async def startDuel(
             value=("Prize to be implemented.\n" + damageMes),
         )
         if isinstance(winner, player):
-            mes.set_thumbnail(url=winner.pic)
+            mes.set_thumbnail(url=winner.picUrl)
         await bat.echoMes(mes, thrd)
         await bat.echoMes(f"<#{ctx.channel.id}>", thrd, False)
         await thrd.edit(archived=1)
@@ -1252,10 +1249,13 @@ async def playerDuelInput(
     moveView = None
     if not peep.missTurn:
         moveView = duelMoveView(reactionList)
-    msg = await peep.p.send(embed=mes, view=moveView)
+    msg: discord.Message = await peep.p.send(embed=mes, view=moveView)
 
     def check(interaction: discord.Interaction):
-        return interaction.user.id == peep.p.id
+        return (
+            interaction.user.id == peep.p.id
+            and interaction.message.id == msg.id
+        )
 
     moveString = ""
     while not peep.missTurn and not moveView.is_finished():

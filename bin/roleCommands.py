@@ -223,7 +223,7 @@ class roleCommands(
                     newMes.add_field(
                         name="Enhancements", value=playerEhnListStr
                     )
-                    newMes.set_thumbnail(url=foundNPC.pic)
+                    newMes.set_thumbnail(url=foundNPC.picUrl)
         else:
             peepListStr = ""
             for peep in npcDict.keys():
@@ -531,16 +531,23 @@ class roleCommands(
     )
     async def interactiveTask(self, ctx: commands.Context):
         autSpent = spent([ctx.author])
-        loadedPers = loadAllPers()
+        loadedPers = loadAllPers(self.bot)
         opp = None
         possibleOpp = None
+        selectedLoaded = False
         if loadedPers:
             possibleOpp = [
-                x[0] for x in loadedPers if x[0].baseV == autSpent[0][1]
+                x[0]
+                for x in loadedPers
+                if x[0].baseV
+                in range(max(0, autSpent[0][1] - 3), autSpent[0][1] + 4)
             ]
             if possibleOpp:
-                opp = random.choice(possibleOpp)
-                opp.reRoll()
+                toLoad = random.choices([True, False], weights=[0.4, 0.6])[0]
+                if toLoad:
+                    opp = random.choice(possibleOpp)
+                    opp.reRoll()
+                    selectedLoaded = True
 
         if not opp:
             opp = rollTask(self.bot, ctx.author)
@@ -549,14 +556,16 @@ class roleCommands(
             (
                 f"It is {aOrAn(opp.rank).lower()} {opp.rank} task to stop the "
                 f"{'persistent ' if possibleOpp else ''}"
-                f"{opp.desc} {opp.n} {opp.task}.\n"
+                f"{opp.desc} {opp.n.lower()} {opp.task}.\n"
                 f"{genderPick(opp.gender, 'their').capitalize()} enhancements "
                 f"are:\n{blToStr(opp.bL)}"
             )
         )
         bat = battler(self.bot, [ctx.author, opp])
+
         bat.playerList[0].play = True
-        await bat.playerList[1].genBuff(ctx)
+        if not selectedLoaded:
+            await bat.playerList[1].genBuff(ctx)
         asyncio.create_task(startDuel(self.bot, ctx, bat, saveOpp=opp))
 
     @commands.command(
@@ -1269,7 +1278,7 @@ class roleCommands(
         mes.set_thumbnail(url=p.p.display_avatar)
         mes.set_footer(
             text=f"{p.p.name}#{p.p.discriminator} - {HOST_NAME}",
-            icon_url=p.pic,
+            icon_url=p.picUrl,
         )
 
         await ctx.send(embed=mes)

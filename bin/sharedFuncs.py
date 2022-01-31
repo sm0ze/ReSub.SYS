@@ -1390,7 +1390,7 @@ class genOppNPC:
         baseVal,
     ) -> None:
         self.bot = bot
-        self.pic = self.bot.user.display_avatar
+        self.picUrl = self.bot.user.display_avatar.url
         self.power, self.desc = self.rollPower()
         self.n, self.gender = self.rollName()
         self.baseV = baseVal
@@ -1408,7 +1408,7 @@ class genOppNPC:
 
     def rollName(self):
         roll = random.choice(activeDic["person"])
-        return str(roll[0]), str(roll[1])
+        return str(roll[0]).capitalize(), str(roll[1])
 
     def rollPower(self):
         retPower = random.choice(list(powerTypes.keys())[:15])
@@ -1608,13 +1608,18 @@ def dictShrtBuild(shrtBuild: list[str]):
     return retDict
 
 
-def savePers(pers: genOppNPC, toSave=True, cache_file="persistent.sqlite3"):
+def savePers(
+    pers: genOppNPC,
+    toSave=True,
+    cache_file=getLoc("persistent.sqlite3", "data"),
+):
     # add persistent to genOppNPC list in a file named "persistent.sqlite3"
     # if persistent is already in the list, update the persistent's
     # win/loss count
     # if persistent is not in the list, add persistent to the list
 
     try:
+        pers.bot = None
         with SqliteDict(cache_file) as mydict:
             if pers.n in mydict.iterkeys():
                 mydict[str(pers.n)]["win"] += int(bool(toSave))
@@ -1630,17 +1635,23 @@ def savePers(pers: genOppNPC, toSave=True, cache_file="persistent.sqlite3"):
         logP.warning(["Error during storing data (Possibly unsupported):", ex])
 
 
-def loadAllPers(cache_file="persistent.sqlite3"):
+def loadAllPers(
+    bot: typing.Union[commands.bot.Bot, commands.bot.AutoShardedBot],
+    cache_file=getLoc("persistent.sqlite3", "data"),
+):
     # load persistent from file named "persistent.sqlite3"
     # return a list of players
     try:
         persList: list[tuple[genOppNPC, int, int]] = []
         with SqliteDict(cache_file) as mydict:
             for key, val in mydict.iteritems():
+                val["peep"].bot = bot
                 persList.append(
-                    val["peep"],
-                    val["win"],
-                    val["loss"],
+                    [
+                        val["peep"],
+                        val["win"],
+                        val["loss"],
+                    ]
                 )
         return persList
     except Exception as ex:
