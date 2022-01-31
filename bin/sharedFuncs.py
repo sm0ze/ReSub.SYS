@@ -1383,25 +1383,32 @@ def strList(dualList):
     return retList
 
 
-class intNPC:
+class genOppNPC:
     def __init__(
         self,
         bot: typing.Union[commands.bot.Bot, commands.bot.AutoShardedBot],
         baseVal,
     ) -> None:
         self.bot = bot
-        self.pic = self.bot.user.display_avatar
-        self.rank, self.task = self.rollRank()
+        self.picUrl = self.bot.user.display_avatar.url
         self.power, self.desc = self.rollPower()
         self.n, self.gender = self.rollName()
-        self.bV = baseVal + int(taskVar["addP"][self.rank])
-        self.bL = genBuild(
+        self.baseV = baseVal
+        self.reRoll()
+
+    def reRoll(self):
+        self.rank, self.task = self.rollRank()
+        self.bV = self.baseV + int(taskVar["addP"][self.rank])
+        self.bL = self.rollBuild()
+
+    def rollBuild(self):
+        return genBuild(
             self.bV, [x for x in leader if leader[x] == self.power][0]
         )
 
     def rollName(self):
         roll = random.choice(activeDic["person"])
-        return str(roll[0]), str(roll[1])
+        return str(roll[0]).capitalize(), str(roll[1])
 
     def rollPower(self):
         retPower = random.choice(list(powerTypes.keys())[:15])
@@ -1425,8 +1432,8 @@ class intNPC:
 
 
 def rollTask(bot, peep: discord.member):
-    peepCount = count(peep)
-    opponent = intNPC(bot, peepCount[0])
+    peepCount = spent([peep])
+    opponent = genOppNPC(bot, peepCount[0][1])
     return opponent
 
 
@@ -1599,3 +1606,54 @@ def dictShrtBuild(shrtBuild: list[str]):
     for item in shrtBuild:
         retDict[item[:3]] = int(item[3:])
     return retDict
+
+
+def savePers(
+    pers: genOppNPC,
+    toSave=True,
+    cache_file=getLoc("persistent.sqlite3", "data"),
+):
+    # add persistent to genOppNPC list in a file named "persistent.sqlite3"
+    # if persistent is already in the list, update the persistent's
+    # win/loss count
+    # if persistent is not in the list, add persistent to the list
+
+    try:
+        pers.bot = None
+        with SqliteDict(cache_file) as mydict:
+            if pers.n in mydict.iterkeys():
+                mydict[str(pers.n)]["win"] += int(bool(toSave))
+                mydict[str(pers.n)]["loss"] += int(bool(toSave))
+            elif toSave:
+                mydict[str(pers.n)] = {
+                    "win": 1,
+                    "loss": 0,
+                    "peep": pers,
+                }
+            mydict.commit()
+    except Exception as ex:
+        logP.warning(["Error during storing data (Possibly unsupported):", ex])
+
+
+def loadAllPers(
+    bot: typing.Union[commands.bot.Bot, commands.bot.AutoShardedBot],
+    cache_file=getLoc("persistent.sqlite3", "data"),
+):
+    # load persistent from file named "persistent.sqlite3"
+    # return a list of players
+    try:
+        persList: list[tuple[genOppNPC, int, int]] = []
+        with SqliteDict(cache_file) as mydict:
+            for key, val in mydict.iteritems():
+                val["peep"].bot = bot
+                persList.append(
+                    [
+                        val["peep"],
+                        val["win"],
+                        val["loss"],
+                    ]
+                )
+        return persList
+    except Exception as ex:
+        logP.warning(["Error during loading data (Possibly unsupported):", ex])
+        return False
