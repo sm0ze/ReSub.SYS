@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 import os
 import sys
 import time
@@ -12,6 +13,7 @@ import bin.log as log
 from bin.battle import testBattle
 from bin.sharedConsts import (
     COMMANDS_ON,
+    DL_ARC_DUR,
     HOST_NAME,
     LOWEST_ROLE,
     MANAGER_ROLES,
@@ -70,6 +72,20 @@ class managerCommands(
 
         # messy implementation for Supe
         return commands.check(await predicate(ctx))
+
+    @commands.command(
+        enabled=COMMANDS_ON,
+        brief=getBrief("resetAgg"),
+        description=getDesc("resetAgg"),
+    )
+    async def resetAgg(self, ctx: commands.Context, *, memberList: str = ""):
+        members = await memGrab(ctx, memberList)
+        cache_file = load(ctx.guild.id)
+        for member in members:
+            if member.id in cache_file:
+                cache_file[member.id].pop("agg", None)
+        save(ctx.guild.id, cache_file)
+        await ctx.send(f"Reset Aggression for {pluralInt(members)}")
 
     @commands.command(
         enabled=COMMANDS_ON,
@@ -282,13 +298,147 @@ class managerCommands(
         description=getDesc("printSave"),
     )
     async def printSave(self, ctx: commands.Context):
-        sendMes = ""
+        embList = []
         cache_file = load(ctx.guild.id)
+        cmdChnl = ctx.channel
 
-        for key, val in cache_file.items():
-            sendMes += f"{val}\n"
-        await sendMessage(sendMes, ctx)
+        expectedFields = [
+            "Name",
+            "currPatrol",
+            "topStatistics",
+            "builds",
+            "tut",
+            "buildSort",
+        ]
+
+        # create thread from channel
+        mesID = ctx.message.id
+        cmdThrd: discord.Thread = await cmdChnl.create_thread(
+            name=f"PrintSave #{mesID}",
+            message=ctx.message,
+            auto_archive_duration=int(DL_ARC_DUR),
+            reason=f"PrintSave #{mesID}",
+        )
+
+        # for each user in cache file create a discord.Embed
+        for userID in cache_file.keys():
+            user = self.bot.get_user(int(userID))
+            if user:
+                titleStr = f"{user.name}#{user.discriminator}"
+            elif expectedFields[0] in cache_file[userID]:
+                titleStr = f"{cache_file[userID][expectedFields[0]]}:{userID}"
+            else:
+                titleStr = f"{userID}"
+
+            emb = discord.Embed(title=titleStr)
+
+            # find the keys that are not in expectedFields
+            for key in cache_file[userID].keys():
+                if key not in expectedFields:
+                    emb.add_field(name=key, value=cache_file[userID][key])
+                else:
+                    if key == expectedFields[1]:
+                        embStr = ""
+                        currPatrolStats: dict[str] = cache_file[userID][key]
+                        lastTask: float = currPatrolStats.get(
+                            "lastTaskTime", None
+                        )
+                        patrolStart: float = currPatrolStats.get(
+                            "patrolStart", None
+                        )
+                        patrolTasks: int = currPatrolStats.get(
+                            "patrolTasks", None
+                        )
+
+                        if lastTask:
+                            lastTaskTimeSinceInt = int(time.time() - lastTask)
+                            lastTaskTimeSince = datetime.timedelta(
+                                seconds=lastTaskTimeSinceInt
+                            )
+                            if lastTaskTimeSinceInt > TIME_TILL_ON_CALL:
+                                # if patrol is finished skip this key
+                                continue
+                            embStr += f"Last Task: {lastTaskTimeSince}\n"
+
+                        if patrolStart:
+                            patrolStartTimeSince = datetime.timedelta(
+                                seconds=int(time.time() - patrolStart)
+                            )
+                            embStr += f"Patrol Time: {patrolStartTimeSince}\n"
+
+                        if patrolTasks:
+                            embStr += f"Patrol Tasks: {patrolTasks}\n"
+                        if not embStr:
+                            embStr = "No Patrol Data"
+                        emb.add_field(
+                            name="Current Patrol Stats", value=embStr
+                        )
+                    elif key == expectedFields[2]:
+                        embStr = ""
+                        topStats: dict[str] = cache_file[userID][key]
+                        totalTasks: int = topStats.get("totalTasks", None)
+                        firstTask: float = topStats.get("firstTaskTime", None)
+                        totalPatrols: int = topStats.get("totalPatrols", None)
+                        longestPatrol: float = topStats.get(
+                            "longestPatrol", None
+                        )
+                        mostActivePatrol: int = topStats.get(
+                            "mostActivePatrol", None
+                        )
+                        if totalTasks:
+                            embStr += f"Total Tasks: {totalTasks}\n"
+
+                        if firstTask:
+                            firstTaskTimeSince = datetime.timedelta(
+                                seconds=int(time.time() - firstTask)
+                            )
+                            embStr += f"First Task: {firstTaskTimeSince}\n"
+
+                        if totalPatrols:
+                            embStr += f"Total Patrols: {totalPatrols}\n"
+
+                        if longestPatrol:
+                            longestPatrolTimeSince = datetime.timedelta(
+                                seconds=int(longestPatrol)
+                            )
+                            embStr += (
+                                f"Longest Patrol: {longestPatrolTimeSince}\n"
+                            )
+
+                        if mostActivePatrol:
+                            embStr += (
+                                f"Most Active Patrol: {mostActivePatrol}\n"
+                            )
+                        if not embStr:
+                            embStr = "No Top Stats"
+                        emb.add_field(name="Top Statistics", value=embStr)
+                    elif key == expectedFields[3]:
+                        embStr = ""
+                        builds: dict[str, list] = cache_file[userID][key]
+                        for build in builds.keys():
+                            embStr += f"{build}: {builds[build]}\n"
+                        if not embStr:
+                            embStr = "No Builds"
+                        emb.add_field(name="Saved Loadouts", value=embStr)
+                    elif key == expectedFields[4]:
+                        stepsLeft = (
+                            cache_file[userID][key]
+                            if cache_file[userID][key]
+                            else "No Steps Left"
+                        )
+                        emb.add_field(
+                            name="Tutorial Steps Left",
+                            value=stepsLeft,
+                        )
+                    else:
+                        pass
+            embList.append(emb)
+
+        await sendMessage(embList, cmdThrd)
+        await cmdThrd.send("Printed Save File.")
         await ctx.send("Printed Save File.")
+        # archive thread
+        await cmdThrd.edit(archived=1)
 
     @commands.command(
         enabled=COMMANDS_ON,

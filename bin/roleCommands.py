@@ -40,6 +40,7 @@ from bin.sharedConsts import (
 )
 from bin.sharedDicts import (
     activeDic,
+    baseDict,
     leader,
     masterEhnDict,
     npcDict,
@@ -517,7 +518,7 @@ class roleCommands(
         await ctx.send(
             (
                 f"{ctx.author.display_name}'s Aggression is set to "
-                f"{cache[ctx.author.id]['agg']}"
+                f"{cache.get('agg', baseDict['AGG'])}"
             )
         )
 

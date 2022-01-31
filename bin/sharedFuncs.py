@@ -1,5 +1,6 @@
 # sharedFuncs.py
 
+import asyncio
 import datetime
 import math
 import os
@@ -427,7 +428,9 @@ def save(key: int, value: dict, cache_file=getLoc(SAVE_FILE, "data")):
         logP.warning(["Error during storing data (Possibly unsupported):", ex])
 
 
-def load(key: int, cache_file=getLoc(SAVE_FILE, "data")) -> dict[int, dict]:
+def load(
+    key: int, cache_file=getLoc(SAVE_FILE, "data")
+) -> dict[int, dict[str]]:
     try:
         with SqliteDict(cache_file) as mydict:
             # No need to use commit(), since we are only loading data!
@@ -1167,26 +1170,54 @@ async def sendMessage(mes, location: Messageable):
 
     Parameters
     ----------
-    mes : Str | Discord.Embed
+    mes : Str | Discord.Embed | list[Discord.Embed]
         The message to be sent. Can be a string that will be split by line
-        into 2000 character chunks. or a Discord.Embed that will be split by
-        24 field chunks.
+        into 2000 character chunks, or a Discord.Embed that will be split by
+        24 field chunks, or a list of Discord.Embed that will be split.
     location : Messageable
         The location to send the message. A messagable type is a Discord type
         that has the attribute send.
     """
-    if isinstance(mes, discord.Embed):
+    taskList = []
+    if isinstance(mes, list):
+        embList = [x for x in mes if isinstance(x, discord.Embed)]
+        stringList = [x for x in mes if isinstance(x, str)]
+        chkdStringList = []
+
+        for emb in pageEmbedList(embList):
+            if emb:
+                task = asyncio.create_task(location.send(embed=emb))
+                taskList.append(task)
+
+        for string in stringList:
+            chkdStringList += splitString(string)
+        if chkdStringList:
+            for string in chkdStringList:
+                task = asyncio.create_task(location.send(string))
+                taskList.append(task)
+
+    elif isinstance(mes, discord.Embed):
         for emb in pageEmbed(mes):
             if emb:
-                await location.send(embed=emb)
-    if isinstance(mes, str):
+                task = asyncio.create_task(location.send(embed=emb))
+                taskList.append(task)
+
+    elif isinstance(mes, str):
         # minMessages = math.floor(mesLength / 2000) + 1
-        mesList = []
-        mesSplit = mes.splitlines(True)
-        mesList = splitFunc(mesSplit)
+        mesList = splitString(mes)
         for message in mesList:
             if message:
-                await location.send(message)
+                task = asyncio.create_task(location.send(message))
+                taskList.append(task)
+
+    await asyncio.gather(*taskList)
+
+
+def splitString(mes):
+    mesList = []
+    mesSplit = mes.splitlines(True)
+    mesList = splitFunc(mesSplit)
+    return mesList
 
 
 def embedBelowMaxLen(
@@ -1213,6 +1244,12 @@ def embedLen(emb: discord.Embed, addField: discord.embeds.EmbedProxy = None):
     for item in fields:
         total += str(item) if str(item) != "Embed.Empty" else ""
     return len(total)
+
+
+def pageEmbedList(embedList: list[discord.Embed]):
+    for embed in embedList:
+        for emb in pageEmbed(embed):
+            yield emb
 
 
 def pageEmbed(mes: discord.Embed, maxFields=24):
