@@ -15,7 +15,6 @@ from bin.sharedConsts import (
     COMMANDS_ON,
     DL_ARC_DUR,
     HOST_NAME,
-    LOWEST_ROLE,
     MANAGER_ROLES,
     ROLE_ID_CALL,
     ROLE_ID_PATROL,
@@ -40,6 +39,7 @@ from bin.sharedFuncs import (
     remOnPatrol,
     save,
     sendMessage,
+    splitString,
     topEnh,
 )
 
@@ -529,8 +529,7 @@ class managerCommands(
     # have been created by bot
     async def moveRoles(self, ctx: commands.Context):
         managed = await manageRoles(ctx)
-        await ctx.send(embed=managed)
-        return
+        asyncio.create_task(sendMessage(managed, ctx))
 
     @commands.command(
         enabled=COMMANDS_ON,
@@ -566,8 +565,31 @@ async def orderRole(ctx: commands.Context):
 async def manageRoles(ctx: commands.Context):
 
     # spam message negation
-    movedRoles = discord.Embed(title="Moving Roles")
-    toMove = {}
+    movedRoles: list[discord.Embed] = []
+    toMove: dict[discord.Role, int] = {}
+    toManage: list[tuple[discord.Role, dict[str]]] = []
+    lowestRank = 100
+    highestRank = 0
+    sortOrder = (
+        "Strength",
+        "Memory",
+        "Speed",
+        "Mental Celerity",
+        "Endurance",
+        "Mental Clarity",
+        "Regeneration",
+        "Pain Tolerance",
+        "Vision",
+        "Invisibility",
+        "Olfactory Sense",
+        "Aural Faculty",
+        "Tactile Reception",
+        "Gustatory Ability",
+        "Proprioception",
+        "4th Wall Breaker",
+        "Intelligence",
+        "Omniscience",
+    )
 
     # iterate through all guild roles
     for role in ctx.message.guild.roles:
@@ -585,15 +607,11 @@ async def manageRoles(ctx: commands.Context):
         if roleShort == []:
             logP.debug("Role not Supe")
             continue
-
-        # check for intelligence roles as they are the rank position constants
-        # and should not be changed by this command
-        elif "Intelligence" == masterEhnDict[roleShort[0]]["Type"]:
-            logP.debug("Role type intelligence")
-            continue
+        else:
+            roleShort = masterEhnDict[roleShort[0]]
 
         # fetch enhancement rank
-        roleRank = masterEhnDict[roleShort[0]]["Rank"]
+        roleRank = roleShort["Rank"]
         logP.debug(f"Role rank is: {roleRank}")
 
         # check for restricted roles
@@ -601,55 +619,71 @@ async def manageRoles(ctx: commands.Context):
             logP.debug("Role rank zero")
             continue
 
-        # check for rank 1 roles that do not have a lowerbound intelligence
-        # role for positioning
-        elif roleRank == 1:
-            roleRankLower = LOWEST_ROLE
+        # Code getting to here means the role is
+        # one that could need to be moved by the bot
+        toManage.append((role, roleShort))
+        if role.position < lowestRank:
+            lowestRank = role.position
+        if role.position > highestRank:
+            highestRank = role.position
 
-        else:
-            roleRankLower = [
-                x.position
-                for x in ctx.message.guild.roles
-                if x.name
-                == f"Rank {roleRank - 1} Intelligence (only for Systems)"
-            ][0]
+    # sort toManage by rank and then by given sort order
+    iniList = toManage.copy()
+    toManage.sort(key=lambda x: (x[1]["Rank"], sortOrder.index(x[1]["Type"])))
 
-        # fetch upperbound intelligence rank position
-        roleRankUpper = [
-            x.position
-            for x in ctx.message.guild.roles
-            if x.name == f"Rank {roleRank} Intelligence (only for Systems)"
-        ][0]
+    taskList = []
 
-        # roleDiff = roleRankUpper - roleRankLower
+    for role, roleShort in toManage.copy():
+        if not len(role.members):
+            toManage.remove((role, roleShort))
+            task = asyncio.create_task(role.delete(reason="No Members"))
+            taskList.append(task)
 
-        # check for if role is already in postion
-        if role.position < roleRankUpper:
-            if role.position >= roleRankLower:
-                logP.debug(
-                    f"Role within bounds {roleRankUpper} - {roleRankLower}"
+    finList = toManage.copy()
+
+    if iniList == finList:
+        movedRoles.append(
+            discord.Embed(title="Move Roles", description="No roles to move")
+        )
+        return movedRoles
+    else:
+        iniStringList = (
+            "\n".join((f'{x[1]["Name"]}' for x in iniList))
+        ).splitlines()
+        finStringList = (
+            "\n".join((f'{x[1]["Name"]}' for x in finList))
+        ).splitlines()
+        fieldStr = "Initial Roles **(Position)** Final Roles\n"
+        largestList = max(len(iniStringList), len(finStringList))
+        for i in range(largestList):
+            if i < len(iniStringList):
+                iniString = iniStringList[i]
+            else:
+                iniString = ""
+            if i < len(finStringList):
+                finString = finStringList[i]
+            else:
+                finString = ""
+            fieldStr += f"{iniString} **({i+lowestRank})** {finString}\n"
+        fieldList = splitString(fieldStr, 4096)
+        for i, field in enumerate(fieldList):
+            movedRoles.append(
+                discord.Embed(
+                    title=f"Move Roles ({1+i} of {len(fieldList)})",
+                    description=field,
                 )
-                continue
+            )
 
-        # move role to current upperbound intelligence position,
-        # forcing intelligence position to increase
-        # ASSUMES current role position is lower than intelligence position
-        # TODO remove assumption
-        logP.debug(
-            f"Role to be moved from {role.position} to {roleRankUpper - 1}"
-        )
+    # move roles to correct rank positions
+    for i, (role, roleShort) in enumerate(toManage):
+        rolePos = lowestRank + i
+        logP.debug(f"Moving role {role.name} to position {rolePos}")
+        toMove[role] = rolePos
 
-        movedRoles.add_field(
-            name=role.name,
-            value=f"{role.position} -> {roleRankUpper}",
-        )
-
-        toMove[role] = roleRankUpper
-    await ctx.message.guild.edit_role_positions(positions=toMove)
+    await asyncio.gather(*taskList)
+    await ctx.guild.edit_role_positions(positions=toMove)
 
     # return moved roles as single message to function call
-    if not movedRoles.fields:
-        movedRoles.description = "No roles moved"
     return movedRoles
 
 

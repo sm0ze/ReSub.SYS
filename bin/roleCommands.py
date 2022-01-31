@@ -108,7 +108,7 @@ class roleCommands(
         if not HOST_NAME == "sm0ze-desktop":
             self.remOnCallLoop.start()
             self.remOnPatrolLoop.start()
-        self.xpLoop.start()
+            self.xpLoop.start()
 
     # Check if user has guild role
     async def cog_check(self, ctx: commands.Context):

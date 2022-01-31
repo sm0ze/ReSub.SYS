@@ -1213,10 +1213,10 @@ async def sendMessage(mes, location: Messageable):
     await asyncio.gather(*taskList)
 
 
-def splitString(mes):
+def splitString(mes: str, length: int = 2000) -> list[str]:
     mesList = []
     mesSplit = mes.splitlines(True)
-    mesList = splitFunc(mesSplit)
+    mesList = splitFunc(mesSplit, length)
     return mesList
 
 
