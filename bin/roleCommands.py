@@ -518,7 +518,7 @@ class roleCommands(
         await ctx.send(
             (
                 f"{ctx.author.display_name}'s Aggression is set to "
-                f"{cache.get('agg', baseDict['AGG'])}"
+                f"{cache[ctx.author.id].get('agg', baseDict['AGG'])}"
             )
         )
 
