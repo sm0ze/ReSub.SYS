@@ -1066,7 +1066,7 @@ async def startDuel(
     ctx: commands.Context,
     bat: battler,
     output: bool = True,
-    saveOpp: bool = False,
+    saveOpp: genOppNPC = None,
 ):
     if output:
         titleString = ""
