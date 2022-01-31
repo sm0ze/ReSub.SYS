@@ -120,7 +120,7 @@ class player:
             self.bL = self.sG[0][2]
             self.npc = False
             self.pic = self.p.display_avatar
-            self.agg = count(member)[6]
+            self.agg: float = count(member)[6]
         elif isinstance(member, NPC):
             self.p = None
             self.n = member.n

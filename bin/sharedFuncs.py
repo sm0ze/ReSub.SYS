@@ -778,7 +778,7 @@ def count(
         mostActivePatrol = topStatistics.setdefault("mostActivePatrol", 0)
         firstTaskTime = topStatistics.setdefault("firstTaskTime", None)
 
-        agg = pickle_file[peep.id].setdefault("agg", baseDict["AGG"])
+        agg = pickle_file[peep.id].get("agg", baseDict["AGG"])
 
         logP.debug(
             (

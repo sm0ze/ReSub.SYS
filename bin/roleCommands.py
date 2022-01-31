@@ -506,12 +506,12 @@ class roleCommands(
         brief=getBrief("setAgg"),
         description=getDesc("setAgg"),
     )
-    async def setAgg(self, ctx: commands.Context, agg: int = None):
+    async def setAgg(self, ctx: commands.Context, agg: float = None):
         cache = load(ctx.guild.id)
         cache.setdefault(ctx.author.id, {})
 
         if agg is not None:
-            agg = max(0, min(agg, 10))
+            agg = max(0.0, min(agg, 10.0))
             cache[ctx.author.id]["agg"] = agg
 
         save(ctx.guild.id, cache)
