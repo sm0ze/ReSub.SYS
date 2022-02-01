@@ -569,7 +569,6 @@ async def cut(
         sendMes += f"{peep.display_name} has been cut down to size!"
         mes.add_field(name=f"{peep.display_name}", value=sendMes)
     await sendMessage(mes, ctx)
-    return
 
 
 async def toAdd(ctx: commands.Context, user: discord.Member, givenBuild: list):
@@ -1657,3 +1656,14 @@ def loadAllPers(
     except Exception as ex:
         logP.warning(["Error during loading data (Possibly unsupported):", ex])
         return False
+
+
+def compareBuild(hasBuild, wantsBuild):
+    remRoles = []
+    wantStrBuild = strList(wantsBuild)
+    hasStrBuild = strList(hasBuild)
+    if not wantStrBuild == hasStrBuild:
+        for item in hasStrBuild:
+            if item not in wantStrBuild:
+                remRoles.append(masterEhnDict[item]["Name"])
+    return remRoles
