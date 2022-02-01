@@ -566,10 +566,12 @@ async def manageRoles(ctx: commands.Context):
 
     # spam message negation
     movedRoles: list[discord.Embed] = []
-    toMove: dict[discord.Role, int] = {}
     toManage: list[tuple[discord.Role, dict[str]]] = []
     lowestRank = 100
     highestRank = 0
+
+    iniFieldString = str("Initial Roles **(Position)** Final Roles\n")
+
     sortOrder = (
         "Strength",
         "Memory",
@@ -629,7 +631,10 @@ async def manageRoles(ctx: commands.Context):
 
     # sort toManage by rank and then by given sort order
     iniList = toManage.copy()
-    toManage.sort(key=lambda x: (x[1]["Rank"], sortOrder.index(x[1]["Type"])))
+    toManage.sort(
+        key=lambda x: (-int(x[1]["Rank"]), sortOrder.index(x[1]["Type"])),
+        reverse=True,
+    )
 
     taskList = []
 
@@ -641,7 +646,7 @@ async def manageRoles(ctx: commands.Context):
 
     finList = toManage.copy()
 
-    if iniList == finList:
+    if iniList == finList and len(finList) - 1 + lowestRank == highestRank:
         movedRoles.append(
             discord.Embed(title="Move Roles", description="No roles to move")
         )
@@ -653,7 +658,7 @@ async def manageRoles(ctx: commands.Context):
         finStringList = (
             "\n".join((f'{x[1]["Name"]}' for x in finList))
         ).splitlines()
-        fieldStr = "Initial Roles **(Position)** Final Roles\n"
+        fieldStr = iniFieldString
         largestList = max(len(iniStringList), len(finStringList))
         for i in range(largestList):
             if i < len(iniStringList):
@@ -664,26 +669,38 @@ async def manageRoles(ctx: commands.Context):
                 finString = finStringList[i]
             else:
                 finString = ""
+            if iniString == finString:
+                continue
             fieldStr += f"{iniString} **({i+lowestRank})** {finString}\n"
         fieldList = splitString(fieldStr, 4096)
-        for i, field in enumerate(fieldList):
-            movedRoles.append(
-                discord.Embed(
-                    title=f"Move Roles ({1+i} of {len(fieldList)})",
-                    description=field,
+        if fieldStr != iniFieldString:
+            for i, field in enumerate(fieldList):
+                movedRoles.append(
+                    discord.Embed(
+                        title=f"Move Roles ({1+i} of {len(fieldList)})",
+                        description=field,
+                    )
                 )
-            )
 
+    await asyncio.gather(*taskList)
     # move roles to correct rank positions
     for i, (role, roleShort) in enumerate(toManage):
         rolePos = lowestRank + i
         logP.debug(f"Moving role {role.name} to position {rolePos}")
-        toMove[role] = rolePos
-
-    await asyncio.gather(*taskList)
-    await ctx.guild.edit_role_positions(positions=toMove)
+        if role.position != rolePos:
+            asyncio.create_task(
+                ctx.send(f"Moving role {role.name} to position {rolePos}")
+            )
+            await role.edit(position=(rolePos))
 
     # return moved roles as single message to function call
+    if not movedRoles:
+        movedRoles.append(
+            discord.Embed(
+                title="Move Roles",
+                description="Order unchanged, positions updated.",
+            )
+        )
     return movedRoles
 
 
