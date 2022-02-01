@@ -1,6 +1,5 @@
 # roleCommands.py
 
-from ast import alias
 import asyncio
 import datetime
 import random
@@ -183,7 +182,7 @@ class roleCommands(
 
     @commands.command(
         enabled=COMMANDS_ON,
-        alias=["rem"],
+        aliases=["rem"],
         brief=getBrief("remove"),
         description=getDesc("remove"),
     )
