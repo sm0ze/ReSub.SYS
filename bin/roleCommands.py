@@ -1,5 +1,6 @@
 # roleCommands.py
 
+from ast import alias
 import asyncio
 import datetime
 import random
@@ -55,6 +56,7 @@ from bin.sharedFuncs import (
     aOrAn,
     blToStr,
     buildFromString,
+    compareBuild,
     count,
     countIdList,
     cut,
@@ -83,6 +85,7 @@ from bin.sharedFuncs import (
     strList,
     tatsuXpGrab,
     toAdd,
+    toCut,
     topEnh,
 )
 
@@ -177,6 +180,44 @@ class roleCommands(
         mes = await tatsuXpGrab(roleGrab)
         if mes:
             await sendMessage(mes, ctx)
+
+    @commands.command(
+        enabled=COMMANDS_ON,
+        alias=["rem"],
+        brief=getBrief("remove"),
+        description=getDesc("remove"),
+    )
+    async def remove(self, ctx: commands.Context, *, typeStr: str = ""):
+        user = ctx.author
+        if toCut(user):
+            await cut(ctx, [user])
+        userSpent = spent([user])
+        userEnhancements = userSpent[0][2]
+        userHas = funcBuild(userEnhancements)
+        userHasBuild = userHas[2]
+        typList = []
+        if not typeStr:
+            await ctx.send("Please enter a type to remove")
+        else:
+            fixArg = typeStr.replace(" ", ",")
+            fixArg = fixArg.replace(";", ",")
+            fixedTypStr = [x.strip() for x in fixArg.split(",") if x.strip()]
+            typList = [x for x in leader if x in fixedTypStr]
+
+        logP.debug(f"{user.name} requested to remove {typList}")
+
+        userWantsEnhancements = userEnhancements.copy()
+        for typ in typList:
+            if typ in [x[:3] for x in userEnhancements]:
+                userWantsEnhancements.remove(
+                    [x for x in userEnhancements if x[:3] == typ][0]
+                )
+        userWants = funcBuild(userWantsEnhancements)
+        userWantsBuild = userWants[2]
+        remRoles = compareBuild(userHasBuild, userWantsBuild)
+        if remRoles:
+            await cut(ctx, [user], remRoles)
+        await toAdd(ctx, user, userWantsBuild)
 
     @commands.command(
         enabled=COMMANDS_ON,
@@ -766,7 +807,7 @@ class roleCommands(
         description=getDesc("add"),
     )
     # add role command available to all PERMROLES users
-    async def add(self, ctx: commands.Context, *, typeRank=""):
+    async def add(self, ctx: commands.Context, *, typeRank: str = ""):
 
         # fetch message author and their current enhancement roles
         # as well as the build for those roles
