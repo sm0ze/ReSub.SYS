@@ -101,4 +101,25 @@ STATS_HYBRID_AG = 0.35
 
 MAX_BAC_ROUNDS = 15
 
+SORT_ORDER = (
+    "Strength",
+    "Memory",
+    "Speed",
+    "Mental Celerity",
+    "Endurance",
+    "Mental Clarity",
+    "Regeneration",
+    "Pain Tolerance",
+    "Vision",
+    "Invisibility",
+    "Olfactory Sense",
+    "Aural Faculty",
+    "Tactile Reception",
+    "Gustatory Ability",
+    "Proprioception",
+    "4th Wall Breaker",
+    "Intelligence",
+    "Omniscience",
+)
+
 VERSION = 0

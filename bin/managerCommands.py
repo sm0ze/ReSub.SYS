@@ -19,6 +19,7 @@ from bin.sharedConsts import (
     ROLE_ID_CALL,
     ROLE_ID_PATROL,
     SAVE_FILE,
+    SORT_ORDER,
     STREAKER,
     SUPE_ROLE,
     TIME_TILL_ON_CALL,
@@ -29,6 +30,7 @@ from bin.sharedFuncs import (
     dupeMes,
     getBrief,
     getDesc,
+    getGuildSupeRoles,
     getLoc,
     isSuper,
     load,
@@ -40,6 +42,7 @@ from bin.sharedFuncs import (
     save,
     sendMessage,
     splitString,
+    sublist,
     topEnh,
 )
 
@@ -566,73 +569,15 @@ async def manageRoles(ctx: commands.Context):
 
     # spam message negation
     movedRoles: list[discord.Embed] = []
-    toManage: list[tuple[discord.Role, dict[str]]] = []
-    lowestRank = 100
-    highestRank = 0
 
     iniFieldString = str("Initial Roles **(Position)** Final Roles\n")
 
-    sortOrder = (
-        "Strength",
-        "Memory",
-        "Speed",
-        "Mental Celerity",
-        "Endurance",
-        "Mental Clarity",
-        "Regeneration",
-        "Pain Tolerance",
-        "Vision",
-        "Invisibility",
-        "Olfactory Sense",
-        "Aural Faculty",
-        "Tactile Reception",
-        "Gustatory Ability",
-        "Proprioception",
-        "4th Wall Breaker",
-        "Intelligence",
-        "Omniscience",
-    )
-
-    # iterate through all guild roles
-    for role in ctx.message.guild.roles:
-        logP.debug(f"Looking at role: {role.name}")
-
-        # grab shorthand for enhancement
-        roleShort = [
-            x
-            for x in masterEhnDict.keys()
-            if masterEhnDict[x]["Name"] == role.name
-        ]
-        logP.debug(f"roleShort = {roleShort}")
-
-        # check to ensure role is one overseen by this bot
-        if roleShort == []:
-            logP.debug("Role not Supe")
-            continue
-        else:
-            roleShort = masterEhnDict[roleShort[0]]
-
-        # fetch enhancement rank
-        roleRank = roleShort["Rank"]
-        logP.debug(f"Role rank is: {roleRank}")
-
-        # check for restricted roles
-        if not roleRank:
-            logP.debug("Role rank zero")
-            continue
-
-        # Code getting to here means the role is
-        # one that could need to be moved by the bot
-        toManage.append((role, roleShort))
-        if role.position < lowestRank:
-            lowestRank = role.position
-        if role.position > highestRank:
-            highestRank = role.position
+    toManage, lowestRank, highestRank = getGuildSupeRoles(ctx)
 
     # sort toManage by rank and then by given sort order
     iniList = toManage.copy()
     toManage.sort(
-        key=lambda x: (-int(x[1]["Rank"]), sortOrder.index(x[1]["Type"])),
+        key=lambda x: (-int(x[1]["Rank"]), SORT_ORDER.index(x[1]["Type"])),
         reverse=True,
     )
 
@@ -641,15 +586,17 @@ async def manageRoles(ctx: commands.Context):
     for role, roleShort in toManage.copy():
         if not len(role.members):
             toManage.remove((role, roleShort))
+            highestRank -= 1
             task = asyncio.create_task(role.delete(reason="No Members"))
             taskList.append(task)
 
     finList = toManage.copy()
 
-    if iniList == finList and len(finList) - 1 + lowestRank == highestRank:
+    if sublist(iniList, finList):
         movedRoles.append(
             discord.Embed(title="Move Roles", description="No roles to move")
         )
+        await asyncio.gather(*taskList)
         return movedRoles
     else:
         iniStringList = (
@@ -683,15 +630,22 @@ async def manageRoles(ctx: commands.Context):
                 )
 
     await asyncio.gather(*taskList)
+    msgStr = f"Editing positions from {lowestRank} to {highestRank}\n"
+    msg = await ctx.send(msgStr)
     # move roles to correct rank positions
     for i, (role, roleShort) in enumerate(toManage):
         rolePos = lowestRank + i
         logP.debug(f"Moving role {role.name} to position {rolePos}")
         if role.position != rolePos:
-            asyncio.create_task(
-                ctx.send(f"Moving role {role.name} to position {rolePos}")
+            await msg.edit(
+                content=(
+                    msgStr
+                    + f"\nMoving ***{role.name}*** to position ***{rolePos}***"
+                )
             )
+
             await role.edit(position=(rolePos))
+    await msg.delete()
 
     # return moved roles as single message to function call
     if not movedRoles:
