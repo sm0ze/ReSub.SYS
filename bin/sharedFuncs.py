@@ -23,6 +23,7 @@ from bin.sharedConsts import (
     GEM_DIFF,
     HOST_NAME,
     SAVE_FILE,
+    SORT_ORDER,
     START_CHANNEL,
     SUPE_ROLE,
     TATSU,
@@ -573,7 +574,7 @@ async def cut(
 
 async def toAdd(ctx: commands.Context, user: discord.Member, givenBuild: list):
     # the guild role names grabbed from shorthand to add to user
-    addList = [
+    addList: list[str] = [
         masterEhnDict[toType(x[1]) + str(x[0])]["Name"] for x in givenBuild
     ]
     logP.debug(f"Add list = {addList}")
@@ -619,6 +620,8 @@ async def toAdd(ctx: commands.Context, user: discord.Member, givenBuild: list):
             colour = rankColour[int(roleRank)]
             logP.debug(f"colour for rank {roleRank} is: {colour}")
             roleId = await user.guild.create_role(name=role, color=colour)
+            roleToPos = calcRolePos(ctx, roleId)
+            await roleId.edit(position=roleToPos)
 
         # add requested role to user
         rolesToAdd.append(roleId)
@@ -1667,3 +1670,88 @@ def compareBuild(hasBuild, wantsBuild):
             if item not in wantStrBuild:
                 remRoles.append(masterEhnDict[item]["Name"])
     return remRoles
+
+
+def getGuildSupeRoles(ctx: commands.Context):
+    toManage: list[tuple[discord.Role, dict[str]]] = []
+    lowestRank = 100
+    highestRank = 0
+    # iterate through all guild roles
+    for role in ctx.message.guild.roles:
+        logP.debug(f"Looking at role: {role.name}")
+
+        # grab shorthand for enhancement
+        roleShort = [
+            x
+            for x in masterEhnDict.keys()
+            if masterEhnDict[x]["Name"] == role.name
+        ]
+        logP.debug(f"roleShort = {roleShort}")
+
+        # check to ensure role is one overseen by this bot
+        if roleShort == []:
+            logP.debug("Role not Supe")
+            continue
+        else:
+            roleShort = masterEhnDict[roleShort[0]]
+
+        # fetch enhancement rank
+        roleRank = roleShort["Rank"]
+        logP.debug(f"Role rank is: {roleRank}")
+
+        # check for restricted roles
+        if not roleRank:
+            logP.debug("Role rank zero")
+            continue
+
+        # Code getting to here means the role is
+        # one that could need to be moved by the bot
+        toManage.append((role, roleShort))
+        if role.position < lowestRank:
+            lowestRank = role.position
+        if role.position > highestRank:
+            highestRank = role.position
+    return toManage, lowestRank, highestRank
+
+
+def calcRolePos(ctx: commands.Context, roleToFind: discord.Role):
+    toManage, lowestRank, highestRank = getGuildSupeRoles(ctx)
+    foundIndex = 1
+    toManage.sort(
+        key=lambda x: (-int(x[1]["Rank"]), SORT_ORDER.index(x[1]["Type"])),
+        reverse=True,
+    )
+    for i, (role, roleShort) in enumerate(toManage):
+        if role == roleToFind:
+            foundIndex += i
+            break
+    return max(1, lowestRank + foundIndex)
+
+
+def sublist(ls1, ls2):
+    """
+    >>> sublist([], [1,2,3])
+    True
+    >>> sublist([1,2,3,4], [2,5,3])
+    True
+    >>> sublist([1,2,3,4], [0,3,2])
+    False
+    >>> sublist([1,2,3,4], [1,2,5,6,7,8,5,76,4,3])
+    False
+
+    https://stackoverflow.com/questions/35964155/checking-if-list-is-a-sublist/35964184
+
+    answered Mar 12 '16 at 22:37
+    L3viathan
+    """
+
+    def get_all_in(one, another):
+        for element in one:
+            if element in another:
+                yield element
+
+    for x1, x2 in zip(get_all_in(ls1, ls2), get_all_in(ls2, ls1)):
+        if x1 != x2:
+            return False
+
+    return True
