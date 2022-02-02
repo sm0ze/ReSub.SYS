@@ -596,6 +596,7 @@ async def manageRoles(ctx: commands.Context):
         movedRoles.append(
             discord.Embed(title="Move Roles", description="No roles to move")
         )
+        await asyncio.gather(*taskList)
         return movedRoles
     else:
         iniStringList = (
