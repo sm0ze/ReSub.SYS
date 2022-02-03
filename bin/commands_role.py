@@ -11,7 +11,7 @@ from discord.ext import commands, tasks
 from discord.utils import get
 
 import bin.log as log
-import bin.sharedDyVars as sharedDyVars
+import bin.shared_dyVars as shared_dyVars
 from bin.battle import (
     NPC,
     NPCFromBuild,
@@ -21,7 +21,7 @@ from bin.battle import (
     startDuel,
 )
 from bin.exceptions import notNPC, notSupeDuel
-from bin.sharedConsts import (
+from bin.shared_consts import (
     ACTIVE_SEC,
     ASK_NPC,
     ASK_SELF,
@@ -38,7 +38,7 @@ from bin.sharedConsts import (
     TASK_CD,
     TIME_TILL_ON_CALL,
 )
-from bin.sharedDicts import (
+from bin.shared_dicts import (
     activeDic,
     baseDict,
     leader,
@@ -51,7 +51,7 @@ from bin.sharedDicts import (
     rsltDict,
     taskVar,
 )
-from bin.sharedFuncs import (
+from bin.shared_funcs import (
     aOrAn,
     blToStr,
     buildFromString,
@@ -138,7 +138,7 @@ class roleCommands(
             if roleGrab:
                 await mee6DictGrab(roleGrab)
 
-            if sharedDyVars.tatsuUpdateList:
+            if shared_dyVars.tatsuUpdateList:
                 await tatsuXpGrab(roleGrab)
 
     @xpLoop.before_loop
@@ -291,8 +291,8 @@ class roleCommands(
         description=getDesc("tatsuUpdate"),
     )
     async def tatsuUpdate(self, ctx: commands.Context):
-        if ctx.author not in sharedDyVars.tatsuUpdateList:
-            sharedDyVars.tatsuUpdateList.append(ctx.author)
+        if ctx.author not in shared_dyVars.tatsuUpdateList:
+            shared_dyVars.tatsuUpdateList.append(ctx.author)
             await ctx.send("Your tatsu xp will update on next update loop.")
         else:
             await ctx.send("You are already set to update your xp soon.")

@@ -11,7 +11,7 @@ from discord.utils import get
 
 import bin.log as log
 from bin.battle import testBattle
-from bin.sharedConsts import (
+from bin.shared_consts import (
     COMMANDS_ON,
     DL_ARC_DUR,
     HOST_NAME,
@@ -24,8 +24,8 @@ from bin.sharedConsts import (
     SUPE_ROLE,
     TIME_TILL_ON_CALL,
 )
-from bin.sharedDicts import leader, masterEhnDict
-from bin.sharedFuncs import (
+from bin.shared_dicts import leader, masterEhnDict
+from bin.shared_funcs import (
     cut,
     dupeMes,
     getBrief,

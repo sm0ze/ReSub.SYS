@@ -6,8 +6,8 @@ import discord
 from discord.ext import commands
 
 import bin.log as log
-from bin.sharedConsts import COMMANDS_ON, MAX_BAC_ROUNDS
-from bin.sharedFuncs import getBrief, getDesc
+from bin.shared_consts import COMMANDS_ON, MAX_BAC_ROUNDS
+from bin.shared_funcs import getBrief, getDesc
 
 logP = log.get_logger(__name__)
 
