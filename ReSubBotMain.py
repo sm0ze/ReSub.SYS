@@ -6,15 +6,15 @@ from discord.utils import get
 from pretty_help import DefaultMenu, PrettyHelp
 
 import bin.log as log
-from bin.sharedConsts import (
+from bin.shared_consts import (
     CMD_PREFIX,
     HOST_NAME,
     START_TIME,
     SUPE_ROLE,
     TOKEN,
 )
-from bin.sharedDicts import powerTypes, notLoaded
-from bin.sharedFuncs import asleep, dupeMes
+from bin.shared_dicts import powerTypes, notLoaded
+from bin.shared_funcs import asleep, dupeMes
 
 logP = log.get_logger(__name__)
 
@@ -27,13 +27,13 @@ logP.info(
 logP.debug(f"Bot start time set as: {START_TIME}")
 
 cogList = [
-    "defaultCommands.py",
-    "gameCommands.py",
-    "roleCommands.py",
-    "managerCommands.py",
-    "ownerCommands.py",
+    "commands_default.py",
+    "commands_game.py",
+    "commands_role.py",
+    "commands_manager.py",
+    "commands_owner.py",
+    "commands_author.py",
     "ErrorHandler.py",
-    "authorCommands.py",
 ]
 
 

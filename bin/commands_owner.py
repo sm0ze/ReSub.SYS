@@ -6,8 +6,8 @@ import git
 from discord.ext import commands
 
 import bin.log as log
-from bin.sharedConsts import COMMANDS_ON, HOST_NAME
-from bin.sharedFuncs import asleep, dupeMes, getBrief, getDesc, load, save
+from bin.shared_consts import COMMANDS_ON, HOST_NAME
+from bin.shared_funcs import asleep, dupeMes, getBrief, getDesc, load, save
 
 logP = log.get_logger(__name__)
 

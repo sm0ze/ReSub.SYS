@@ -9,9 +9,9 @@ from discord.ext import commands
 from discord.utils import get
 
 import bin.log as log
-from bin.sharedConsts import CMD_PREFIX, COMMANDS_ON, HOST_NAME, START_TIME
-from bin.sharedDicts import freeRoles, tutDict
-from bin.sharedFuncs import getBrief, getDesc, load, save, sendMessage
+from bin.shared_consts import CMD_PREFIX, COMMANDS_ON, HOST_NAME, START_TIME
+from bin.shared_dicts import freeRoles, tutDict
+from bin.shared_funcs import getBrief, getDesc, load, save, sendMessage
 
 logP = log.get_logger(__name__)
 
@@ -58,15 +58,15 @@ class defaultCommands(
             await ctx.send("Tutorial Complete")
             save(ctx.guild.id, memDict)
             return
-        await ctx.send(
-            f"Step {memDict[ctx.author.id]['tut'][0]} of {len(defTut)}."
+        retEmb = discord.Embed(
+            title=f"Step {memDict[ctx.author.id]['tut'][0]} of {len(defTut)}."
         )
-        step = tutDict[memDict[ctx.author.id]["tut"][0]]
-        mes = f"{CMD_PREFIX}{step['cmd']}"
-        if step["arg"]:
-            mes += f" {step['arg']}"
-        mes += f": {step['txt']}"
-        await sendMessage(mes, ctx)
+
+        step: dict[str] = tutDict[memDict[ctx.author.id]["tut"][0]]
+        mes = f"{CMD_PREFIX}{step.get('cmd', 'N/A')} {step.get('arg', '')}"
+        retEmb.add_field(name="Command", value=mes)
+        retEmb.add_field(name="Explanation", value=step.get("txt", "N/A"))
+        await sendMessage(retEmb, ctx)
         memDict[ctx.author.id]["tut"] = memDict[ctx.author.id]["tut"][1:]
         save(ctx.guild.id, memDict)
 

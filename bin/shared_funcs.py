@@ -18,8 +18,8 @@ from mee6_py_api import API
 from sqlitedict import SqliteDict
 
 import bin.log as log
-import bin.sharedDyVars as sharedDyVars
-from bin.sharedConsts import (
+import bin.shared_dyVars as shared_dyVars
+from bin.shared_consts import (
     GEM_DIFF,
     HOST_NAME,
     SAVE_FILE,
@@ -28,7 +28,7 @@ from bin.sharedConsts import (
     SUPE_ROLE,
     TATSU,
 )
-from bin.sharedDicts import (
+from bin.shared_dicts import (
     activeDic,
     baseDict,
     cmdInf,
@@ -703,7 +703,7 @@ async def tatsuXpGrab(roleTo: discord.Role):
     tat = tatsu.wrapper
     mes = ""
     savedCache = load(roleTo.guild.id)
-    peepList: list[discord.Member] = sharedDyVars.tatsuUpdateList.copy()
+    peepList: list[discord.Member] = shared_dyVars.tatsuUpdateList.copy()
     for peep in peepList:
         TATSUxp = 0
         try:
@@ -720,7 +720,7 @@ async def tatsuXpGrab(roleTo: discord.Role):
             )
         )
         try:
-            sharedDyVars.tatsuUpdateList.remove(peep)
+            shared_dyVars.tatsuUpdateList.remove(peep)
             mes += f"Updated {peep.display_name}\n"
         except ValueError as e:
             logP.warning(e)
