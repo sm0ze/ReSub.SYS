@@ -24,6 +24,92 @@ class gameCommands(
 
     @commands.command(
         enabled=COMMANDS_ON,
+        aliases=["hman"],
+        brief=getBrief("hangman"),
+        description=getDesc("hangman"),
+    )
+    async def hangman(self, ctx: commands.Context):
+        answer = "something"
+        leftToGuess = list(answer)
+        countDown = 10
+
+        # create the game embed to send
+        gameEmbed = discord.Embed(
+            title="Hangman",
+            description=self.hangmanRender(countDown, leftToGuess, ini=True),
+        )
+
+        # create a list of discord.ui.select.options for the letters a to z
+        letterList = "abcdefghijklmnopqrstuvwxyz"
+        selectList = []
+        for char in letterList:
+            selectList.append(discord.SelectOption(label=char))
+
+        # create discord view for interactions
+        gameView = discord.ui.View()
+        gameView.add_item(
+            discord.ui.Select(custom_id="hangmanSelect", options=selectList)
+        )
+
+        def check(interaction: discord.Interaction):
+            return (
+                interaction.user.id == ctx.author.id
+                and interaction.message.id == sentMes.id
+            )
+
+        while not gameView.is_finished():
+            sentMes = await ctx.send(embed=gameEmbed, view=gameView)
+            try:
+                interaction: discord.Interaction = await self.bot.wait_for(
+                    "interaction", check=check
+                )
+                move = interaction.data["custom_id"]
+                (
+                    gameEmbed.description,
+                    countDown,
+                    gameView,
+                ) = self.hangmanRender(
+                    countDown,
+                    leftToGuess,
+                    ans=answer,
+                    guess=move,
+                    view=gameView,
+                )
+            except asyncio.TimeoutError:
+                (
+                    gameEmbed.description,
+                    countDown,
+                ) = self.hangmanRender(countDown, leftToGuess, ans=answer)
+
+    def hangmanRender(
+        self,
+        countDown: int,
+        leftToGuess: list,
+        guess: str = None,
+        ini: bool = False,
+        view: discord.ui.View = None,
+        ans: str = None,
+    ):
+        if ini:
+            gameEmbed = discord.Embed(
+                title="Hangman",
+                description=(
+                    f"Chances left: {countDown}\n\n"
+                    f"{('_ ' * len(leftToGuess))}"
+                ),
+            )
+            return gameEmbed
+
+        if guess is None:
+            guessStr = self.genGuessStr(leftToGuess, ans)
+            countDown -= 1
+            return f"Chances left: {countDown}\n\n{guessStr}", countDown
+
+        if guess in leftToGuess:
+            pass
+
+    @commands.command(
+        enabled=COMMANDS_ON,
         aliases=["bac"],
         brief=getBrief("bullsAndCows"),
         description=getDesc("bullsAndCows"),
