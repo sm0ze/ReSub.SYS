@@ -565,7 +565,7 @@ async def orderRole(ctx: commands.Context):
 
 
 # function to move roles to correct rank positions
-async def manageRoles(ctx: commands.Context):
+async def manageRoles(ctx: commands.Context, output=True):
 
     # spam message negation
     movedRoles: list[discord.Embed] = []
@@ -597,7 +597,8 @@ async def manageRoles(ctx: commands.Context):
             discord.Embed(title="Move Roles", description="No roles to move")
         )
         await asyncio.gather(*taskList)
-        return movedRoles
+        if output:
+            return movedRoles
     else:
         iniStringList = (
             "\n".join((f'{x[1]["Name"]}' for x in iniList))
@@ -655,7 +656,8 @@ async def manageRoles(ctx: commands.Context):
                 description="Order unchanged, positions updated.",
             )
         )
-    return movedRoles
+    if output:
+        return movedRoles
 
 
 # function to setup cog
