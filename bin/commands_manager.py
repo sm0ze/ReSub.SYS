@@ -565,14 +565,24 @@ async def orderRole(ctx: commands.Context):
 
 
 # function to move roles to correct rank positions
-async def manageRoles(ctx: commands.Context):
+async def manageRoles(ctx: commands.Context, output=True):
 
     # spam message negation
     movedRoles: list[discord.Embed] = []
+    toMove: dict[discord.Role, int] = {}
+    toExpel: dict[int, discord.Role] = {}
 
     iniFieldString = str("Initial Roles **(Position)** Final Roles\n")
 
     toManage, lowestRank, highestRank = getGuildSupeRoles(ctx)
+
+    toManageRoles = [x[0] for x in toManage]
+
+    for role in ctx.guild.roles:
+        if role not in toManageRoles and role.position in range(
+            lowestRank, highestRank + 1
+        ):
+            toExpel[role.position] = role
 
     # sort toManage by rank and then by given sort order
     iniList = toManage.copy()
@@ -592,12 +602,13 @@ async def manageRoles(ctx: commands.Context):
 
     finList = toManage.copy()
 
-    if sublist(iniList, finList):
+    if sublist(iniList, finList) and not len(toExpel):
         movedRoles.append(
             discord.Embed(title="Move Roles", description="No roles to move")
         )
-        await asyncio.gather(*taskList)
-        return movedRoles
+        await asyncio.gather(*taskList, return_exceptions=True)
+        if output:
+            return movedRoles
     else:
         iniStringList = (
             "\n".join((f'{x[1]["Name"]}' for x in iniList))
@@ -629,22 +640,21 @@ async def manageRoles(ctx: commands.Context):
                     )
                 )
 
-    await asyncio.gather(*taskList)
+    await asyncio.gather(*taskList, return_exceptions=True)
     msgStr = f"Editing positions from {lowestRank} to {highestRank}\n"
     msg = await ctx.send(msgStr)
     # move roles to correct rank positions
     for i, (role, roleShort) in enumerate(toManage):
         rolePos = lowestRank + i
         logP.debug(f"Moving role {role.name} to position {rolePos}")
-        if role.position != rolePos:
-            await msg.edit(
-                content=(
-                    msgStr
-                    + f"\nMoving ***{role.name}*** to position ***{rolePos}***"
-                )
-            )
+        toMove[role] = rolePos
+    if len(toMove) or len(toExpel):
+        for i, rolePos in enumerate(sorted(list(toExpel.keys()))):
+            role = toExpel[rolePos]
+            logP.debug(f"Expel role {role.name}")
+            toMove[role] = highestRank - len(toExpel) + 1 + i
 
-            await role.edit(position=(rolePos))
+        await ctx.guild.edit_role_positions(toMove)
     await msg.delete()
 
     # return moved roles as single message to function call
@@ -655,7 +665,8 @@ async def manageRoles(ctx: commands.Context):
                 description="Order unchanged, positions updated.",
             )
         )
-    return movedRoles
+    if output:
+        return movedRoles
 
 
 # function to setup cog

@@ -602,6 +602,7 @@ async def toAdd(ctx: commands.Context, user: discord.Member, givenBuild: list):
     sendMes = discord.Embed(title="Adding Roles")
     rolesToAddStr = ""
     rolesToAdd = []
+    toMove = {}
     for role in addList:
         logP.debug(f"Trying to add role: {role}")
 
@@ -621,12 +622,14 @@ async def toAdd(ctx: commands.Context, user: discord.Member, givenBuild: list):
             logP.debug(f"colour for rank {roleRank} is: {colour}")
             roleId = await user.guild.create_role(name=role, color=colour)
             roleToPos = calcRolePos(ctx, roleId)
-            await roleId.edit(position=roleToPos)
+            toMove[roleId] = roleToPos
 
         # add requested role to user
         rolesToAdd.append(roleId)
         rolesToAddStr += f"Added {roleId}!\n"
 
+    if len(toMove):
+        await ctx.guild.edit_role_positions(toMove)
     # trim the user of excess roles
     # debug("TO CUT")
     # await cut(ctx, [user])
