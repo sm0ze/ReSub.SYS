@@ -569,6 +569,7 @@ async def manageRoles(ctx: commands.Context, output=True):
 
     # spam message negation
     movedRoles: list[discord.Embed] = []
+    toMove = {}
 
     iniFieldString = str("Initial Roles **(Position)** Final Roles\n")
 
@@ -596,7 +597,7 @@ async def manageRoles(ctx: commands.Context, output=True):
         movedRoles.append(
             discord.Embed(title="Move Roles", description="No roles to move")
         )
-        await asyncio.gather(*taskList)
+        await asyncio.gather(*taskList, return_exceptions=True)
         if output:
             return movedRoles
     else:
@@ -630,7 +631,7 @@ async def manageRoles(ctx: commands.Context, output=True):
                     )
                 )
 
-    await asyncio.gather(*taskList)
+    await asyncio.gather(*taskList, return_exceptions=True)
     msgStr = f"Editing positions from {lowestRank} to {highestRank}\n"
     msg = await ctx.send(msgStr)
     # move roles to correct rank positions
@@ -638,14 +639,9 @@ async def manageRoles(ctx: commands.Context, output=True):
         rolePos = lowestRank + i
         logP.debug(f"Moving role {role.name} to position {rolePos}")
         if role.position != rolePos:
-            await msg.edit(
-                content=(
-                    msgStr
-                    + f"\nMoving ***{role.name}*** to position ***{rolePos}***"
-                )
-            )
-
-            await role.edit(position=(rolePos))
+            toMove[role] = rolePos
+    if len(toMove):
+        await ctx.guild.edit_role_positions(toMove)
     await msg.delete()
 
     # return moved roles as single message to function call
