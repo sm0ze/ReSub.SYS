@@ -569,11 +569,20 @@ async def manageRoles(ctx: commands.Context, output=True):
 
     # spam message negation
     movedRoles: list[discord.Embed] = []
-    toMove = {}
+    toMove: dict[discord.Role, int] = {}
+    toExpel: dict[int, discord.Role] = {}
 
     iniFieldString = str("Initial Roles **(Position)** Final Roles\n")
 
     toManage, lowestRank, highestRank = getGuildSupeRoles(ctx)
+
+    toManageRoles = [x[0] for x in toManage]
+
+    for role in ctx.guild.roles:
+        if role not in toManageRoles and role.position in range(
+            lowestRank, highestRank + 1
+        ):
+            toExpel[role.position] = role
 
     # sort toManage by rank and then by given sort order
     iniList = toManage.copy()
@@ -593,7 +602,7 @@ async def manageRoles(ctx: commands.Context, output=True):
 
     finList = toManage.copy()
 
-    if sublist(iniList, finList):
+    if sublist(iniList, finList) and not len(toExpel):
         movedRoles.append(
             discord.Embed(title="Move Roles", description="No roles to move")
         )
@@ -638,9 +647,13 @@ async def manageRoles(ctx: commands.Context, output=True):
     for i, (role, roleShort) in enumerate(toManage):
         rolePos = lowestRank + i
         logP.debug(f"Moving role {role.name} to position {rolePos}")
-        if role.position != rolePos:
-            toMove[role] = rolePos
-    if len(toMove):
+        toMove[role] = rolePos
+    if len(toMove) or len(toExpel):
+        for i, rolePos in enumerate(sorted(list(toExpel.keys()))):
+            role = toExpel[rolePos]
+            logP.debug(f"Expel role {role.name}")
+            toMove[role] = highestRank - len(toExpel) + 1 + i
+
         await ctx.guild.edit_role_positions(toMove)
     await msg.delete()
 
