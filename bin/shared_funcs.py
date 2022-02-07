@@ -1,6 +1,7 @@
 # sharedFuncs.py
 
 import asyncio
+import copy
 import datetime
 import math
 import os
@@ -1191,7 +1192,12 @@ async def sendMessage(mes, location: Messageable):
 
         for emb in pageEmbedList(embList):
             if emb:
-                task = asyncio.create_task(location.send(embed=emb))
+                embDict: dict = emb.to_dict()
+                task = asyncio.create_task(
+                    location.send(
+                        embed=discord.Embed.from_dict(copy.deepcopy(embDict))
+                    )
+                )
                 taskList.append(task)
 
         for string in stringList:
@@ -1204,7 +1210,12 @@ async def sendMessage(mes, location: Messageable):
     elif isinstance(mes, discord.Embed):
         for emb in pageEmbed(mes):
             if emb:
-                task = asyncio.create_task(location.send(embed=emb))
+                embDict: dict = emb.to_dict()
+                task = asyncio.create_task(
+                    location.send(
+                        embed=discord.Embed.from_dict(copy.deepcopy(embDict))
+                    )
+                )
                 taskList.append(task)
 
     elif isinstance(mes, str):
