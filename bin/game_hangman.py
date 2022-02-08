@@ -53,7 +53,9 @@ async def hangmanGame(
             if not move:
                 intId = interaction.data.get("custom_id", "None")
                 if intId == "HangManExit":
-                    await hangmanEnd(answer, countDown, sentMes, "QUIT")
+                    await hangmanEnd(
+                        answer, leftToGuess, countDown, sentMes, "QUIT"
+                    )
                     return
             else:
                 move = move[0]
@@ -75,27 +77,30 @@ async def hangmanGame(
                 countDown,
             ) = hangmanRender(countDown, leftToGuess, ans=answer)
         if not leftToGuess:
-            await hangmanEnd(answer, countDown, sentMes, "WON")
+            await hangmanEnd(answer, leftToGuess, countDown, sentMes, "WON")
             return
         if countDown == 0:
-            await hangmanEnd(answer, countDown, sentMes, "LOST")
+            await hangmanEnd(answer, leftToGuess, countDown, sentMes, "LOST")
             return
 
 
-async def hangmanEnd(answer, countDown, sentMes, endCon):
+async def hangmanEnd(
+    answer, leftToGuess, countDown, sentMes: discord.Message, endCon
+):
     return await sentMes.edit(
         embed=discord.Embed(
             title="Hangman",
-            description=hangmanEndMes(answer, countDown, endCon),
+            description=hangmanEndMes(answer, leftToGuess, countDown, endCon),
         ),
         view=None,
     )
 
 
-def hangmanEndMes(answer, countDown, endCon):
+def hangmanEndMes(answer, leftToGuess, countDown, endCon):
     retMes = (
         f"Game {endCon} at {countDown} lives left.\n"
         f"Correct answer was ***{answer}***.\n"
+        f"You guessed: {soFarGuessed(leftToGuess,answer,False)}"
     )
     if endCon == "WON":
         retMes += "Well done!"
@@ -179,7 +184,19 @@ def hangmanRender(
 
 
 def genGuessStr(leftToGuess: list, ans: str, guesses: list, livesLeft: int):
-    retString = "```\n"
+    retString = soFarGuessed(leftToGuess, ans)
+    if not guesses:
+        guesses = []
+    retString += f"Guesses: {' '.join(guesses)}\n\n"
+    retString += genHangman(livesLeft)
+    retString += "```"
+    return retString
+
+
+def soFarGuessed(leftToGuess, ans, strStart=True):
+    retString = ""
+    if strStart:
+        retString += "```\n"
     if not ans:
         ans = []
     for char in ans:
@@ -188,11 +205,6 @@ def genGuessStr(leftToGuess: list, ans: str, guesses: list, livesLeft: int):
         else:
             retString += f"{char} "
     retString = retString.strip() + "\n"
-    if not guesses:
-        guesses = []
-    retString += f"Guesses: {' '.join(guesses)}\n\n"
-    retString += genHangman(livesLeft)
-    retString += "```"
     return retString
 
 
