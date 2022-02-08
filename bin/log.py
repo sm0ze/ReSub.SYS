@@ -11,8 +11,8 @@ FORMATTER = logging.Formatter(
 
 # get the path to the root of the project
 Root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-os.makedirs(Root + "\\Logs", exist_ok=True)
-LOG_FILE = Root + "\\Logs\\ReSubBot.log"
+os.makedirs(os.path.join(Root, "Logs"), exist_ok=True)
+LOG_FILE = os.path.join(Root, "Logs", "ReSubBot.log")
 
 
 def get_console_handler():
