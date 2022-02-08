@@ -100,6 +100,7 @@ STATS_HYBRID_DMG = 0.05
 STATS_HYBRID_AG = 0.35
 
 MAX_BAC_ROUNDS = 15
+HANGMAN_LIVES = 10
 
 SORT_ORDER = (
     "Strength",
@@ -112,8 +113,8 @@ SORT_ORDER = (
     "Pain Tolerance",
     "Vision",
     "Invisibility",
-    "Olfactory Sense",
     "Aural Faculty",
+    "Olfactory Sense",
     "Tactile Reception",
     "Gustatory Ability",
     "Proprioception",
