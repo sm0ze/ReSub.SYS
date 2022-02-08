@@ -20,6 +20,7 @@ def askToken(var: str) -> str:
 
 HOST_NAME = socket.gethostname().lower()
 logP.info(f"Name of host for program is: {HOST_NAME}")
+logP.info(f"Saving logs at: {log.LOG_FILE}")
 
 COMMANDS_ON = True
 
