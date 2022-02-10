@@ -434,6 +434,7 @@ def load(
     key: int, cache_file=getLoc(SAVE_FILE, "data")
 ) -> dict[int, dict[str]]:
     try:
+        value = {}
         with SqliteDict(cache_file) as mydict:
             # No need to use commit(), since we are only loading data!
             value = mydict[key]
@@ -441,6 +442,7 @@ def load(
         return value
     except Exception as ex:
         logP.warning(["Error during loading data:", ex])
+        return {}
 
 
 def lvlEqu(givVar: float = 0, inv=0) -> float:

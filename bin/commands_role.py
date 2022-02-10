@@ -107,7 +107,7 @@ class roleCommands(
         self, bot: typing.Union[commands.bot.Bot, commands.bot.AutoShardedBot]
     ):
         self.bot = bot
-        if not HOST_NAME == "sm0ze-desktop":
+        if HOST_NAME not in ["sm0ze-desktop", "smoze-laptop"]:
             self.remOnCallLoop.start()
             self.remOnPatrolLoop.start()
             self.xpLoop.start()
@@ -491,10 +491,9 @@ class roleCommands(
                 if not currPatrolStart:
                     currPatrolStart = currTime
                     authInf["currPatrol"]["patrolStart"] = currTime
-                totPatrols = authInf["topStatistics"]["totalPatrols"]
-                if not totPatrols:
-                    totPatrols = 1
-                    authInf["topStatistics"]["totalPatrols"] = totPatrols
+                totPatrols = authInf["topStatistics"].setdefault(
+                    "totalPatrols", 1
+                )
                 currPatrolTime = str(
                     datetime.timedelta(
                         seconds=int(round(currTime - currPatrolStart))
@@ -1274,10 +1273,16 @@ class roleCommands(
             patrolStats = ""
             if patrolRole:
                 if peep in patrolRole.members:
-                    isPatrolStr = f"Patrol #{stuff[5]['totalPatrols']}"
+                    isPatrolStr = (
+                        f"Patrol #{stuff[5].setdefault('totalPatrols',1)}"
+                    )
 
-                    currPatrolStart = stuff[4]["patrolStart"]
                     currTime = time.time()
+
+                    currPatrolStart = stuff[4].setdefault(
+                        "patrolStart", currTime
+                    )
+
                     if currPatrolStart:
                         patrolLength = currTime - currPatrolStart
                     else:
@@ -1285,7 +1290,7 @@ class roleCommands(
                     currPatrolTime = str(
                         datetime.timedelta(seconds=int(round(patrolLength)))
                     )
-                    currPatrolTasks = stuff[4]["patrolTasks"]
+                    currPatrolTasks = stuff[4].setdefault("patrolTasks", 1)
 
                     patrolStats += (
                         f"{peep.display_name} has completed "
