@@ -3,6 +3,7 @@ import typing
 
 from discord.ext import commands
 from bin.game_bullsAndCows import bacGame
+from bin.game_wordBullsAndCows import wbacGame
 
 import bin.log as log
 from bin.game_hangman import hangmanGame
@@ -42,6 +43,18 @@ class gameCommands(
         ctx: commands.Context,
     ):
         asyncio.create_task(bacGame(ctx, self.bot))
+
+    @commands.command(
+        enabled=COMMANDS_ON,
+        aliases=["wbac"],
+        brief=getBrief("wordBullsAndCows"),
+        description=getDesc("wordBullsAndCows"),
+    )
+    async def wordBullsAndCows(
+        self,
+        ctx: commands.Context,
+    ):
+        asyncio.create_task(wbacGame(ctx, self.bot))
 
 
 # function to setup cog
