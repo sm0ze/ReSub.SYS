@@ -14,7 +14,7 @@ import bin.log as log
 import bin.shared_dyVars as shared_dyVars
 from bin.battle import (
     NPC,
-    NPCFromBuild,
+    NPC_from_diff,
     battler,
     player,
     playerFromBuild,
@@ -23,6 +23,7 @@ from bin.battle import (
 from bin.exceptions import notNPC, notSupeDuel
 from bin.shared_consts import (
     ACTIVE_SEC,
+    AID_WEIGHT,
     ASK_NPC,
     ASK_SELF,
     COMMANDS_ON,
@@ -39,7 +40,6 @@ from bin.shared_consts import (
     TIME_TILL_ON_CALL,
 )
 from bin.shared_dicts import (
-    activeDic,
     baseDict,
     leader,
     masterEhnDict,
@@ -64,6 +64,7 @@ from bin.shared_funcs import (
     genderPick,
     getBrief,
     getDesc,
+    getHelpers,
     isSuper,
     load,
     loadAllPers,
@@ -335,16 +336,8 @@ class roleCommands(
         onCallRole = get(ctx.guild.roles, id=int(ROLE_ID_CALL))
 
         aidPick = [patrolRole, onCallRole, supRole]
-        aidWeight = [40, 30, 30]
 
-        if taskAdd:
-            logP.debug(f"Guild has {len(ctx.message.guild.roles)} roles")
-            addPeeps = pickWeightedSupe(ctx, aidPick, aidWeight, taskAdd)
-            xpList = [[x, taskShrt["Aid"]] for x in addPeeps[:taskAdd]]
-            xpList.append([ctx.author, 1])
-        else:
-            addPeeps = ""
-            xpList = [[ctx.author, 1]]
+        xpList = getHelpers(ctx, taskShrt, taskAdd, aidPick, AID_WEIGHT)
         logP.debug("xpList = ", xpList)
         logP.debug(f"{taskType}\nTask XP: {lvlEqu(taskWorth[0], 1)}")
         emptMes = discord.Embed(
@@ -573,38 +566,62 @@ class roleCommands(
         loadedPers = loadAllPers(self.bot)
         opp = None
         possibleOpp = None
-        selectedLoaded = False
         if loadedPers:
+            oppDict = {}
+            for pers in loadedPers:
+                oppDict[pers[0]] = (pers[1], pers[2])
             possibleOpp = [
                 x[0]
                 for x in loadedPers
-                if x[0].baseV
+                if x[0].bV
                 in range(max(0, autSpent[0][1] - 3), autSpent[0][1] + 4)
             ]
             if possibleOpp:
-                toLoad = random.choices([True, False], weights=[0.4, 0.6])[0]
+                liveWeights = [0.4, 0.6]
+                liveWeights = [1, 0]
+                toLoad = random.choices([True, False], weights=liveWeights)[0]
                 if toLoad:
                     opp = random.choice(possibleOpp)
                     opp.reRoll()
-                    selectedLoaded = True
 
         if not opp:
             opp = rollTask(self.bot, ctx.author)
 
+        isPersStr = ""
+        if toLoad:
+            isPersStr = (
+                f"persistent (W: {oppDict[opp][0]}, L: {oppDict[opp][1]}) "
+            )
         await ctx.send(
             (
                 f"It is {aOrAn(opp.rank).lower()} {opp.rank} task to stop the "
-                f"{'persistent ' if possibleOpp else ''}"
+                f"{isPersStr}"
                 f"{opp.desc} {opp.n.lower()} {opp.task}.\n"
                 f"{genderPick(opp.gender, 'their').capitalize()} enhancements "
-                f"are:\n{blToStr(opp.bL)}"
+                f"are ({opp.bV}):\n{blToStr(opp.bL)}"
             )
         )
+
+        # buff the players based on the task rank here
+        patrolRole = get(ctx.guild.roles, id=int(ROLE_ID_PATROL))
+        supRole = get(ctx.guild.roles, name=SUPE_ROLE)
+        onCallRole = get(ctx.guild.roles, id=int(ROLE_ID_CALL))
+
+        aidPick = [patrolRole, onCallRole, supRole]
+        taskAdd = taskVar["addP"][opp.rank]
+
+        aidList = pickWeightedSupe(ctx, aidPick, AID_WEIGHT, taskAdd)
+
         bat = battler(self.bot, [ctx.author, opp])
 
+        if aidList:
+            mes = ""
+            mes += bat.playerList[0].grabExtra(ctx, aidList)
+            mes += bat.playerList[1].grabExtra(ctx, aidList, True)
+            await sendMessage(mes, ctx)
+
         bat.playerList[0].play = True
-        if not selectedLoaded:
-            await bat.playerList[1].genBuff(ctx)
+        await bat.playerList[1].genBuff(ctx)
         asyncio.create_task(startDuel(self.bot, ctx, bat, saveOpp=opp))
 
     @commands.command(
@@ -1335,14 +1352,7 @@ class roleCommands(
         description=getDesc("generateDuel"),
     )
     async def generateDuel(self, ctx: commands.Context, diffVal: int = 0):
-        authCount = count(ctx.author)
-        genVal = authCount[0] + diffVal
-        build = genBuild(genVal)
-
-        peepName: list = random.choice(activeDic["person"])
-        peepName = str(peepName[0]).capitalize()
-
-        FPC = NPCFromBuild(self.bot, build, peepName)
+        FPC = NPC_from_diff(ctx, diffVal)
         mes = f"Creating a duel against {FPC.n}\n**Enhancements**\n"
 
         mes += blToStr(FPC.bL)

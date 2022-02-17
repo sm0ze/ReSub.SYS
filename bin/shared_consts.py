@@ -124,4 +124,6 @@ SORT_ORDER = (
     "Omniscience",
 )
 
+AID_WEIGHT = [40, 30, 30]
+
 VERSION = 0

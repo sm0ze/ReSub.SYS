@@ -21,8 +21,11 @@ from sqlitedict import SqliteDict
 import bin.log as log
 import bin.shared_dyVars as shared_dyVars
 from bin.shared_consts import (
+    AID_WEIGHT,
     GEM_DIFF,
     HOST_NAME,
+    ROLE_ID_CALL,
+    ROLE_ID_PATROL,
     SAVE_FILE,
     SORT_ORDER,
     START_CHANNEL,
@@ -1411,13 +1414,12 @@ class genOppNPC:
         self.picUrl = self.bot.user.display_avatar.url
         self.power, self.desc = self.rollPower()
         self.n, self.gender = self.rollName()
-        self.baseV = baseVal
+        self.bV = baseVal
+        self.bL = self.rollBuild()
         self.reRoll()
 
     def reRoll(self):
         self.rank, self.task = self.rollRank()
-        self.bV = self.baseV + int(taskVar["addP"][self.rank])
-        self.bL = self.rollBuild()
 
     def rollBuild(self):
         return genBuild(
@@ -1640,8 +1642,13 @@ def savePers(
         pers.bot = None
         with SqliteDict(cache_file) as mydict:
             if pers.n in mydict.iterkeys():
-                mydict[str(pers.n)]["win"] += int(bool(toSave))
-                mydict[str(pers.n)]["loss"] += int(bool(toSave))
+                prevSave = mydict[str(pers.n)]
+
+                prevSave["win"] += int(bool(toSave))
+                prevSave["loss"] += int(not bool(toSave))
+
+                mydict[str(pers.n)] = prevSave
+
             elif toSave:
                 mydict[str(pers.n)] = {
                     "win": 1,
@@ -1771,3 +1778,28 @@ def sublist(ls1, ls2):
             return False
 
     return True
+
+
+def getHelpers(
+    ctx: commands.Context,
+    taskShrt,
+    taskAdd,
+    aidPick=None,
+    aidWeight=AID_WEIGHT,
+):
+    if not aidPick:
+        patrolRole = get(ctx.guild.roles, id=int(ROLE_ID_PATROL))
+        supRole = get(ctx.guild.roles, name=SUPE_ROLE)
+        onCallRole = get(ctx.guild.roles, id=int(ROLE_ID_CALL))
+
+        aidPick = [patrolRole, onCallRole, supRole]
+
+    if taskAdd:
+        logP.debug(f"Guild has {len(ctx.message.guild.roles)} roles")
+        addPeeps = pickWeightedSupe(ctx, aidPick, aidWeight, taskAdd)
+        xpList = [[x, taskShrt["Aid"]] for x in addPeeps[:taskAdd]]
+        xpList.append([ctx.author, 1])
+    else:
+        addPeeps = ""
+        xpList = [[ctx.author, 1]]
+    return xpList
