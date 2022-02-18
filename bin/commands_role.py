@@ -579,7 +579,6 @@ class roleCommands(
             ]
             if possibleOpp:
                 liveWeights = [0.4, 0.6]
-                liveWeights = [1, 0]
                 toLoad = random.choices([True, False], weights=liveWeights)[0]
                 if toLoad:
                     opp = random.choice(possibleOpp)
@@ -632,7 +631,6 @@ class roleCommands(
 
         else:
             await bat.playerList[1].genBuff(ctx)
-            return
 
         bat.playerList[0].play = True
         asyncio.create_task(startDuel(self.bot, ctx, bat, saveOpp=opp))
