@@ -66,7 +66,7 @@ class defaultCommands(
         mes = f"{CMD_PREFIX}{step.get('cmd', 'N/A')} {step.get('arg', '')}"
         retEmb.add_field(name="Command", value=mes)
         retEmb.add_field(name="Explanation", value=step.get("txt", "N/A"))
-        await sendMessage(retEmb, ctx)
+        await sendMessage(ctx, retEmb)
         memDict[ctx.author.id]["tut"] = memDict[ctx.author.id]["tut"][1:]
         save(ctx.guild.id, memDict)
 

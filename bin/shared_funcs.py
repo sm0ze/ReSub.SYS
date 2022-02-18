@@ -575,7 +575,7 @@ async def cut(
         # notify current user has been finished with to discord
         sendMes += f"{peep.display_name} has been cut down to size!"
         mes.add_field(name=f"{peep.display_name}", value=sendMes)
-    await sendMessage(mes, ctx)
+    await sendMessage(ctx, mes)
 
 
 async def toAdd(ctx: commands.Context, user: discord.Member, givenBuild: list):
@@ -642,7 +642,7 @@ async def toAdd(ctx: commands.Context, user: discord.Member, givenBuild: list):
     if rolesToAddStr:
         sendMes.add_field(name=f"{user.display_name}", value=rolesToAddStr)
         await user.add_roles(*rolesToAdd)
-    await sendMessage(sendMes, ctx)
+    await sendMessage(ctx, sendMes)
 
 
 async def pointsLeft(
@@ -1173,21 +1173,21 @@ def isSuper(
     return supeGuildList
 
 
-async def sendMessage(mes, location: Messageable):
+async def sendMessage(location: Messageable, mes):
     """
     What are you sending and where is it going?
     This function will friut ninja your message to discord message
-    length standards.
+    length standards and send it to the specified location.
 
     Parameters
     ----------
+    location : Messageable
+        The location to send the message. A messagable type is a Discord type
+        that has the attribute send.
     mes : Str | Discord.Embed | list[Discord.Embed]
         The message to be sent. Can be a string that will be split by line
         into 2000 character chunks, or a Discord.Embed that will be split by
         24 field chunks, or a list of Discord.Embed that will be split.
-    location : Messageable
-        The location to send the message. A messagable type is a Discord type
-        that has the attribute send.
     """
     taskList = []
     if isinstance(mes, list):
@@ -1803,3 +1803,18 @@ def getHelpers(
         addPeeps = ""
         xpList = [[ctx.author, 1]]
     return xpList
+
+
+def buffStrGen(
+    buffDict: dict, peepName: str, aidNames: list[str], isBot=False
+):
+    aidStr = str(aidNames)
+    if isBot:
+        aidStr = f"{len(aidNames)} helper{pluralInt(len(aidNames))}"
+    peepEmb = discord.Embed(
+        title="Granted Buffs",
+        description=f"{peepName} is receiving aid from {aidStr} and gains:",
+    )
+    for key, val in buffDict.items():
+        peepEmb.add_field(name=key, value=val)
+    return peepEmb

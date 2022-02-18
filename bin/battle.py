@@ -506,6 +506,9 @@ class player:
         reGen=False,
     ):
         retDict = {}
+
+        memberNames = [x.display_name for x in memberList]
+
         for member in memberList:
             if reGen:
                 peep = player(
@@ -564,7 +567,7 @@ class player:
             self.swi += addSwi
             retDict["Swi"] = retDict.get("Swi", 0) + addSwi
 
-        return str(retDict) + "\n"
+        return (retDict, memberNames)
 
 
 class battler:
@@ -585,9 +588,9 @@ class battler:
             if not isinstance(peep, player):
                 continue
             if peep.play:
-                await sendMessage(mes, peep.p)
+                await sendMessage(peep.p, mes)
         if toThrd:
-            await sendMessage(mes, thrd)
+            await sendMessage(thrd, mes)
 
     async def findPlayers(self, dontAsk):
         for peep in self.playerList:
@@ -1470,8 +1473,8 @@ async def testBattle(
                 f"TotAv of {lossSum[key][0]/totRound:0.2f}\n"
             ),
         )
-    await sendMessage(mes, ctx)
-    await sendMessage(embMes, ctx)
+    await sendMessage(ctx, mes)
+    await sendMessage(ctx, embMes)
 
 
 def NPC_from_diff(

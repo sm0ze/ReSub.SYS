@@ -54,6 +54,7 @@ from bin.shared_dicts import (
 from bin.shared_funcs import (
     aOrAn,
     blToStr,
+    buffStrGen,
     buildFromString,
     compareBuild,
     count,
@@ -179,7 +180,7 @@ class roleCommands(
         roleGrab = get(ctx.guild.roles, name=SUPE_ROLE)
         mes = await tatsuXpGrab(roleGrab)
         if mes:
-            await sendMessage(mes, ctx)
+            await sendMessage(ctx, mes)
 
     @commands.command(
         enabled=COMMANDS_ON,
@@ -270,7 +271,7 @@ class roleCommands(
             for peep in npcDict.keys():
                 peepListStr += f"{peep}: {npcDict[peep]['name']}\n"
             newMes.add_field(name="ID: Name", value=peepListStr)
-        await sendMessage(newMes, ctx)
+        await sendMessage(ctx, newMes)
 
     @commands.command(
         enabled=COMMANDS_ON,
@@ -615,13 +616,25 @@ class roleCommands(
         bat = battler(self.bot, [ctx.author, opp])
 
         if aidList:
-            mes = ""
-            mes += bat.playerList[0].grabExtra(ctx, aidList)
-            mes += bat.playerList[1].grabExtra(ctx, aidList, True)
-            await sendMessage(mes, ctx)
+
+            peepBuffDict, aidNames = bat.playerList[0].grabExtra(ctx, aidList)
+            notPeepBuffDict = bat.playerList[1].grabExtra(ctx, aidList, True)[
+                0
+            ]
+
+            peepEmb = buffStrGen(peepBuffDict, bat.playerList[0].n, aidNames)
+
+            notPeepEmb = buffStrGen(
+                notPeepBuffDict, bat.playerList[1].n, aidNames, True
+            )
+
+            await sendMessage(ctx, [peepEmb, notPeepEmb])
+
+        else:
+            await bat.playerList[1].genBuff(ctx)
+            return
 
         bat.playerList[0].play = True
-        await bat.playerList[1].genBuff(ctx)
         asyncio.create_task(startDuel(self.bot, ctx, bat, saveOpp=opp))
 
     @commands.command(
@@ -665,8 +678,8 @@ class roleCommands(
                 await ctx.send("You need a buildname to save this build.")
             builds[buildName] = spent([ctx.author])[0][2]
             await sendMessage(
-                (f"Saved {buildName}: " f"{builds[buildName]}"),
                 ctx,
+                (f"Saved {buildName}: " f"{builds[buildName]}"),
             )
 
         elif lowDoWith in delStrL:
@@ -677,8 +690,8 @@ class roleCommands(
                 await ctx.send(f"no saved build named {buildName}")
                 return
             await sendMessage(
-                ("Removed build: " f"{builds.pop(buildName)}"),
                 ctx,
+                ("Removed build: " f"{builds.pop(buildName)}"),
             )
 
         elif lowDoWith in allStrL:
@@ -701,7 +714,7 @@ class roleCommands(
                 mes.add_field(
                     name=f"Build ({FPC.fB[0]}): {name}", value=valStr
                 )
-            await sendMessage(mes, ctx)
+            await sendMessage(ctx, mes)
 
         elif lowDoWith in clearStrL:
             valLen = len(builds.keys())
@@ -1053,7 +1066,7 @@ class roleCommands(
                 ]
             pointList = sorted(resubXPList, key=lambda x: -x[1])
 
-            blankMessage = discord.Embed(title=f"{enh.upper()} Leaderboard")
+            leaderMes = discord.Embed(title=f"{enh.upper()} Leaderboard")
 
         elif enhL in patrolKey.keys():
             peepList = load(ctx.guild.id)
@@ -1069,9 +1082,7 @@ class roleCommands(
 
             pointList = sorted(grabbedStatList, key=lambda x: -x[1])
 
-            blankMessage = discord.Embed(
-                title=f"{patrolKey[enhL]} Leaderboard"
-            )
+            leaderMes = discord.Embed(title=f"{patrolKey[enhL]} Leaderboard")
 
         elif enh:
             if enhL not in leader.keys():
@@ -1088,7 +1099,7 @@ class roleCommands(
             lenPeep = len(peepDict.keys())
             avPeep = round(sumPeep / lenPeep, 2)
 
-            blankMessage = discord.Embed(
+            leaderMes = discord.Embed(
                 title=f"{enh} Enhancement Leaderboard",
                 description=(
                     f"{enh} is being used by {lenPeep} "
@@ -1132,7 +1143,7 @@ class roleCommands(
                 f"point{pluralInt(totPoints)} spent."
             )
 
-            blankMessage = discord.Embed(
+            leaderMes = discord.Embed(
                 title="Host Leaderboard", description=desc
             )
         # counter and blank message to track user number and
@@ -1140,39 +1151,39 @@ class roleCommands(
         i = strtLead + 1
         for group in pointList[strtLead:endLead]:
             if not enh:
-                blankMessage.add_field(
+                leaderMes.add_field(
                     inline=True,
                     name=f"**{i}** - {group[0].display_name}",
                     value=f"\t{group[1]} enhancement{pluralInt(group[1])}",
                 )
             else:
                 if enhL in xpKey:
-                    blankMessage.add_field(
+                    leaderMes.add_field(
                         inline=True,
                         name=f"**{i}** - {group[0].display_name}",
                         value=f"\t{group[1]:,} {enh.upper()}",
                     )
                 elif enhL in patrolKey.keys():
                     if enhL == "active" or enhL == "tasks":
-                        blankMessage.add_field(
+                        leaderMes.add_field(
                             inline=True,
                             name=f"**{i}** - {group[0].display_name}",
                             value=f"\t{group[1]} task{pluralInt(group[1])}",
                         )
                     elif enhL == "long":
-                        blankMessage.add_field(
+                        leaderMes.add_field(
                             inline=True,
                             name=f"**{i}** - {group[0].display_name}",
                             value=f"\t{datetime.timedelta(seconds=group[1])}",
                         )
                     elif enhL == "patrols":
-                        blankMessage.add_field(
+                        leaderMes.add_field(
                             inline=True,
                             name=f"**{i}** - {group[0].display_name}",
                             value=f"\t{group[1]} patrol{pluralInt(group[1])}",
                         )
                 else:
-                    blankMessage.add_field(
+                    leaderMes.add_field(
                         inline=True,
                         name=f"**{i}** - {group[0].display_name}",
                         value=f"\tRank {group[1]} {enh}",
@@ -1180,11 +1191,11 @@ class roleCommands(
 
             i += 1
 
-        blankMessage.set_footer(
+        leaderMes.set_footer(
             text=HOST_NAME, icon_url=self.bot.user.display_avatar
         )
         # return leaderboard to command caller
-        await sendMessage(blankMessage, ctx)
+        await sendMessage(ctx, leaderMes)
 
     @commands.command(
         enabled=COMMANDS_ON,
@@ -1352,12 +1363,12 @@ class roleCommands(
         description=getDesc("generateDuel"),
     )
     async def generateDuel(self, ctx: commands.Context, diffVal: int = 0):
-        FPC = NPC_from_diff(ctx, diffVal)
+        FPC: NPC = NPC_from_diff(ctx, diffVal)
         mes = f"Creating a duel against {FPC.n}\n**Enhancements**\n"
 
         mes += blToStr(FPC.bL)
 
-        await sendMessage(mes, ctx)
+        await sendMessage(ctx, mes)
 
         bat = battler(self.bot, [ctx.author, FPC])
         await bat.findPlayers(0)

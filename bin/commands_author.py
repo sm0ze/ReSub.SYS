@@ -36,7 +36,7 @@ class authorCommands(
                         "uploads/2018/03/talktohand_trans.png"
                     )
                 )
-                await sendMessage(mes, ctx)
+                await sendMessage(ctx, mes)
                 passCheck = False
             return passCheck
 
@@ -59,8 +59,8 @@ class authorCommands(
         setGemDiff(var)
 
         await sendMessage(
-            f"Gem diff is now {GEMDIFF} times total XP or {100 * GEMDIFF}%",
             ctx,
+            f"Gem diff is now {GEMDIFF} times total XP or {100 * GEMDIFF}%",
         )
 
 
