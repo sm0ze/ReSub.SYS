@@ -14,7 +14,7 @@ import bin.log as log
 import bin.shared_dyVars as shared_dyVars
 from bin.battle import (
     NPC,
-    NPCFromBuild,
+    NPC_from_diff,
     battler,
     player,
     playerFromBuild,
@@ -23,6 +23,7 @@ from bin.battle import (
 from bin.exceptions import notNPC, notSupeDuel
 from bin.shared_consts import (
     ACTIVE_SEC,
+    AID_WEIGHT,
     ASK_NPC,
     ASK_SELF,
     COMMANDS_ON,
@@ -39,7 +40,6 @@ from bin.shared_consts import (
     TIME_TILL_ON_CALL,
 )
 from bin.shared_dicts import (
-    activeDic,
     baseDict,
     leader,
     masterEhnDict,
@@ -54,6 +54,7 @@ from bin.shared_dicts import (
 from bin.shared_funcs import (
     aOrAn,
     blToStr,
+    buffStrGen,
     buildFromString,
     compareBuild,
     count,
@@ -64,6 +65,7 @@ from bin.shared_funcs import (
     genderPick,
     getBrief,
     getDesc,
+    getHelpers,
     isSuper,
     load,
     loadAllPers,
@@ -178,7 +180,7 @@ class roleCommands(
         roleGrab = get(ctx.guild.roles, name=SUPE_ROLE)
         mes = await tatsuXpGrab(roleGrab)
         if mes:
-            await sendMessage(mes, ctx)
+            await sendMessage(ctx, mes)
 
     @commands.command(
         enabled=COMMANDS_ON,
@@ -269,7 +271,7 @@ class roleCommands(
             for peep in npcDict.keys():
                 peepListStr += f"{peep}: {npcDict[peep]['name']}\n"
             newMes.add_field(name="ID: Name", value=peepListStr)
-        await sendMessage(newMes, ctx)
+        await sendMessage(ctx, newMes)
 
     @commands.command(
         enabled=COMMANDS_ON,
@@ -335,16 +337,8 @@ class roleCommands(
         onCallRole = get(ctx.guild.roles, id=int(ROLE_ID_CALL))
 
         aidPick = [patrolRole, onCallRole, supRole]
-        aidWeight = [40, 30, 30]
 
-        if taskAdd:
-            logP.debug(f"Guild has {len(ctx.message.guild.roles)} roles")
-            addPeeps = pickWeightedSupe(ctx, aidPick, aidWeight, taskAdd)
-            xpList = [[x, taskShrt["Aid"]] for x in addPeeps[:taskAdd]]
-            xpList.append([ctx.author, 1])
-        else:
-            addPeeps = ""
-            xpList = [[ctx.author, 1]]
+        xpList = getHelpers(ctx, taskShrt, taskAdd, aidPick, AID_WEIGHT)
         logP.debug("xpList = ", xpList)
         logP.debug(f"{taskType}\nTask XP: {lvlEqu(taskWorth[0], 1)}")
         emptMes = discord.Embed(
@@ -573,38 +567,74 @@ class roleCommands(
         loadedPers = loadAllPers(self.bot)
         opp = None
         possibleOpp = None
-        selectedLoaded = False
         if loadedPers:
+            oppDict = {}
+            for pers in loadedPers:
+                oppDict[pers[0]] = (pers[1], pers[2])
             possibleOpp = [
                 x[0]
                 for x in loadedPers
-                if x[0].baseV
+                if x[0].bV
                 in range(max(0, autSpent[0][1] - 3), autSpent[0][1] + 4)
             ]
             if possibleOpp:
-                toLoad = random.choices([True, False], weights=[0.4, 0.6])[0]
+                liveWeights = [0.4, 0.6]
+                liveWeights = [1, 0]
+                toLoad = random.choices([True, False], weights=liveWeights)[0]
                 if toLoad:
                     opp = random.choice(possibleOpp)
                     opp.reRoll()
-                    selectedLoaded = True
 
         if not opp:
             opp = rollTask(self.bot, ctx.author)
 
+        isPersStr = ""
+        if toLoad:
+            isPersStr = (
+                f"persistent (W: {oppDict[opp][0]}, L: {oppDict[opp][1]}) "
+            )
         await ctx.send(
             (
                 f"It is {aOrAn(opp.rank).lower()} {opp.rank} task to stop the "
-                f"{'persistent ' if possibleOpp else ''}"
+                f"{isPersStr}"
                 f"{opp.desc} {opp.n.lower()} {opp.task}.\n"
                 f"{genderPick(opp.gender, 'their').capitalize()} enhancements "
-                f"are:\n{blToStr(opp.bL)}"
+                f"are ({opp.bV}):\n{blToStr(opp.bL)}"
             )
         )
+
+        # buff the players based on the task rank here
+        patrolRole = get(ctx.guild.roles, id=int(ROLE_ID_PATROL))
+        supRole = get(ctx.guild.roles, name=SUPE_ROLE)
+        onCallRole = get(ctx.guild.roles, id=int(ROLE_ID_CALL))
+
+        aidPick = [patrolRole, onCallRole, supRole]
+        taskAdd = taskVar["addP"][opp.rank]
+
+        aidList = pickWeightedSupe(ctx, aidPick, AID_WEIGHT, taskAdd)
+
         bat = battler(self.bot, [ctx.author, opp])
 
-        bat.playerList[0].play = True
-        if not selectedLoaded:
+        if aidList:
+
+            peepBuffDict, aidNames = bat.playerList[0].grabExtra(ctx, aidList)
+            notPeepBuffDict = bat.playerList[1].grabExtra(ctx, aidList, True)[
+                0
+            ]
+
+            peepEmb = buffStrGen(peepBuffDict, bat.playerList[0].n, aidNames)
+
+            notPeepEmb = buffStrGen(
+                notPeepBuffDict, bat.playerList[1].n, aidNames, True
+            )
+
+            await sendMessage(ctx, [peepEmb, notPeepEmb])
+
+        else:
             await bat.playerList[1].genBuff(ctx)
+            return
+
+        bat.playerList[0].play = True
         asyncio.create_task(startDuel(self.bot, ctx, bat, saveOpp=opp))
 
     @commands.command(
@@ -648,8 +678,8 @@ class roleCommands(
                 await ctx.send("You need a buildname to save this build.")
             builds[buildName] = spent([ctx.author])[0][2]
             await sendMessage(
-                (f"Saved {buildName}: " f"{builds[buildName]}"),
                 ctx,
+                (f"Saved {buildName}: " f"{builds[buildName]}"),
             )
 
         elif lowDoWith in delStrL:
@@ -660,8 +690,8 @@ class roleCommands(
                 await ctx.send(f"no saved build named {buildName}")
                 return
             await sendMessage(
-                ("Removed build: " f"{builds.pop(buildName)}"),
                 ctx,
+                ("Removed build: " f"{builds.pop(buildName)}"),
             )
 
         elif lowDoWith in allStrL:
@@ -684,7 +714,7 @@ class roleCommands(
                 mes.add_field(
                     name=f"Build ({FPC.fB[0]}): {name}", value=valStr
                 )
-            await sendMessage(mes, ctx)
+            await sendMessage(ctx, mes)
 
         elif lowDoWith in clearStrL:
             valLen = len(builds.keys())
@@ -1036,7 +1066,7 @@ class roleCommands(
                 ]
             pointList = sorted(resubXPList, key=lambda x: -x[1])
 
-            blankMessage = discord.Embed(title=f"{enh.upper()} Leaderboard")
+            leaderMes = discord.Embed(title=f"{enh.upper()} Leaderboard")
 
         elif enhL in patrolKey.keys():
             peepList = load(ctx.guild.id)
@@ -1052,9 +1082,7 @@ class roleCommands(
 
             pointList = sorted(grabbedStatList, key=lambda x: -x[1])
 
-            blankMessage = discord.Embed(
-                title=f"{patrolKey[enhL]} Leaderboard"
-            )
+            leaderMes = discord.Embed(title=f"{patrolKey[enhL]} Leaderboard")
 
         elif enh:
             if enhL not in leader.keys():
@@ -1071,7 +1099,7 @@ class roleCommands(
             lenPeep = len(peepDict.keys())
             avPeep = round(sumPeep / lenPeep, 2)
 
-            blankMessage = discord.Embed(
+            leaderMes = discord.Embed(
                 title=f"{enh} Enhancement Leaderboard",
                 description=(
                     f"{enh} is being used by {lenPeep} "
@@ -1115,7 +1143,7 @@ class roleCommands(
                 f"point{pluralInt(totPoints)} spent."
             )
 
-            blankMessage = discord.Embed(
+            leaderMes = discord.Embed(
                 title="Host Leaderboard", description=desc
             )
         # counter and blank message to track user number and
@@ -1123,39 +1151,39 @@ class roleCommands(
         i = strtLead + 1
         for group in pointList[strtLead:endLead]:
             if not enh:
-                blankMessage.add_field(
+                leaderMes.add_field(
                     inline=True,
                     name=f"**{i}** - {group[0].display_name}",
                     value=f"\t{group[1]} enhancement{pluralInt(group[1])}",
                 )
             else:
                 if enhL in xpKey:
-                    blankMessage.add_field(
+                    leaderMes.add_field(
                         inline=True,
                         name=f"**{i}** - {group[0].display_name}",
                         value=f"\t{group[1]:,} {enh.upper()}",
                     )
                 elif enhL in patrolKey.keys():
                     if enhL == "active" or enhL == "tasks":
-                        blankMessage.add_field(
+                        leaderMes.add_field(
                             inline=True,
                             name=f"**{i}** - {group[0].display_name}",
                             value=f"\t{group[1]} task{pluralInt(group[1])}",
                         )
                     elif enhL == "long":
-                        blankMessage.add_field(
+                        leaderMes.add_field(
                             inline=True,
                             name=f"**{i}** - {group[0].display_name}",
                             value=f"\t{datetime.timedelta(seconds=group[1])}",
                         )
                     elif enhL == "patrols":
-                        blankMessage.add_field(
+                        leaderMes.add_field(
                             inline=True,
                             name=f"**{i}** - {group[0].display_name}",
                             value=f"\t{group[1]} patrol{pluralInt(group[1])}",
                         )
                 else:
-                    blankMessage.add_field(
+                    leaderMes.add_field(
                         inline=True,
                         name=f"**{i}** - {group[0].display_name}",
                         value=f"\tRank {group[1]} {enh}",
@@ -1163,11 +1191,11 @@ class roleCommands(
 
             i += 1
 
-        blankMessage.set_footer(
+        leaderMes.set_footer(
             text=HOST_NAME, icon_url=self.bot.user.display_avatar
         )
         # return leaderboard to command caller
-        await sendMessage(blankMessage, ctx)
+        await sendMessage(ctx, leaderMes)
 
     @commands.command(
         enabled=COMMANDS_ON,
@@ -1335,19 +1363,12 @@ class roleCommands(
         description=getDesc("generateDuel"),
     )
     async def generateDuel(self, ctx: commands.Context, diffVal: int = 0):
-        authCount = count(ctx.author)
-        genVal = authCount[0] + diffVal
-        build = genBuild(genVal)
-
-        peepName: list = random.choice(activeDic["person"])
-        peepName = str(peepName[0]).capitalize()
-
-        FPC = NPCFromBuild(self.bot, build, peepName)
+        FPC: NPC = NPC_from_diff(ctx, diffVal)
         mes = f"Creating a duel against {FPC.n}\n**Enhancements**\n"
 
         mes += blToStr(FPC.bL)
 
-        await sendMessage(mes, ctx)
+        await sendMessage(ctx, mes)
 
         bat = battler(self.bot, [ctx.author, FPC])
         await bat.findPlayers(0)

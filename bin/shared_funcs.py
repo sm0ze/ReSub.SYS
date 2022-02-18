@@ -21,8 +21,11 @@ from sqlitedict import SqliteDict
 import bin.log as log
 import bin.shared_dyVars as shared_dyVars
 from bin.shared_consts import (
+    AID_WEIGHT,
     GEM_DIFF,
     HOST_NAME,
+    ROLE_ID_CALL,
+    ROLE_ID_PATROL,
     SAVE_FILE,
     SORT_ORDER,
     START_CHANNEL,
@@ -572,7 +575,7 @@ async def cut(
         # notify current user has been finished with to discord
         sendMes += f"{peep.display_name} has been cut down to size!"
         mes.add_field(name=f"{peep.display_name}", value=sendMes)
-    await sendMessage(mes, ctx)
+    await sendMessage(ctx, mes)
 
 
 async def toAdd(ctx: commands.Context, user: discord.Member, givenBuild: list):
@@ -639,7 +642,7 @@ async def toAdd(ctx: commands.Context, user: discord.Member, givenBuild: list):
     if rolesToAddStr:
         sendMes.add_field(name=f"{user.display_name}", value=rolesToAddStr)
         await user.add_roles(*rolesToAdd)
-    await sendMessage(sendMes, ctx)
+    await sendMessage(ctx, sendMes)
 
 
 async def pointsLeft(
@@ -1170,21 +1173,21 @@ def isSuper(
     return supeGuildList
 
 
-async def sendMessage(mes, location: Messageable):
+async def sendMessage(location: Messageable, mes):
     """
     What are you sending and where is it going?
     This function will friut ninja your message to discord message
-    length standards.
+    length standards and send it to the specified location.
 
     Parameters
     ----------
+    location : Messageable
+        The location to send the message. A messagable type is a Discord type
+        that has the attribute send.
     mes : Str | Discord.Embed | list[Discord.Embed]
         The message to be sent. Can be a string that will be split by line
         into 2000 character chunks, or a Discord.Embed that will be split by
         24 field chunks, or a list of Discord.Embed that will be split.
-    location : Messageable
-        The location to send the message. A messagable type is a Discord type
-        that has the attribute send.
     """
     taskList = []
     if isinstance(mes, list):
@@ -1411,13 +1414,12 @@ class genOppNPC:
         self.picUrl = self.bot.user.display_avatar.url
         self.power, self.desc = self.rollPower()
         self.n, self.gender = self.rollName()
-        self.baseV = baseVal
+        self.bV = baseVal
+        self.bL = self.rollBuild()
         self.reRoll()
 
     def reRoll(self):
         self.rank, self.task = self.rollRank()
-        self.bV = self.baseV + int(taskVar["addP"][self.rank])
-        self.bL = self.rollBuild()
 
     def rollBuild(self):
         return genBuild(
@@ -1640,8 +1642,13 @@ def savePers(
         pers.bot = None
         with SqliteDict(cache_file) as mydict:
             if pers.n in mydict.iterkeys():
-                mydict[str(pers.n)]["win"] += int(bool(toSave))
-                mydict[str(pers.n)]["loss"] += int(bool(toSave))
+                prevSave = mydict[str(pers.n)]
+
+                prevSave["win"] += int(bool(toSave))
+                prevSave["loss"] += int(not bool(toSave))
+
+                mydict[str(pers.n)] = prevSave
+
             elif toSave:
                 mydict[str(pers.n)] = {
                     "win": 1,
@@ -1771,3 +1778,43 @@ def sublist(ls1, ls2):
             return False
 
     return True
+
+
+def getHelpers(
+    ctx: commands.Context,
+    taskShrt,
+    taskAdd,
+    aidPick=None,
+    aidWeight=AID_WEIGHT,
+):
+    if not aidPick:
+        patrolRole = get(ctx.guild.roles, id=int(ROLE_ID_PATROL))
+        supRole = get(ctx.guild.roles, name=SUPE_ROLE)
+        onCallRole = get(ctx.guild.roles, id=int(ROLE_ID_CALL))
+
+        aidPick = [patrolRole, onCallRole, supRole]
+
+    if taskAdd:
+        logP.debug(f"Guild has {len(ctx.message.guild.roles)} roles")
+        addPeeps = pickWeightedSupe(ctx, aidPick, aidWeight, taskAdd)
+        xpList = [[x, taskShrt["Aid"]] for x in addPeeps[:taskAdd]]
+        xpList.append([ctx.author, 1])
+    else:
+        addPeeps = ""
+        xpList = [[ctx.author, 1]]
+    return xpList
+
+
+def buffStrGen(
+    buffDict: dict, peepName: str, aidNames: list[str], isBot=False
+):
+    aidStr = str(aidNames)
+    if isBot:
+        aidStr = f"{len(aidNames)} helper{pluralInt(len(aidNames))}"
+    peepEmb = discord.Embed(
+        title="Granted Buffs",
+        description=f"{peepName} is receiving aid from {aidStr} and gains:",
+    )
+    for key, val in buffDict.items():
+        peepEmb.add_field(name=key, value=val)
+    return peepEmb

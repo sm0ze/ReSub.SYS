@@ -277,7 +277,7 @@ class managerCommands(
         for peep in cached_file.keys():
             if peep not in memberIdList:
                 mes.add_field(name=f"{peep}", value=cached_file[peep])
-        await sendMessage(mes, ctx)
+        await sendMessage(ctx, mes)
 
     @commands.command(
         enabled=COMMANDS_ON,
@@ -437,7 +437,7 @@ class managerCommands(
                         pass
             embList.append(emb)
 
-        await sendMessage(embList, cmdThrd)
+        await sendMessage(cmdThrd, embList)
         await cmdThrd.send("Printed Save File.")
         await ctx.send("Printed Save File.")
         # archive thread
@@ -521,7 +521,7 @@ class managerCommands(
             ),
         )
         mes.set_footer(text=HOST_NAME, icon_url=self.bot.user.display_avatar)
-        await sendMessage(mes, ctx)
+        await sendMessage(ctx, mes)
 
     @commands.command(
         enabled=COMMANDS_ON,
@@ -532,7 +532,7 @@ class managerCommands(
     # have been created by bot
     async def moveRoles(self, ctx: commands.Context):
         managed = await manageRoles(ctx)
-        asyncio.create_task(sendMessage(managed, ctx))
+        asyncio.create_task(sendMessage(ctx, managed))
 
     @commands.command(
         enabled=COMMANDS_ON,

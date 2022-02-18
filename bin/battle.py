@@ -30,6 +30,7 @@ from bin.shared_consts import (
     STATS_HYBRID_DMG,
 )
 from bin.shared_dicts import (
+    activeDic,
     attackRollDict,
     baseDict,
     bonusDict,
@@ -49,6 +50,7 @@ from bin.shared_funcs import (
     dictShrtBuild,
     duelMoveView,
     funcBuild,
+    genBuild,
     genOppNPC,
     pluralInt,
     savePers,
@@ -150,8 +152,8 @@ class player:
 
         addHP = baseDict["HP"] + self.calcStat("HP")
 
-        self.hp = addHP
         self.totHP = addHP
+        self.hp = self.totHP
 
         self.rec = baseDict["REC"] + self.calcStat("Rec")
 
@@ -497,6 +499,76 @@ class player:
                     f"Buffed MA & PA by: {atBonus}.\nBuffed HP by: {hpBonus}"
                 )
 
+    def grabExtra(
+        self,
+        ctx: commands.Context,
+        memberList: list[discord.Member],
+        reGen=False,
+    ):
+        retDict = {}
+
+        memberNames = [x.display_name for x in memberList]
+
+        for member in memberList:
+            if reGen:
+                peep = player(
+                    NPC_from_diff(
+                        self.bot,
+                        ctx,
+                        0,
+                        member,
+                    ),
+                    self.bot,
+                )
+            else:
+                peep = player(member, self.bot)
+
+            addHP = peep.calcStat("HP")
+            self.totHP += addHP
+            self.hp = self.totHP
+            retDict["HP"] = retDict.get("HP", 0) + addHP
+
+            addRec = peep.calcStat("Rec")
+            self.rec += addRec
+            retDict["Rec"] = retDict.get("Rec", 0) + addRec
+
+            addSta = peep.calcStat("Sta")
+            addStaTot = peep.calcStat("StaTot")
+            addStaR = peep.calcStat("StaR")
+            self.sta += addSta
+            self.totSta += addStaTot
+            self.staR += addStaR
+            retDict["Sta"] = retDict.get("Sta", 0) + addSta
+            retDict["StaTot"] = retDict.get("StaTot", 0) + addStaTot
+            retDict["StaR"] = retDict.get("StaR", 0) + addStaR
+
+            addPA = peep.calcStat("PA")
+            addPD = peep.calcStat("PD")
+            self.pa += addPA
+            self.pd += addPD
+            retDict["PA"] = retDict.get("PA", 0) + addPA
+            retDict["PD"] = retDict.get("PD", 0) + addPD
+
+            addMA = peep.calcStat("MA")
+            addMD = peep.calcStat("MD")
+            self.ma += addMA
+            self.md += addMD
+            retDict["MA"] = retDict.get("MA", 0) + addMA
+            retDict["MD"] = retDict.get("MD", 0) + addMD
+
+            addEva = peep.calcStat("Eva")
+            addAcc = peep.calcStat("Acc")
+            self.eva += addEva
+            self.acc += addAcc
+            retDict["Eva"] = retDict.get("Eva", 0) + addEva
+            retDict["Acc"] = retDict.get("Acc", 0) + addAcc
+
+            addSwi = peep.calcStat("Swi")
+            self.swi += addSwi
+            retDict["Swi"] = retDict.get("Swi", 0) + addSwi
+
+        return (retDict, memberNames)
+
 
 class battler:
     def __init__(
@@ -516,9 +588,9 @@ class battler:
             if not isinstance(peep, player):
                 continue
             if peep.play:
-                await sendMessage(mes, peep.p)
+                await sendMessage(peep.p, mes)
         if toThrd:
-            await sendMessage(mes, thrd)
+            await sendMessage(thrd, mes)
 
     async def findPlayers(self, dontAsk):
         for peep in self.playerList:
@@ -1167,7 +1239,8 @@ async def startDuel(
 
     winnerName = winner.n if isinstance(winner, player) else winner
     if saveOpp:
-        savePers(saveOpp, not bool(winner == bat.playerList[0].n))
+        saveNew = not bool(winnerName == bat.playerList[0].n)
+        savePers(saveOpp, saveNew)
     if output:
         damageMes = ""
         for peep in bat.playerList:
@@ -1400,5 +1473,24 @@ async def testBattle(
                 f"TotAv of {lossSum[key][0]/totRound:0.2f}\n"
             ),
         )
-    await sendMessage(mes, ctx)
-    await sendMessage(embMes, ctx)
+    await sendMessage(ctx, mes)
+    await sendMessage(ctx, embMes)
+
+
+def NPC_from_diff(
+    bot: typing.Union[commands.bot.Bot, commands.bot.AutoShardedBot],
+    ctx: commands.Context,
+    diffVal: int,
+    member=None,
+):
+    if not member:
+        member = ctx.author
+    authCount = count(member)
+    genVal = authCount[0] + diffVal
+    build = genBuild(genVal)
+
+    peepName: list = random.choice(activeDic["person"])
+    peepName = str(peepName[0]).capitalize()
+
+    FPC = NPCFromBuild(bot, build, peepName)
+    return FPC
