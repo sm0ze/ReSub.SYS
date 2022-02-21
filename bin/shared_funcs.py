@@ -1890,7 +1890,7 @@ def histUptime(
 
     longestUp = max([x[1] - x[0] for x in online])
 
-    minTimePeriod = totalTime / timelineSquares
+    minTimePeriod = totalTime / max(1, timelineSquares)
     for period in timeLine:
         timelineStr += timeChar[int(startChar)] * max(
             1, int((period[1] - period[0]) / minTimePeriod)
