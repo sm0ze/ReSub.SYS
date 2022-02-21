@@ -3,6 +3,7 @@
 import asyncio
 import copy
 import datetime
+import json
 import math
 import os
 import random
@@ -1818,3 +1819,59 @@ def buffStrGen(
     for key, val in buffDict.items():
         peepEmb.add_field(name=key, value=val)
     return peepEmb
+
+
+def saveTime(givenTime: float, fileName: str = getLoc("uptime.json", "data")):
+    # add given time to the time list in the file
+    # return the time list
+    try:
+        with open(fileName, "r") as f:
+            timeList = json.load(f)
+    except Exception as ex:
+        logP.warning(f"Error during loading data: {ex}")
+        timeList = []
+    timeList.append(givenTime)
+    with open(fileName, "w") as f:
+        json.dump(timeList, f)
+    return timeList
+
+
+def histUptime(fileName: str = getLoc("uptime.json", "data")):
+    currTime = time.time()
+    saveTime(currTime)
+
+    try:
+        with open(fileName, "r") as f:
+            timeList = json.load(f)
+    except Exception as ex:
+        logP.warning(f"Error during loading data: {ex}")
+        timeList = []
+
+    retStr = ""
+    offline = []
+    online = []
+    currTime = time.time()
+    currCheck = currTime
+
+    for t in timeList[::-1]:
+        if currCheck - t > 90:
+            offline.append([t, currCheck])
+        else:
+            online.append([t, currCheck])
+        currCheck = float(t)
+
+    online.reverse()
+    offline.reverse()
+
+    totalTime = currTime - currCheck
+    onlineTime = sum([x[1] - x[0] for x in online])
+    offlineTime = sum([x[1] - x[0] for x in offline])
+    uptime = onlineTime / totalTime * 100
+
+    retStr += f"**Total Uptime:** {totalTime:.2f} seconds\n"
+    retStr += f"**Online Uptime:** {onlineTime:.2f} seconds\n"
+    retStr += f"**Offline Uptime:** {offlineTime:.2f} seconds\n"
+    retStr += f"**Uptime:** {uptime:.2f}%\n\n"
+    retStr += f"online ({len(online)})\noffline ({len(offline)})"
+
+    return retStr

@@ -5,13 +5,21 @@ import time
 import typing
 
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from discord.utils import get
 
 import bin.log as log
 from bin.shared_consts import CMD_PREFIX, COMMANDS_ON, HOST_NAME, START_TIME
 from bin.shared_dicts import freeRoles, tutDict
-from bin.shared_funcs import getBrief, getDesc, load, save, sendMessage
+from bin.shared_funcs import (
+    getBrief,
+    getDesc,
+    histUptime,
+    load,
+    save,
+    saveTime,
+    sendMessage,
+)
 
 logP = log.get_logger(__name__)
 
@@ -37,7 +45,15 @@ class defaultCommands(
         global loginTime
         loginTime = time.time()
 
+        self.online_time.start()
+
         logP.debug(f"Bot last login time set as: {loginTime}")
+
+    @tasks.loop(minutes=1)
+    async def online_time(self):
+        currTime = time.time()
+        saveTime(currTime)
+        logP.debug(f"Saved uptime ping to file at: {currTime}")
 
     @commands.command(
         enabled=COMMANDS_ON,
@@ -231,6 +247,16 @@ class defaultCommands(
             )
         await ctx.send(sendMes)
         logP.debug("command role resolution: " + sendMes)
+
+    @commands.command(
+        enabled=COMMANDS_ON,
+        aliases=["uh", "hist"],
+        brief=getBrief("uptimeHistory"),
+        description=getDesc("uptimeHistory"),
+    )
+    async def uptimeHistory(self, ctx: commands.Context):
+        mes = histUptime()
+        await sendMessage(ctx, mes)
 
     @commands.command(
         enabled=COMMANDS_ON,
