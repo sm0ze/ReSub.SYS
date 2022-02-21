@@ -7,6 +7,7 @@ import json
 import math
 import os
 import random
+import re
 import time
 import typing
 
@@ -1836,42 +1837,79 @@ def saveTime(givenTime: float, fileName: str = getLoc("uptime.json", "data")):
     return timeList
 
 
-def histUptime(fileName: str = getLoc("uptime.json", "data")):
+def histUptime(
+    timelineSquares: int = 100, fileName: str = getLoc("uptime.json", "data")
+):
     currTime = time.time()
     saveTime(currTime)
-
+    timeList: list[float] = []
     try:
         with open(fileName, "r") as f:
             timeList = json.load(f)
     except Exception as ex:
         logP.warning(f"Error during loading data: {ex}")
-        timeList = []
 
     retStr = ""
-    offline = []
-    online = []
+    offline: list[list[float]] = []
+    online: list[list[float]] = []
+    timeLine = []
     currTime = time.time()
     currCheck = currTime
+    timelineStr = ""
+
+    timeChar = ["🟥", "🟩"]
+    # [
+    #   [0, 1],
+    #   [1, 2],
+    #   [2, 3],
+    # ]
 
     for t in timeList[::-1]:
         if currCheck - t > 90:
-            offline.append([t, currCheck])
+            if not offline or not offline[-1][0] == currCheck:
+                offline.append([t, currCheck])
+            else:
+                offline[-1][0] = t
         else:
-            online.append([t, currCheck])
+            if not online or not online[-1][0] == currCheck:
+                online.append([t, currCheck])
+            else:
+                online[-1][0] = t
         currCheck = float(t)
 
     online.reverse()
     offline.reverse()
+
+    timeLine = sorted(online + offline, key=lambda x: x[0])
+    startChar = True if timeLine[0] == online[0] else False
 
     totalTime = currTime - currCheck
     onlineTime = sum([x[1] - x[0] for x in online])
     offlineTime = sum([x[1] - x[0] for x in offline])
     uptime = onlineTime / totalTime * 100
 
+    longestUp = max([x[1] - x[0] for x in online])
+
+    minTimePeriod = totalTime / timelineSquares
+    for period in timeLine:
+        timelineStr += timeChar[int(startChar)] * max(
+            1, int((period[1] - period[0]) / minTimePeriod)
+        )
+        startChar = not startChar
+
     retStr += f"**Total Uptime:** {totalTime:.2f} seconds\n"
     retStr += f"**Online Uptime:** {onlineTime:.2f} seconds\n"
     retStr += f"**Offline Uptime:** {offlineTime:.2f} seconds\n"
-    retStr += f"**Uptime:** {uptime:.2f}%\n\n"
-    retStr += f"online ({len(online)})\noffline ({len(offline)})"
+    retStr += f"**Uptime:** {uptime:.2f}%\n"
+    retStr += f"**Longest Online:** {longestUp:.2f} seconds\n"
+    retStr += (
+        f"**Timeline:** {len(timelineStr)} squares\n"
+        f"online periods: {len(online)}, offline periods: {len(offline)}\n"
+        f"{fixStrLineLenTen(timelineStr)} "
+    )
 
     return retStr
+
+
+def fixStrLineLenTen(str: str):
+    return re.sub(r"(.{10})(?!$)", r"\g<1>\n", str)

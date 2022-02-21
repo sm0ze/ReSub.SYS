@@ -52,8 +52,11 @@ class defaultCommands(
     @tasks.loop(minutes=1)
     async def online_time(self):
         currTime = time.time()
-        saveTime(currTime)
-        logP.debug(f"Saved uptime ping to file at: {currTime}")
+        if self.bot.ws:
+            saveTime(currTime)
+            logP.debug(f"Saved uptime ping to file at: {currTime}")
+        else:
+            logP.debug(f"websocket down at: {currTime}")
 
     @commands.command(
         enabled=COMMANDS_ON,
@@ -254,8 +257,8 @@ class defaultCommands(
         brief=getBrief("uptimeHistory"),
         description=getDesc("uptimeHistory"),
     )
-    async def uptimeHistory(self, ctx: commands.Context):
-        mes = histUptime()
+    async def uptimeHistory(self, ctx: commands.Context, squares: int = 100):
+        mes = histUptime(squares)
         await sendMessage(ctx, mes)
 
     @commands.command(
