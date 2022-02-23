@@ -1,12 +1,13 @@
 # ErrorHandler.py
 
 import datetime
+
 import discord
 from discord.ext import commands
 
 from bin.exceptions import notNPC, notSupeDuel
-from bin.shared_consts import CMD_PREFIX, ERROR_THREAD
-from bin.shared_funcs import dupeError, getSendLoc
+from bin.shared.consts import CMD_PREFIX, ERROR_THREAD
+from bin.shared.funcs import dupeError, getSendLoc
 
 
 class ErrorHandler(commands.Cog):

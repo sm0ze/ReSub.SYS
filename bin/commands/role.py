@@ -6,12 +6,9 @@ import random
 import time
 import typing
 
-import discord
-from discord.ext import commands, tasks
-from discord.utils import get
-
 import bin.log as log
-import bin.shared_dyVars as shared_dyVars
+import bin.shared.dyVars as shared_dyVars
+import discord
 from bin.battle import (
     NPC,
     NPC_from_diff,
@@ -21,7 +18,7 @@ from bin.battle import (
     startDuel,
 )
 from bin.exceptions import notNPC, notSupeDuel
-from bin.shared_consts import (
+from bin.shared.consts import (
     ACTIVE_SEC,
     AID_WEIGHT,
     ASK_NPC,
@@ -39,7 +36,7 @@ from bin.shared_consts import (
     TASK_CD,
     TIME_TILL_ON_CALL,
 )
-from bin.shared_dicts import (
+from bin.shared.dicts import (
     baseDict,
     leader,
     masterEhnDict,
@@ -51,7 +48,7 @@ from bin.shared_dicts import (
     rsltDict,
     taskVar,
 )
-from bin.shared_funcs import (
+from bin.shared.funcs import (
     aOrAn,
     blToStr,
     buffStrGen,
@@ -89,6 +86,8 @@ from bin.shared_funcs import (
     toCut,
     topEnh,
 )
+from discord.ext import commands, tasks
+from discord.utils import get
 
 logP = log.get_logger(__name__)
 

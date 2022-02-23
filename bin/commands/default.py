@@ -4,14 +4,11 @@ import math
 import time
 import typing
 
-import discord
-from discord.ext import commands, tasks
-from discord.utils import get
-
 import bin.log as log
-from bin.shared_consts import CMD_PREFIX, COMMANDS_ON, HOST_NAME, START_TIME
-from bin.shared_dicts import freeRoles, tutDict
-from bin.shared_funcs import (
+import discord
+from bin.shared.consts import CMD_PREFIX, COMMANDS_ON, HOST_NAME, START_TIME
+from bin.shared.dicts import freeRoles, tutDict
+from bin.shared.funcs import (
     getBrief,
     getDesc,
     histUptime,
@@ -20,6 +17,8 @@ from bin.shared_funcs import (
     saveTime,
     sendMessage,
 )
+from discord.ext import commands, tasks
+from discord.utils import get
 
 logP = log.get_logger(__name__)
 

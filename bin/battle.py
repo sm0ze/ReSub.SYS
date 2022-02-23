@@ -13,7 +13,7 @@ from numpy import mean
 
 import bin.log as log
 from bin.exceptions import noFields, notADuel
-from bin.shared_consts import (
+from bin.shared.consts import (
     ASK_ALL,
     ASK_NPC,
     ASK_SELF,
@@ -29,7 +29,7 @@ from bin.shared_consts import (
     STATS_HYBRID_AG,
     STATS_HYBRID_DMG,
 )
-from bin.shared_dicts import (
+from bin.shared.dicts import (
     activeDic,
     attackRollDict,
     baseDict,
@@ -42,7 +42,7 @@ from bin.shared_dicts import (
     restrictedList,
     statCalcDict,
 )
-from bin.shared_funcs import (
+from bin.shared.funcs import (
     aOrAn,
     checkDefined,
     checkUndefined,

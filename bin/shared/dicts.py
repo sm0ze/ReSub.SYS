@@ -1,9 +1,8 @@
 # power.py
 # this file is a dictionary and other lengthy constant variables dump
 
-import pandas as pd
-
 import bin.log as log
+import pandas as pd
 
 logP = log.get_logger(__name__)
 
