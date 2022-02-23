@@ -1,13 +1,12 @@
 import asyncio
 import typing
 
-from discord.ext import commands
-from bin.game_bullsAndCows import bacGame
-
 import bin.log as log
-from bin.game_hangman import hangmanGame
-from bin.shared_consts import COMMANDS_ON
-from bin.shared_funcs import getBrief, getDesc
+from bin.minigame.bullsAndCows import bacGame
+from bin.minigame.hangman import hangmanGame
+from bin.shared.consts import COMMANDS_ON
+from bin.shared.funcs import getBrief, getDesc
+from discord.ext import commands
 
 logP = log.get_logger(__name__)
 

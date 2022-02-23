@@ -5,13 +5,10 @@ import sys
 import time
 import typing
 
-import discord
-from discord.ext import commands
-from discord.utils import get
-
 import bin.log as log
+import discord
 from bin.battle import testBattle
-from bin.shared_consts import (
+from bin.shared.consts import (
     COMMANDS_ON,
     DL_ARC_DUR,
     HOST_NAME,
@@ -24,8 +21,8 @@ from bin.shared_consts import (
     SUPE_ROLE,
     TIME_TILL_ON_CALL,
 )
-from bin.shared_dicts import leader, masterEhnDict
-from bin.shared_funcs import (
+from bin.shared.dicts import leader, masterEhnDict
+from bin.shared.funcs import (
     cut,
     dupeMes,
     getBrief,
@@ -45,6 +42,8 @@ from bin.shared_funcs import (
     sublist,
     topEnh,
 )
+from discord.ext import commands
+from discord.utils import get
 
 logP = log.get_logger(__name__)
 

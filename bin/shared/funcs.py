@@ -11,18 +11,11 @@ import re
 import time
 import typing
 
+import bin.log as log
+import bin.shared.dyVars as shared_dyVars
 import discord
 import tatsu
-from discord.abc import Messageable
-from discord.ext import commands
-from discord.ext.commands.converter import MemberConverter, RoleConverter
-from discord.utils import get
-from mee6_py_api import API
-from sqlitedict import SqliteDict
-
-import bin.log as log
-import bin.shared_dyVars as shared_dyVars
-from bin.shared_consts import (
+from bin.shared.consts import (
     AID_WEIGHT,
     GEM_DIFF,
     HOST_NAME,
@@ -34,7 +27,7 @@ from bin.shared_consts import (
     SUPE_ROLE,
     TATSU,
 )
-from bin.shared_dicts import (
+from bin.shared.dicts import (
     activeDic,
     baseDict,
     cmdInf,
@@ -48,6 +41,12 @@ from bin.shared_dicts import (
     restrictedList,
     taskVar,
 )
+from discord.abc import Messageable
+from discord.ext import commands
+from discord.ext.commands.converter import MemberConverter, RoleConverter
+from discord.utils import get
+from mee6_py_api import API
+from sqlitedict import SqliteDict
 
 logP = log.get_logger(__name__)
 
@@ -419,7 +418,9 @@ def getLoc(fileName: str, dirName: str):
     # get the root directory of the project
     # if there is not a directory of dirName, create it
     # return the full path of the file
-    rootDir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    rootDir = os.path.dirname(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    )
     if not os.path.exists(os.path.join(rootDir, dirName)):
         os.mkdir(os.path.join(rootDir, dirName))
     return os.path.join(rootDir, dirName, fileName)

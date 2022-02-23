@@ -2,9 +2,8 @@ import os
 import socket
 import time
 
-import dotenv
-
 import bin.log as log
+import dotenv
 
 logP = log.get_logger(__name__)
 

@@ -2,11 +2,10 @@ import asyncio
 import random
 import typing
 
-import discord
-from discord.ext import commands
-
 import bin.log as log
-from bin.shared_consts import MAX_BAC_ROUNDS
+import discord
+from bin.shared.consts import MAX_BAC_ROUNDS
+from discord.ext import commands
 
 logP = log.get_logger(__name__)
 

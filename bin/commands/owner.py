@@ -1,13 +1,12 @@
 import sys
 import typing
 
+import bin.log as log
 import discord
 import git
+from bin.shared.consts import COMMANDS_ON, HOST_NAME
+from bin.shared.funcs import asleep, dupeMes, getBrief, getDesc, load, save
 from discord.ext import commands
-
-import bin.log as log
-from bin.shared_consts import COMMANDS_ON, HOST_NAME
-from bin.shared_funcs import asleep, dupeMes, getBrief, getDesc, load, save
 
 logP = log.get_logger(__name__)
 

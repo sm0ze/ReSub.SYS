@@ -1,12 +1,11 @@
 import asyncio
 import typing
 
+import bin.log as log
 import discord
+from bin.shared.consts import HANGMAN_LIVES
 from discord.ext import commands
 from random_word import RandomWords
-
-import bin.log as log
-from bin.shared_consts import HANGMAN_LIVES
 
 logP = log.get_logger(__name__)
 
