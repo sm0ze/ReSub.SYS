@@ -13,6 +13,7 @@ from bin.battle import (
     NPC,
     NPC_from_diff,
     battler,
+    buffAidList,
     player,
     playerFromBuild,
     startDuel,
@@ -51,7 +52,6 @@ from bin.shared.dicts import (
 from bin.shared.funcs import (
     aOrAn,
     blToStr,
-    buffStrGen,
     buildFromString,
     compareBuild,
     count,
@@ -613,23 +613,7 @@ class roleCommands(
 
         bat = battler(self.bot, [ctx.author, opp])
 
-        if aidList:
-
-            peepBuffDict, aidNames = bat.playerList[0].grabExtra(ctx, aidList)
-            notPeepBuffDict = bat.playerList[1].grabExtra(ctx, aidList, True)[
-                0
-            ]
-
-            peepEmb = buffStrGen(peepBuffDict, bat.playerList[0].n, aidNames)
-
-            notPeepEmb = buffStrGen(
-                notPeepBuffDict, bat.playerList[1].n, aidNames, True
-            )
-
-            await sendMessage(ctx, [peepEmb, notPeepEmb])
-
-        else:
-            await bat.playerList[1].genBuff(ctx)
+        await buffAidList(ctx, aidList, bat)
 
         bat.playerList[0].play = True
         asyncio.create_task(startDuel(self.bot, ctx, bat, saveOpp=opp))

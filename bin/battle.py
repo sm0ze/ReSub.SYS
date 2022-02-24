@@ -9,11 +9,13 @@ from collections import namedtuple
 
 import discord
 from discord.ext import commands
+from discord.utils import get
 from numpy import mean
 
 import bin.log as log
 from bin.exceptions import noFields, notADuel
 from bin.shared.consts import (
+    AID_WEIGHT,
     ASK_ALL,
     ASK_NPC,
     ASK_SELF,
@@ -23,11 +25,14 @@ from bin.shared.consts import (
     HIT_RANGE,
     HOST_NAME,
     PLAYER_TURN_WAIT,
+    ROLE_ID_CALL,
+    ROLE_ID_PATROL,
     ROUND_LIMIT,
     STATS_HP_AG,
     STATS_HP_DMG,
     STATS_HYBRID_AG,
     STATS_HYBRID_DMG,
+    SUPE_ROLE,
 )
 from bin.shared.dicts import (
     activeDic,
@@ -41,9 +46,11 @@ from bin.shared.dicts import (
     replaceDict,
     restrictedList,
     statCalcDict,
+    taskVar,
 )
 from bin.shared.funcs import (
     aOrAn,
+    buffStrGen,
     checkDefined,
     checkUndefined,
     count,
@@ -52,6 +59,7 @@ from bin.shared.funcs import (
     funcBuild,
     genBuild,
     genOppNPC,
+    pickWeightedSupe,
     pluralInt,
     savePers,
     sendMessage,
@@ -1477,6 +1485,137 @@ async def testBattle(
     await sendMessage(ctx, embMes)
 
 
+async def testInteractiveBattle(
+    bot: typing.Union[commands.bot.Bot, commands.bot.AutoShardedBot],
+    ctx: commands.Context,
+    peepBuild: typing.Union[int, str],
+    notPeepBuild: typing.Union[int, str],
+    gens: int,
+    repeats: int,
+    defCost: int,
+    outType: int,
+    taskRank: str,
+):
+    patrolRole = get(ctx.guild.roles, id=int(ROLE_ID_PATROL))
+    supRole = get(ctx.guild.roles, name=SUPE_ROLE)
+    onCallRole = get(ctx.guild.roles, id=int(ROLE_ID_CALL))
+
+    mes = ""
+    winnerList = []
+    testStart = time.time()
+    win: dict[int, dict] = {}
+    loss: dict[int, dict] = {}
+    totRound = int(0)
+
+    aidPick = [patrolRole, onCallRole, supRole]
+    taskAdd = taskVar["addP"][taskRank]
+    for generation in range(gens):
+        aidList = pickWeightedSupe(ctx, aidPick, AID_WEIGHT, taskAdd)
+        p1Build = []
+        p2Build = []
+
+        peepBuild, p1Cost, p1Build = checkDefined(ctx, peepBuild)
+        if not p1Build and isinstance(peepBuild, int):
+            p1Build, p1Cost = checkUndefined(
+                ctx, peepBuild, notPeepBuild, defCost
+            )
+
+        notPeepBuild, p2Cost, p2Build = checkDefined(ctx, notPeepBuild)
+        if not p2Build and isinstance(notPeepBuild, int):
+            p2Build, p2Cost = checkUndefined(
+                ctx, notPeepBuild, peepBuild, defCost
+            )
+
+        p1FPC = NPCFromBuild(bot, p1Build, "Peep")
+        p2FPC = NPCFromBuild(bot, p2Build, "NotPeep")
+        if outType >= 1:
+            mes += (
+                f"Gen: {generation+1}\n"
+                f"   {p1Cost} - {p1Build}\n"
+                f"   {p2Cost} - {p2Build}\n"
+            )
+        roundList = []
+
+        bat = battler(bot, [p1FPC, p2FPC])
+        playerStats = await buffAidList(ctx, aidList, bat, False)
+
+        if isinstance(playerStats, tuple):
+            playerBuffs = playerStats[1]
+            playerStats = playerStats[0]
+
+            if outType >= 2:
+                buffStr = [
+                    x if isinstance(x, dict) else x.to_dict()
+                    for x in playerBuffs
+                ]
+                buffStrMes = [f"      {x}\n" for x in buffStr]
+                mes += "    Buffs:\n"
+                for mesPart in buffStrMes:
+                    mes += mesPart
+
+        for round in range(repeats):
+            bat = battler(bot, [p1FPC, p2FPC])
+            bat.playerList = playerStats
+
+            duelTask = asyncio.create_task(startDuel(bot, ctx, bat, False))
+            await asyncio.wait_for(duelTask, timeout=60)
+            winner = duelTask.result()
+            totRound += 1
+            winnerList.append(winner)
+            roundList.append(winner)
+            if winner == "Peep":
+                win[totRound] = dictShrtBuild(p1Build)
+                loss[totRound] = dictShrtBuild(p2Build)
+            elif winner == "NotPeep":
+                win[totRound] = dictShrtBuild(p2Build)
+                loss[totRound] = dictShrtBuild(p1Build)
+            else:
+                win[totRound] = {}
+                loss[totRound] = {}
+            if outType >= 3:
+                mes += f"    Round: {round+1} - {winner}\n"
+        if outType >= 1:
+            mes += f"      {winPercent(roundList)}\n"
+    timeTaken = time.time() - testStart
+    mes += f"\nTest took: {datetime.timedelta(seconds=int(timeTaken))}"
+    if timeTaken > 120:
+        mes += f" <@{ctx.author.id}>"
+
+    winSum = {}
+    lossSum = {}
+    pickList = [x for x in leader.keys() if leader[x] not in restrictedList]
+    for key in pickList:
+        winSum.setdefault(key, [0, 0])
+        lossSum.setdefault(key, [0, 0])
+        for i in range(1, totRound + 1):
+            winTemp = win[i].get(key, 0)
+            lossTemp = loss[i].get(key, 0)
+            winSum[key][0] += winTemp
+            lossSum[key][0] += lossTemp
+            if winTemp:
+                winSum[key][1] += 1
+            if lossTemp:
+                lossSum[key][1] += 1
+
+    embMes = discord.Embed(title=f"Totals {winPercent(winnerList)}")
+    for key in pickList:
+        weightedAv = (winSum[key][0] / totRound) - (lossSum[key][0] / totRound)
+        embMes.add_field(
+            name=(f"{leader[key]}: {weightedAv:0.2f}"),
+            value=(
+                f"{winSum[key][1]} winners, {lossSum[key][1]} losers\n"
+                f"Winners total {winSum[key][0]} or  "
+                f"WinAv of {winSum[key][0]/max(1,winSum[key][1]):0.2f} and "
+                f"TotAv of {winSum[key][0]/totRound:0.2f}\n"
+                f"Losers total of {lossSum[key][0]} or "
+                f"LossAv of {lossSum[key][0]/max(1,lossSum[key][1]):0.2f} and "
+                f"TotAv of {lossSum[key][0]/totRound:0.2f}\n"
+            ),
+        )
+    await sendMessage(ctx, mes)
+    await sendMessage(ctx, embMes)
+
+
 def NPC_from_diff(
     bot: typing.Union[commands.bot.Bot, commands.bot.AutoShardedBot],
     ctx: commands.Context,
@@ -1494,3 +1633,30 @@ def NPC_from_diff(
 
     FPC = NPCFromBuild(bot, build, peepName)
     return FPC
+
+
+async def buffAidList(ctx: commands.Context, aidList, bat: battler, out=True):
+    if aidList:
+        peepBuffDict, aidNames = bat.playerList[0].grabExtra(ctx, aidList)
+        notPeepBuffDict = bat.playerList[1].grabExtra(ctx, aidList, True)[0]
+
+        peepEmb = buffStrGen(peepBuffDict, bat.playerList[0].n, aidNames)
+
+        notPeepEmb = buffStrGen(
+            notPeepBuffDict, bat.playerList[1].n, aidNames, True
+        )
+        if out:
+            retList: typing.Union[list[discord.Embed], list[dict]] = [
+                peepEmb,
+                notPeepEmb,
+            ]
+        else:
+            retList = [peepBuffDict, notPeepBuffDict]
+        return bat.playerList, retList
+
+    else:
+        if out:
+            await bat.playerList[1].genBuff(ctx)
+        else:
+            await bat.playerList[1].genBuff()
+        return bat.playerList

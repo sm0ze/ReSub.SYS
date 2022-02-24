@@ -1352,7 +1352,7 @@ def pickWeightedSupe(
     elif numPicks:
         if numPicks < 0:
             numPicks = 0
-        roleSets = []
+        roleSets: list[list[discord.Member]] = []
         for role in roles:
             toAppend = role.members
             if ctx.author in toAppend:
@@ -1809,7 +1809,10 @@ def getHelpers(
 
 
 def buffStrGen(
-    buffDict: dict, peepName: str, aidNames: list[str], isBot=False
+    buffDict: dict,
+    peepName: str,
+    aidNames: list[str],
+    isBot=False,
 ):
     aidStr = str(aidNames)
     if isBot:
