@@ -7,7 +7,7 @@ import typing
 
 import bin.log as log
 import discord
-from bin.battle import testBattle
+from bin.battle import testBattle, testInteractiveBattle
 from bin.shared.consts import (
     COMMANDS_ON,
     DL_ARC_DUR,
@@ -106,7 +106,7 @@ class managerCommands(
         outType: int = 1,
     ):
         await ctx.send(
-            f"Starting simulation of {generations * repeats} "
+            f"Starting ~d simulation of {generations * repeats} "
             f"battles of {generations} generations * {repeats} repeats."
         )
         asyncio.create_task(
@@ -121,6 +121,43 @@ class managerCommands(
                 outType,
             )
         )
+
+    @commands.command(
+        enabled=COMMANDS_ON,
+        aliases=["tid"],
+        brief=getBrief("testInterctiveDuel"),
+        description=getDesc("testInteractiveDuel"),
+    )
+    async def testInteractiveDuel(
+        self,
+        ctx: commands.Context,
+        peepBuild: typing.Union[int, str],
+        notPeepBuild: typing.Union[int, str],
+        generations: int = 1,
+        repeats: int = 1,
+        defCost: int = 20,
+        outType: int = 1,
+        taskRank: str = "Imperative",
+    ):
+        await ctx.send(
+            f"Starting ~it simulation of {generations * repeats} "
+            f"battles of {generations} generations * {repeats} repeats."
+        )
+
+        asyncio.create_task(
+            testInteractiveBattle(
+                self.bot,
+                ctx,
+                peepBuild,
+                notPeepBuild,
+                generations,
+                repeats,
+                defCost,
+                outType,
+                taskRank,
+            )
+        )
+        pass
 
     @commands.command(
         enabled=COMMANDS_ON,
