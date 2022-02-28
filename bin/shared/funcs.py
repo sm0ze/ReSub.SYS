@@ -668,7 +668,7 @@ async def pointsLeft(
         await ctx.send(
             (
                 f"{group[0].display_name} has {pointTot[0]- group[1]} "
-                "spare enhancement points."
+                f"spare enhancement point{pluralInt(pointTot[0]- group[1])}."
             )
         )
     if skipped:
