@@ -4,6 +4,7 @@ import os
 import sys
 import time
 import typing
+from zipfile import ZipFile
 
 import bin.log as log
 import discord
@@ -15,7 +16,6 @@ from bin.shared.consts import (
     MANAGER_ROLES,
     ROLE_ID_CALL,
     ROLE_ID_PATROL,
-    SAVE_FILE,
     SORT_ORDER,
     STREAKER,
     SUPE_ROLE,
@@ -28,7 +28,6 @@ from bin.shared.funcs import (
     getBrief,
     getDesc,
     getGuildSupeRoles,
-    getLoc,
     isSuper,
     load,
     memGrab,
@@ -285,18 +284,27 @@ class managerCommands(
         )
         logP.debug(f"currTime: {currTime}")
         logP.debug("currTimeStr: " + currTimeStr)
-        nameStamp = f"{SAVE_FILE}_{currTimeStr}"
+        nameStamp = f"dataArchive_{currTimeStr}.zip"
         if logg:
             await ctx.send(
                 f"Log File from {HOST_NAME} at: {currTimeStr}",
                 file=discord.File(log.LOG_FILE),
             )
         else:
+            # zip all files in "data" folder
+            Root = os.path.dirname(
+                os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            )
+            os.makedirs(os.path.join(Root, "archive"), exist_ok=True)
+            zipName = os.path.join(Root, "archive", nameStamp)
+            with ZipFile(zipName, "w") as zipObj:
+                for file in os.listdir(os.path.join(Root, "data")):
+                    filepath = os.path.join("data", file)
+                    zipObj.write(filepath, os.path.basename(filepath))
+
             await ctx.send(
-                f"File {SAVE_FILE} from {HOST_NAME}",
-                file=discord.File(
-                    getLoc(SAVE_FILE, "data"), filename=nameStamp
-                ),
+                f"Data from {HOST_NAME}.",
+                file=discord.File(zipName),
             )
         logP.debug("command upload completed")
 
