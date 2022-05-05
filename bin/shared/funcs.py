@@ -1561,7 +1561,25 @@ def buildFromString(givenString: str):
     fixArg = givenString.replace(" ", ",")
     fixArg = fixArg.replace(";", ",")
     buildList = [x.strip() for x in fixArg.split(",") if x.strip()]
-    return buildList
+    adBuildList = []
+    skip = []
+    for i, item in enumerate(buildList):
+        if i in skip:
+            continue
+        if len(item) == 3:
+            if not i + 1 < len(buildList):
+                adBuildList.append(item)
+                continue
+            try:
+                digitToAdd = int(buildList[i + 1])
+                skip.append(i + 1)
+                adBuildList.append(str(item) + str(digitToAdd))
+                continue
+            except ValueError:
+                pass
+        adBuildList.append(item)
+
+    return adBuildList
 
 
 def checkDefined(ctx: commands.Context, buildType: typing.Union[int, str]):
