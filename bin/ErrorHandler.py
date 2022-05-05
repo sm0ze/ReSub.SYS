@@ -40,6 +40,7 @@ class ErrorHandler(commands.Cog):
 
         elif isinstance(error.__cause__, KeyError):
             dupeEr = False
+            delaySet = 0
             mes = discord.Embed(
                 title="KeyError",
                 description=(
