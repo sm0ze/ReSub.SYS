@@ -53,6 +53,7 @@ from bin.shared.funcs import (
     aOrAn,
     blToStr,
     buildFromString,
+    cleanStrList,
     compareBuild,
     count,
     countIdList,
@@ -199,10 +200,8 @@ class roleCommands(
         if not typeStr:
             await ctx.send("Please enter a type to remove")
         else:
-            fixArg = typeStr.replace(" ", ",")
-            fixArg = fixArg.replace(";", ",")
-            fixedTypStr = [x.strip() for x in fixArg.split(",") if x.strip()]
-            typList = [x for x in leader if x in fixedTypStr]
+            fixedTypList = cleanStrList(typeStr)
+            typList = [x for x in leader if x in fixedTypList]
 
         logP.debug(f"{user.name} requested to remove {typList}")
 
@@ -843,9 +842,7 @@ class roleCommands(
             typeRank = buildList[0]
         # otherwise split the arglist into a readable shorthand enhancment list
         else:
-            fixArg = typeRank.replace(" ", ",")
-            fixArg = fixArg.replace(";", ",")
-            buildList = [x.strip() for x in fixArg.split(",") if x.strip()]
+            buildList = buildFromString(typeRank)
 
         logP.debug(buildList)
 

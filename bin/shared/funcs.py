@@ -8,6 +8,7 @@ import math
 import os
 import random
 import re
+import string
 import time
 import typing
 
@@ -1208,11 +1209,11 @@ async def sendMessage(location: Messageable, mes):
                 )
                 taskList.append(task)
 
-        for string in stringList:
-            chkdStringList += splitString(string)
+        for strI in stringList:
+            chkdStringList += splitString(strI)
         if chkdStringList:
-            for string in chkdStringList:
-                task = asyncio.create_task(location.send(string))
+            for strI in chkdStringList:
+                task = asyncio.create_task(location.send(strI))
                 taskList.append(task)
 
     elif isinstance(mes, discord.Embed):
@@ -1557,10 +1558,17 @@ def exitGenBuild(searchedBuilds: dict, val: int):
     return largestSafeBuild[1]
 
 
-def buildFromString(givenString: str):
+def cleanStrList(givenString: str):
+    whiteList = set(string.ascii_lowercase + string.digits + ",")
     fixArg = givenString.replace(" ", ",")
     fixArg = fixArg.replace(";", ",")
-    buildList = [x.strip() for x in fixArg.split(",") if x.strip()]
+    fixArg = "".join(x for x in fixArg if x in whiteList)
+    cleanStrList = [x.strip() for x in fixArg.split(",") if x.strip()]
+    return cleanStrList
+
+
+def buildFromString(givenString: str):
+    buildList = cleanStrList(givenString)
     adBuildList = []
     skip = []
     for i, item in enumerate(buildList):
