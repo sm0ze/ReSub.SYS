@@ -1188,10 +1188,10 @@ async def sendMessage(location: Messageable, mes):
     location : Messageable
         The location to send the message. A messagable type is a Discord type
         that has the attribute send.
-    mes : Str | Discord.Embed | list[Discord.Embed]
+    mes : Str | Discord.Embed | list [Discord.Embed | str]
         The message to be sent. Can be a string that will be split by line
         into 2000 character chunks, or a Discord.Embed that will be split by
-        24 field chunks, or a list of Discord.Embed that will be split.
+        24 field chunks, or a list of strings and or embeds that will be split.
     """
     taskList = []
     if isinstance(mes, list):
