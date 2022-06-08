@@ -1927,11 +1927,19 @@ def histUptime(
         )
         startChar = not startChar
 
-    retStr += f"**Total Uptime:** {totalTime:.2f} seconds\n"
-    retStr += f"**Online Uptime:** {onlineTime:.2f} seconds\n"
-    retStr += f"**Offline Uptime:** {offlineTime:.2f} seconds\n"
+    retStr += (
+        f"**Total Uptime:** {datetime.timedelta(seconds=int(totalTime))}\n"
+    )
+    retStr += (
+        f"**Online Uptime:** {datetime.timedelta(seconds=int(onlineTime))}\n"
+    )
+    retStr += (
+        f"**Offline Uptime:** {datetime.timedelta(seconds=int(offlineTime))}\n"
+    )
     retStr += f"**Uptime:** {uptime:.2f}%\n"
-    retStr += f"**Longest Online:** {longestUp:.2f} seconds\n"
+    retStr += (
+        f"**Longest Online:** {datetime.timedelta(seconds=int(longestUp))}\n"
+    )
     retStr += (
         f"**Timeline:** {len(timelineStr)} squares\n"
         f"online periods: {len(online)}, offline periods: {len(offline)}\n"
