@@ -48,13 +48,16 @@ class defaultCommands(
 
         logP.debug(f"Bot last login time set as: {loginTime}")
 
-    @tasks.loop(minutes=1)
+    @tasks.loop(minutes=5)
     async def online_time(self):
         currTime = time.time()
+        isonline = False
         if self.bot.ws:
-            saveTime(currTime)
-            logP.debug(f"Saved uptime ping to file at: {currTime}")
-        else:
+            if self.bot.ws.latency <= 500:
+                saveTime(currTime)
+                isonline = True
+                logP.debug(f"Saved uptime ping to file at: {currTime}")
+        if not isonline:
             logP.debug(f"websocket down at: {currTime}")
 
     @commands.command(

@@ -1870,6 +1870,9 @@ def saveTime(givenTime: float, fileName: str = getLoc("uptime.json", "data")):
 def histUptime(
     timelineSquares: int = 100, fileName: str = getLoc("uptime.json", "data")
 ):
+
+    timelineSquares = round_to_multiple(timelineSquares, 10)
+
     currTime = time.time()
     saveTime(currTime)
     timeList: list[float] = []
@@ -1895,7 +1898,7 @@ def histUptime(
     # ]
 
     for t in timeList[::-1]:
-        if currCheck - t > 90:
+        if currCheck - t > 6 * 60:
             if not offline or not offline[-1][0] == currCheck:
                 offline.append([t, currCheck])
             else:
@@ -1920,28 +1923,45 @@ def histUptime(
 
     longestUp = max([x[1] - x[0] for x in online])
 
-    minTimePeriod = totalTime / max(1, timelineSquares)
+    lineList = []
+
     for period in timeLine:
-        timelineStr += timeChar[int(startChar)] * max(
-            1, int((period[1] - period[0]) / minTimePeriod)
+        lineList.append(
+            [
+                timeChar[int(startChar)],
+                period[1] - period[0],
+                1,
+            ]
         )
         startChar = not startChar
 
+    minSquares = len(lineList)
+    if timelineSquares < minSquares:
+        timelineSquares = (int(minSquares / 10) + 1) * 10
+    distributedList = distributeTimeline(timelineSquares, lineList)
+
+    for i, item in enumerate(distributedList):
+        lineList[i][2] = item
+
+    for period in lineList:
+        timelineStr += period[0] * period[2]
+    squareCount = len(timelineStr)
+
     retStr += (
-        f"**Total Uptime:** {datetime.timedelta(seconds=int(totalTime))}\n"
+        f"**Timeline Length:** {datetime.timedelta(seconds=int(totalTime))}\n"
     )
     retStr += (
-        f"**Online Uptime:** {datetime.timedelta(seconds=int(onlineTime))}\n"
+        f"**Online Total:** {datetime.timedelta(seconds=int(onlineTime))}\n"
     )
     retStr += (
-        f"**Offline Uptime:** {datetime.timedelta(seconds=int(offlineTime))}\n"
+        f"**Offline Total:** {datetime.timedelta(seconds=int(offlineTime))}\n"
     )
     retStr += f"**Uptime:** {uptime:.2f}%\n"
     retStr += (
         f"**Longest Online:** {datetime.timedelta(seconds=int(longestUp))}\n"
     )
     retStr += (
-        f"**Timeline:** {len(timelineStr)} squares\n"
+        f"**Timeline:** {squareCount} squares\n"
         f"online periods: {len(online)}, offline periods: {len(offline)}\n"
         f"{fixStrLineLenTen(timelineStr)} "
     )
@@ -1951,3 +1971,24 @@ def histUptime(
 
 def fixStrLineLenTen(str: str):
     return re.sub(r"(.{10})(?!$)", r"\g<1>\n", str)
+
+
+def distributeTimeline(available, weights_and_mins):
+    prior_available = available
+    allocated = [i[2] for i in weights_and_mins]
+    available = available - sum(allocated)
+    if available < 0:
+        # The hell breaks loose
+        print("Error")
+
+    total_weight = float(sum([i[1] for i in weights_and_mins]))
+    for i, item in enumerate(weights_and_mins):
+        v = round(item[1] * prior_available / total_weight)
+        nv = min(available, max(v - allocated[i], 0))
+        allocated[i] += nv
+        available -= nv
+    return allocated
+
+
+def round_to_multiple(number, multiple):
+    return multiple * round(number / multiple)
