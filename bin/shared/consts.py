@@ -33,6 +33,7 @@ SAVE_FILE = os.getenv("SAVEFILE")
 START_CHANNEL = os.getenv("STARTCHANNEL")
 ERROR_THREAD = os.getenv("ERRORTHREAD")
 TATSU = os.getenv("TATSU_TOKEN")
+GUILD = os.getenv("DISCORD_GUILD")
 
 if not TOKEN:
     logP.warning("No Discord Token")
@@ -48,6 +49,8 @@ if not ERROR_THREAD:
     ERROR_THREAD = askToken("ERRORTHREAD")
 if not TATSU:
     TATSU = askToken("TATSU_TOKEN")
+if not GUILD:
+    GUILD = askToken("DISCORD_GUILD")
 
 logP.debug("All .env Tokens loaded")
 

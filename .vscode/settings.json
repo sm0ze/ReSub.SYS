@@ -1,5 +1,8 @@
 {
     "python.linting.flake8Enabled": true,
     "python.linting.enabled": true,
-    "python.pythonPath": "/home/gitpod/.pyenv/versions/3.9.7/bin/python"
+    "python.pythonPath": "/home/gitpod/.pyenv/versions/3.9.7/bin/python",
+    "[python]":{
+        "editor.formatOnSave": true
+    }
 }

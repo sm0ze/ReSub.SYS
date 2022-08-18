@@ -121,5 +121,5 @@ class ErrorHandler(commands.Cog):
             await dupeError(mes, ctx, ERTHRD)
 
 
-def setup(bot: commands.Bot):
-    bot.add_cog(ErrorHandler(bot))
+async def setup(bot: commands.Bot):
+    await bot.add_cog(ErrorHandler(bot))

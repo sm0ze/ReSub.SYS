@@ -191,7 +191,28 @@ class ownerCommands(
         await ctx.send("Testing Done")
         logP.info("Command testAll finished")
 
+    @commands.command(
+        brief=getBrief("sync"),
+        description=getDesc("sync"),
+    )
+    async def sync(
+        self,
+        ctx: commands.Context,
+        host: str = HOST_NAME,
+        all: bool = False,
+    ):
+        if host != HOST_NAME:
+            return
+        tree = self.bot.tree
+        if not all and ctx.guild:
+            syncList = await tree.sync(guild=ctx.guild)
+        else:
+            syncList = await tree.sync()
+        if not syncList:
+            syncList = "None"
+        await ctx.send(f"Commands Synced: {syncList}")
+
 
 # function to setup cog
-def setup(bot: commands.Bot):
-    bot.add_cog(ownerCommands(bot))
+async def setup(bot: commands.Bot):
+    await bot.add_cog(ownerCommands(bot))

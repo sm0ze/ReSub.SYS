@@ -12,6 +12,7 @@ from bin.battle import testBattle, testInteractiveBattle
 from bin.shared.consts import (
     COMMANDS_ON,
     DL_ARC_DUR,
+    GUILD,
     HOST_NAME,
     MANAGER_ROLES,
     ROLE_ID_CALL,
@@ -59,20 +60,11 @@ class managerCommands(
 
     # Check if user has guild role
     async def cog_check(self, ctx: commands.Context):
-        async def predicate(ctx: commands.Context):
-            for role in MANAGER_ROLES:
-                chkRole = get(ctx.guild.roles, name=role)
-                if chkRole in ctx.author.roles:
-                    return chkRole
-            raise commands.CheckFailure(
-                (
-                    "You do not have permission as you are missing a role in "
-                    f"this list: {MANAGER_ROLES}"
-                )
-            )
+        async def predicate_commands(ctx: commands.Context):
+            check_roles(ctx.guild.roles, ctx.author.roles)
 
         # messy implementation for Supe
-        return commands.check(await predicate(ctx))
+        return commands.check(await predicate_commands(ctx))
 
     @commands.command(
         enabled=COMMANDS_ON,
@@ -487,6 +479,37 @@ class managerCommands(
         # archive thread
         await cmdThrd.edit(archived=1)
 
+    @discord.app_commands.command(
+        name="change_stat",
+        description=getDesc("change_stat"),
+    )
+    @discord.app_commands.describe(member="the member to edit the stats of")
+    @discord.app_commands.checks.has_any_role(*MANAGER_ROLES)
+    async def change_stat(
+        self, inter: discord.Interaction, member: discord.Member
+    ):
+
+        cache_file = load(inter.guild.id)
+        if member.id not in cache_file:
+            respond = inter.response
+            respond.send_message(
+                f"{member.name} is not in save file", ephemeral=True
+            )
+            return
+
+        mesDesc = "Stats:\n"
+        for key, val in cache_file[member.id].items():
+            if isinstance(val, dict):
+                mesDesc += f"{key}: Dict\n"
+            else:
+                mesDesc += f"{key}: {val}\n"
+        mes = discord.Embed(
+            title=f"{member.display_name} Stats",
+            description=mesDesc,
+        )
+        await inter.response.defer(ephemeral=True, thinking=True)
+        await inter.followup.send(ephemeral=True, embed=mes)
+
     @commands.command(
         enabled=COMMANDS_ON,
         brief=getBrief("xpAdd"),
@@ -713,6 +736,22 @@ async def manageRoles(ctx: commands.Context, output=True):
         return movedRoles
 
 
+def check_roles(
+    guildRoleList: typing.Sequence[discord.Role],
+    authorRoles: typing.List[discord.Role],
+):
+    for role in MANAGER_ROLES:
+        chkRole = get(guildRoleList, name=role)
+        if chkRole in authorRoles:
+            return chkRole
+    raise commands.CheckFailure(
+        (
+            "You do not have permission as you are missing a role in "
+            f"this list: {MANAGER_ROLES}"
+        )
+    )
+
+
 # function to setup cog
-def setup(bot: commands.Bot):
-    bot.add_cog(managerCommands(bot))
+async def setup(bot: commands.Bot):
+    await bot.add_cog(managerCommands(bot), guilds=[discord.Object(id=GUILD)])
