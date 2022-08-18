@@ -308,5 +308,5 @@ async def fetchEmoji(ctx: commands.Context, emojiStr):
 
 
 # function to setup cog
-def setup(bot: commands.Bot):
-    bot.add_cog(defaultCommands(bot))
+async def setup(bot: commands.Bot):
+    await bot.add_cog(defaultCommands(bot))

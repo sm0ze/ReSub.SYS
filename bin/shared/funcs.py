@@ -368,8 +368,11 @@ async def dupeMes(bot, channel=None, mes: str = None):
 async def memGrab(
     ctx: commands.Context, memList: str = ""
 ) -> list[typing.Union[discord.User, discord.Member]]:
-    logP.debug(f"memList: {memList}\nand mentions: {ctx.message.mentions}")
+
     grabList = []
+
+    logP.debug(f"memList: {memList}\nand mentions: {ctx.message.mentions}")
+
     # first check for users mentioned in message
     if ctx.message.mentions:
         grabList = ctx.message.mentions

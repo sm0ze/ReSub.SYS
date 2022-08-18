@@ -3,7 +3,7 @@ import typing
 
 import bin.log as log
 import discord
-from bin.shared.consts import COMMANDS_ON, GEM_DIFF, setGemDiff
+from bin.shared.consts import COMMANDS_ON, GEM_DIFF, GUILD, setGemDiff
 from bin.shared.funcs import getBrief, getDesc, sendMessage
 from discord.ext import commands
 
@@ -64,5 +64,5 @@ class authorCommands(
 
 
 # function to setup cog
-def setup(bot: commands.Bot):
-    bot.add_cog(authorCommands(bot))
+async def setup(bot: commands.Bot):
+    await bot.add_cog(authorCommands(bot), guilds=[discord.Object(id=GUILD)])

@@ -27,6 +27,7 @@ from bin.shared.consts import (
     COMMANDS_ON,
     COMMANDS_ROLES,
     DEFAULT_DUEL_OPP,
+    GUILD,
     HIDE,
     HOST_NAME,
     LEAD_LIMIT,
@@ -1480,5 +1481,5 @@ def highestEhn(userEhnList: list = [], belowTop: bool = True):
 
 
 # function to setup cog
-def setup(bot: commands.Bot):
-    bot.add_cog(roleCommands(bot))
+async def setup(bot: commands.Bot):
+    await bot.add_cog(roleCommands(bot), guilds=[discord.Object(id=GUILD)])

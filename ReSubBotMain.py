@@ -1,5 +1,6 @@
 # ReSubBotMain.py
 
+import asyncio
 import discord
 from discord.ext import commands, tasks
 from discord.utils import get
@@ -27,12 +28,12 @@ logP.info(
 logP.debug(f"Bot start time set as: {START_TIME}")
 
 cogList = [
+    "commands.author.py",
     "commands.default.py",
     "commands.game.py",
-    "commands.role.py",
     "commands.manager.py",
     "commands.owner.py",
-    "commands.author.py",
+    "commands.role.py",
     "ErrorHandler.py",
 ]
 
@@ -157,14 +158,11 @@ async def update_presence():
     return
 
 
-# general import protection
-if __name__ == "__main__":
-
-    # discord.py cog importing
+async def load_extensions():
     for filename in cogList:
         if filename.endswith(".py"):
             logP.debug(f"Loading Cog: {filename}")
-            bot.load_extension(f"bin.{filename[:-3]}")
+            await bot.load_extension(f"bin.{filename[:-3]}")
 
         # general exception for excluding __pycache__
         # while accounting for generation of other filetypes
@@ -173,9 +171,23 @@ if __name__ == "__main__":
         else:
             print(f"Unable to load {filename[:-3]}")
 
-    # and to finish. run the bot
-    if runBot:
-        logP.info("Bot connection starting....")
-        bot.run(TOKEN, reconnect=True)
+
+async def main():
+    async with bot:
+
+        # discord.py cog importing
+        await load_extensions()
+
+        logP.debug(bot.tree)
+
+        # and to finish. run the bot
+        if runBot:
+            logP.info("Bot connection starting....")
+            await bot.start(TOKEN, reconnect=True)
+
+
+# general import protection
+if __name__ == "__main__":
+    asyncio.run(main())
 
 logP.critical("Bot has reached end of file")
