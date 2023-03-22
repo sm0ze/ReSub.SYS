@@ -368,7 +368,6 @@ async def dupeMes(bot, channel=None, mes: str = None):
 async def memGrab(
     ctx: commands.Context, memList: str = ""
 ) -> list[typing.Union[discord.User, discord.Member]]:
-
     grabList = []
 
     logP.debug(f"memList: {memList}\nand mentions: {ctx.message.mentions}")
@@ -486,7 +485,6 @@ def pluralInt(val: int):
 
 
 def topEnh(ctx: commands.Context, enh: str) -> dict:
-
     enhNameList = {
         masterEhnDict[x]["Name"]: 0
         for x in masterEhnDict.keys()
@@ -525,7 +523,6 @@ def asleep(var=None):
 
 # get roles of a lower rank on member to remove later
 def toCut(member: discord.Member) -> list[str]:
-
     # fetch unrestricted managed roles member has
     supeRoles = spent([member])
     logP.debug(f"supeRoles = {supeRoles[0][2]}")
@@ -560,7 +557,6 @@ async def cut(
     mes = discord.Embed(title="Cutting Roles")
 
     for peep in memberList:
-
         # if no list of roles to remove was given get user's extra roles
         if not cutList:
             cutting = toCut(peep)
@@ -749,7 +745,6 @@ async def tatsuXpGrab(roleTo: discord.Role):
 def count(
     peepList: typing.Union[list[discord.Member], discord.Member]
 ) -> tuple[int, float, float, list[int, int, float], dict, dict]:
-
     if isinstance(peepList, discord.Member):
         peepList = [peepList]
 
@@ -901,6 +896,7 @@ async def remOnPatrol(
     memberDict = load(patrolRole.guild.id)
     currTime = time.time()
     currentlyPatrolling = 0
+    toRemind = shared_dyVars.toRemindList.copy()
     for key, val in memberDict.items():
         currPatrol = val.get("currPatrol", {})
         lastTaskTime = currPatrol.get("lastTaskTime", None)
@@ -924,7 +920,7 @@ async def remOnPatrol(
                 if member:
                     notActive[member] = [patrolLength, numPatrolTasks]
 
-            elif hourlyPing in range(50 * 60, 60 * 60):
+            elif hourlyPing in range(50 * 60, 60 * 60) and member in toRemind:
                 if (
                     isinstance(member, discord.Member)
                     and streakerRole in member.roles
@@ -937,6 +933,7 @@ async def remOnPatrol(
                             f"in roughly {timeLeft}.]"
                         )
                     )
+                    shared_dyVars.toRemindList.remove(member)
 
     membersFinishingPatrol = set(patrolRole.members) & set(notActive.keys())
 
@@ -1131,7 +1128,6 @@ def genBuild(val: int = 0, typ: str = "", iniBuild: list = None) -> list[str]:
                     rank = groupToAdd[0]
 
                 else:
-
                     shrt = toAdd[0]
                     rank = 1
                     if leader[shrt] in restrictedList:
@@ -1343,7 +1339,6 @@ def pickWeightedSupe(
     weights: list[int],
     numPicks: int = 1,
 ) -> list[discord.Member]:
-
     if len(roles) != len(weights):
         raise Exception("Number of roles and weights do not match.")
     toRet = []
@@ -1620,7 +1615,6 @@ def checkUndefined(
     notPeepBuild: typing.Union[int, str],
     defCost: int,
 ):
-
     # peepBuild requires notPeepBuild to be evaluated
     if isinstance(notPeepBuild, int) or notPeepBuild.lower() == "rand":
         # notPeepBuild is not defined and peepBuild should use defCost
@@ -1873,7 +1867,6 @@ def saveTime(givenTime: float, fileName: str = getLoc("uptime.json", "data")):
 def histUptime(
     timelineSquares: int = 100, fileName: str = getLoc("uptime.json", "data")
 ):
-
     timelineSquares = round_to_multiple(timelineSquares, 10)
 
     currTime = time.time()
