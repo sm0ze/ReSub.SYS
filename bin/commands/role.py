@@ -280,7 +280,6 @@ class roleCommands(
     # command to trim command caller of extra roles. OBSOLETE due to cut call
     # after role add in add command
     async def trim(self, ctx: commands.Context):
-
         memberList = await memGrab(ctx, "")
 
         await cut(ctx, memberList)
@@ -320,7 +319,6 @@ class roleCommands(
     )
     @commands.cooldown(1, TASK_CD, type=commands.BucketType.user)
     async def task(self, ctx: commands.Context):
-
         taskType = random.choices(
             taskVar["taskOpt"][0],
             cum_weights=taskVar["taskWeight"],
@@ -334,6 +332,7 @@ class roleCommands(
         patrolRole = get(ctx.guild.roles, id=int(ROLE_ID_PATROL))
         supRole = get(ctx.guild.roles, name=SUPE_ROLE)
         onCallRole = get(ctx.guild.roles, id=int(ROLE_ID_CALL))
+        streakerRole = get(ctx.guild.roles, name=STREAKER)
 
         aidPick = [patrolRole, onCallRole, supRole]
 
@@ -531,6 +530,10 @@ class roleCommands(
         )
 
         await ctx.send(embed=emptMes)
+        if streakerRole:
+            if streakerRole in ctx.author.roles:
+                if ctx.author not in shared_dyVars.toRemindList:
+                    shared_dyVars.toRemindList.append(ctx.author)
         await ctx.message.delete(delay=1)
         return
 
@@ -817,7 +820,6 @@ class roleCommands(
     )
     # add role command available to all PERMROLES users
     async def add(self, ctx: commands.Context, *, typeRank: str = ""):
-
         # fetch message author and their current enhancement roles
         # as well as the build for those roles
         user = ctx.author
@@ -920,7 +922,6 @@ class roleCommands(
         # add each enhancement and
         # the total ranks available to the message to return
         for group in ENHLIST:
-
             # check for mental clarity and mental celerity exception
             if group[0][0:3].lower() == "men":
                 shorthand = group[0][7:10]
@@ -1375,7 +1376,6 @@ class roleCommands(
                 if not opponent:
                     opponent = get(ctx.guild.members, id=DEFAULT_DUEL_OPP)
                 else:
-
                     raise notSupeDuel("Not a supe.")
             nameList = [x.name for x in opponent.roles]
             if (str(SUPE_ROLE) not in nameList) and str(

@@ -4,7 +4,7 @@ import asyncio
 import discord
 from discord.ext import commands, tasks
 from discord.utils import get
-from pretty_help import DefaultMenu, PrettyHelp
+import pretty_help
 
 import bin.log as log
 from bin.shared.consts import (
@@ -44,7 +44,7 @@ INTENTS = discord.Intents.all()
 
 # ":discord:743511195197374563" is a custom discord emoji format.
 # Adjust to match your own custom emoji.
-menu = DefaultMenu(
+menu = pretty_help.EmojiMenu(
     page_left="⬅️",
     page_right="➡️",
     remove="⏹️",
@@ -60,7 +60,7 @@ bot = commands.Bot(
     intents=INTENTS,
 )
 
-bot.help_command = PrettyHelp(
+bot.help_command = pretty_help.PrettyHelp(
     menu=menu,
     ending_note=ending_note,
     delete_after_timeout=True,
@@ -116,7 +116,6 @@ async def on_ready():
 
 @bot.event
 async def on_message(message: discord.Message):
-
     if message.author.bot:
         # skip message if a bot posted it
         return
@@ -174,7 +173,6 @@ async def load_extensions():
 
 async def main():
     async with bot:
-
         # discord.py cog importing
         await load_extensions()
 
