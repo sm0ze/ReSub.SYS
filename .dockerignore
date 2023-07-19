@@ -1,0 +1,6 @@
+.venv/
+.vscode/
+archive/
+data/
+Logs/
+.env
