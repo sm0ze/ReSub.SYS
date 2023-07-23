@@ -4,7 +4,7 @@ pipeline {
         stage('build') {
             steps {
                 sh '''
-                    export $(cat /home/pi/docker/.env | xargs)
+                    export $(cat /var/jenkins_home/envfile/.env | xargs)
                     docker compose build bot
                 '''
             }
@@ -12,7 +12,7 @@ pipeline {
         stage('deploy') {
             steps {
                 sh '''
-                    export $(cat /home/pi/docker/.env | xargs)
+                    export $(cat /var/jenkins_home/envfile/.env | xargs)
                     docker compose up -d bot
                 '''
             }

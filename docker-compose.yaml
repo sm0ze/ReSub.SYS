@@ -57,6 +57,8 @@ services:
     container_name: jenkins
     volumes:
       - ${APPDATA_PATH}/jenkins:/var/jenkins_home
+      - ${ENV_PATH}:/var/jenkins_home/envfile
+      - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - 8080:8080
       - 50000:50000
