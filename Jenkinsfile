@@ -5,16 +5,17 @@ pipeline {
             steps {
                 withEnv(readFile('/var/jenkins_home/envfile/.env').split("\n")) {
                     sh '''
-                    docker compose build resub-bot
+                    docker compose -f docker-compose.yaml build resub-bot
                 '''
                 }
+                docker.
             }
         }
         stage('deploy') {
             steps {
                 withEnv(readFile('/var/jenkins_home/envfile/.env').split("\n")) {
                     sh '''
-                    docker compose up -d resub-bot
+                    docker compose -f docker-compose.yaml up -d resub-bot
                 '''
                 }
             }
