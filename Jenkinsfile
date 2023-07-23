@@ -6,7 +6,7 @@ pipeline {
                 script {
                     def envVars = readFile('/var/jenkins_home/envfile/.env').split("\n").toList()
                     withEnv(envVars) {
-                        sh 'sudo docker compose -f docker-compose.yaml build resub-bot'
+                        sh 'docker compose -f docker-compose.yaml build resub-bot'
                     }
                 }
             }
@@ -16,7 +16,7 @@ pipeline {
                 script {
                     def envVars = readFile('/var/jenkins_home/envfile/.env').split("\n").toList()
                     withEnv(envVars) {
-                        sh 'sudo docker compose -f docker-compose.yaml up -d resub-bot'
+                        sh 'docker compose -f docker-compose.yaml up -d resub-bot'
                     }
                 }
             }
