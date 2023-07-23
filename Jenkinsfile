@@ -5,7 +5,7 @@ pipeline {
     stages {
         stage('build') {
             steps {
-                sh 'python --version'
+                def customImage = docker.build("Resub-Bot:${currentBuild.startTimeInMillis}")
             }
         }
     }
