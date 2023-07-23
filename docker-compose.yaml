@@ -1,0 +1,80 @@
+version: '3'
+services:
+  mongodb:
+    image: mongo:4.4.13
+    container_name: mongodb
+    volumes:
+      - ${APPDATA_PATH}/mongodb_data:/data/db
+    restart: always
+
+  mongodb_exporter:
+    image: percona/mongodb_exporter:0.39
+    container_name: mongodb_exporter
+    environment:
+    - MONGODB_URI=mongodb://mongodb:27017
+    restart: always
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    volumes:
+      - ${APPDATA_PATH}/prometheus:/etc/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    ports:
+      - 9090:9090
+    restart: always
+
+  alertmanager:
+    image: prom/alertmanager
+    container_name: alertmanager
+    volumes:
+      - ${APPDATA_PATH}/alertmanager:/etc/alertmanager
+    ports:
+      - 9093:9093
+    restart: always
+
+  discord_webhook:
+    image: rogerrum/alertmanager-discord:1.0.4
+    container_name: discord_webhook
+    environment:
+      - DISCORD_USERNAME=smoze-pi-alert
+      - DISCORD_WEBHOOK=${DISCORD_WEBHOOK_URL}
+    ports:
+      - 9094:9094
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    volumes:
+      - ${APPDATA_PATH}/grafana:/var/lib/grafana
+    ports:
+      - 3000:3000
+    restart: always
+
+  jenkins:
+    image: jenkins/jenkins
+    container_name: jenkins
+    volumes:
+      - ${APPDATA_PATH}/jenkins:/var/jenkins_home
+    ports:
+      - 8080:8080
+      - 50000:50000
+    restart: always
+
+  resub-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - ${APPDATA_PATH}/resub-bot/.env
+
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${APPDATA_PATH}/portainer:/data
+    ports:
+      - 9000:9000
+    restart: always

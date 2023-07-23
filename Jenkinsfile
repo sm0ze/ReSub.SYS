@@ -1,11 +1,20 @@
 pipeline {
-    agent {
-        dockerfile true
-    }
+    agent any
     stages {
         stage('build') {
             steps {
-                def customImage = docker.build("Resub-Bot:${currentBuild.startTimeInMillis}")
+                sh '''
+                    export $(cat /home/pi/docker/.env | xargs)
+                    docker-compose build bot
+                '''
+            }
+        }
+        stage('deploy') {
+            steps {
+                sh '''
+                    export $(cat /home/pi/docker/.env | xargs)
+                    docker-compose up -d bot
+                '''
             }
         }
     }
