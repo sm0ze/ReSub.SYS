@@ -12,6 +12,3 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the bot's code into the working directory
 COPY . .
-
-# Start the bot
-CMD [ "python", "-u", "ReSubBotMain.py" ]
