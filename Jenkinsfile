@@ -8,7 +8,6 @@ pipeline {
                     docker compose -f docker-compose.yaml build resub-bot
                 '''
                 }
-                docker.
             }
         }
         stage('deploy') {
