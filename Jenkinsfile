@@ -5,7 +5,7 @@ pipeline {
             steps {
                 sh '''
                     export $(cat /home/pi/docker/.env | xargs)
-                    docker-compose build bot
+                    docker compose build bot
                 '''
             }
         }
@@ -13,7 +13,7 @@ pipeline {
             steps {
                 sh '''
                     export $(cat /home/pi/docker/.env | xargs)
-                    docker-compose up -d bot
+                    docker compose up -d bot
                 '''
             }
         }
